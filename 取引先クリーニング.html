@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>取引先台帳クリーニング</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --paper:#FAF7EF;
+    --paper-deep:#F2EDE0;
+    --ink:#20303B;
+    --ink-soft:#5B6B72;
+    --line:#DCD3BE;
+    --line-soft:#EAE3D2;
+    --red:#B23A2E;
+    --red-soft:#F3E1DD;
+    --amber:#A8792A;
+    --amber-soft:#F1E6D2;
+    --green:#2E6B4E;
+    --green-soft:#DFEAE2;
+    --navy:#22384C;
+    --navy-soft:#2E4A63;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:transparent;}
+  body{
+    font-family:"Hiragino Sans","Yu Gothic Medium","Yu Gothic","Meiryo",sans-serif;
+    color:var(--ink);
+    background:transparent;
+    line-height:1.6;
+  }
+  .bg-gradient {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(120deg, #ffecd2 0%, #fcb69f 25%, #a18cd1 50%, #fbc2eb 75%, #8fd3f4 100%);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+    opacity: 0.6;
+    z-index: 1;
+    pointer-events: none;
+  }
+  @keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  html,body{ min-height:100%; }
+  .page{
+    position:relative;
+    z-index:2;
+    max-width:460px;
+    margin:44px auto;
+    padding:36px 24px 56px;
+    background:rgba(255,253,247,0.6);
+    backdrop-filter:blur(22px);
+    -webkit-backdrop-filter:blur(22px);
+    border-radius:34px;
+    box-shadow:0 30px 80px rgba(32,48,59,0.22), 0 4px 16px rgba(32,48,59,0.08);
+  }
+  @media (max-width:520px){
+    .page{
+      margin:0;
+      border-radius:0;
+      min-height:100vh;
+      box-shadow:none;
+    }
+  }
+  /* ---------- Header ---------- */
+  header{
+    display:flex;
+    align-items:center;
+    gap:20px;
+    padding-bottom:24px;
+    border-bottom:2px solid var(--ink);
+    margin-bottom:28px;
+  }
+  .stamp{
+    flex:none;
+    width:64px;height:64px;
+  }
+  header h1{
+    font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;
+    font-size:26px;
+    font-weight:600;
+    margin:0 0 4px;
+    letter-spacing:.02em;
+  }
+  header p{
+    margin:0;
+    color:var(--ink-soft);
+    font-size:13.5px;
+  }
+  /* ---------- Upload zone ---------- */
+  .dropzone{
+    border:1.5px dashed var(--line);
+    background:#FFFDF7;
+    border-radius:18px;
+    padding:44px 26px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .dropzone.drag{
+    border-color:var(--navy);
+    background:var(--paper-deep);
+  }
+  .dropzone .big{
+    font-size:15.5px;
+    font-weight:600;
+    margin-bottom:6px;
+  }
+  .dropzone .small{
+    font-size:12.5px;
+    color:var(--ink-soft);
+  }
+  .dropzone input{display:none;}
+  .privacy-note{
+    margin-top:10px;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    text-align:center;
+  }
+  /* ---------- Error ---------- */
+  .error-box{
+    margin-top:16px;
+    border:1px solid var(--red);
+    background:var(--red-soft);
+    color:var(--red);
+    padding:12px 16px;
+    border-radius:11px;
+    font-size:13px;
+    display:none;
+  }
+  /* ---------- Summary bar ---------- */
+  .summary{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    align-items:center;
+    justify-content:space-between;
+    margin:36px 0 22px;
+    padding:20px 20px;
+    background:var(--paper-deep);
+    border:1px solid var(--line-soft);
+    border-radius:18px;
+  }
+  .summary-stats{
+    display:flex;
+    gap:22px;
+    flex-wrap:wrap;
+  }
+  .stat{
+    display:flex;
+    flex-direction:column;
+  }
+  .stat .num{
+    font-size:20px;
+    font-weight:700;
+    font-variant-numeric:tabular-nums;
+  }
+  .stat .lbl{
+    font-size:11px;
+    color:var(--ink-soft);
+  }
+  .controls{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  .toggle-btn{
+    border:1px solid var(--line);
+    background:#fff;
+    padding:7px 13px;
+    font-size:12.5px;
+    border-radius:11px;
+    cursor:pointer;
+    color:var(--ink);
+  }
+  .toggle-btn.active{
+    background:var(--navy);
+    border-color:var(--navy);
+    color:#fff;
+  }
+  input.search{
+    border:1px solid var(--line);
+    border-radius:11px;
+    padding:7px 10px;
+    font-size:12.5px;
+    width:160px;
+    background:#fff;
+    color:var(--ink);
+  }
+  input.search:focus, .toggle-btn:focus, button:focus, input[type=radio]:focus{
+    outline:2px solid var(--navy-soft);
+    outline-offset:1px;
+  }
+  /* ---------- Groups ---------- */
+  .group{
+    border:1px solid var(--line);
+    border-radius:18px;
+    margin-bottom:18px;
+    box-shadow:0 2px 10px rgba(32,48,59,0.05);
+    background:#FFFDF7;
+    overflow:hidden;
+  }
+  .group-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:13px 18px;
+    background:var(--paper-deep);
+    border-bottom:1px solid var(--line-soft);
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .group-head-left{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .group-num{
+    font-size:12px;
+    color:var(--ink-soft);
+    font-variant-numeric:tabular-nums;
+  }
+  .badge{
+    font-size:11px;
+    padding:2px 9px;
+    border-radius:20px;
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .badge.high{ background:var(--red-soft); color:var(--red); }
+  .badge.medium{ background:var(--amber-soft); color:var(--amber); }
+  .reason{
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+  .dismiss-btn{
+    font-size:11.5px;
+    color:var(--ink-soft);
+    background:none;
+    border:1px solid var(--line);
+    border-radius:11px;
+    padding:4px 10px;
+    cursor:pointer;
+  }
+  .dismiss-btn:hover{ border-color:var(--ink-soft); color:var(--ink); }
+  .member{
+    display:flex;
+    align-items:flex-start;
+    gap:14px;
+    padding:14px 18px;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .member:last-child{ border-bottom:none; }
+  .member.keep{ background:var(--green-soft); }
+  .member input[type=radio]{
+    margin-top:4px;
+    flex:none;
+    accent-color:var(--green);
+    width:15px;height:15px;
+  }
+  .member-body{ flex:1; min-width:0; }
+  .member-name-row{
+    display:flex;
+    align-items:baseline;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .member-name{
+    font-weight:700;
+    font-size:14.5px;
+  }
+  .keep-tag{
+    font-size:10.5px;
+    color:var(--green);
+    font-weight:700;
+    border:1px solid var(--green);
+    border-radius:20px;
+    padding:0px 7px;
+  }
+  .member-meta{
+    margin-top:3px;
+    font-size:12px;
+    color:var(--ink-soft);
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px 14px;
+  }
+  .member-meta span b{ color:var(--ink); font-weight:600; }
+  .group-dismissed-note{
+    padding:10px 16px;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .restore-btn{
+    font-size:11.5px;
+    background:none;
+    border:1px solid var(--line);
+    border-radius:11px;
+    padding:4px 10px;
+    cursor:pointer;
+    color:var(--ink-soft);
+  }
+  /* ---------- All-records table (view all) ---------- */
+  .all-table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:12.5px;
+    margin-top:6px;
+  }
+  .all-table th{
+    text-align:left;
+    font-size:11px;
+    color:var(--ink-soft);
+    font-weight:600;
+    border-bottom:1.5px solid var(--ink);
+    padding:6px 8px;
+  }
+  .all-table td{
+    padding:7px 8px;
+    border-bottom:1px solid var(--line-soft);
+    vertical-align:top;
+  }
+  .all-table tr.is-dup td{ background:var(--paper-deep); }
+  .empty-state{
+    text-align:center;
+    padding:50px 20px;
+    color:var(--ink-soft);
+  }
+  .empty-state .mark{ font-size:34px; margin-bottom:10px; }
+  /* ---------- Stage 2: unused partner check ---------- */
+  #dedupeScreen, #unusedScreen{
+    animation: screenIn .25s ease;
+  }
+  @keyframes screenIn{
+    from{ opacity:0; transform:translateY(6px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  .screen-nav{
+    display:flex;
+    justify-content:center;
+    margin:28px 0 4px;
+    padding-top:20px;
+    border-top:1px solid var(--line-soft);
+  }
+  .screen-header{
+    margin-bottom:20px;
+  }
+  .back-btn{
+    background:none;
+    border:none;
+    color:var(--ink-soft);
+    font-size:12.5px;
+    cursor:pointer;
+    padding:0 0 12px;
+    display:block;
+  }
+  .back-btn:hover{ color:var(--ink); }
+  .screen-header h2{
+    font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;
+    font-size:19px;
+    margin:0 0 6px;
+    padding-top:12px;
+    border-top:2px solid var(--ink);
+  }
+  .screen-header p{
+    margin:0 0 16px;
+    font-size:12.5px;
+    color:var(--ink-soft);
+  }
+  .dropzone-small{ padding:24px 20px; }
+  .unused-row{
+    display:flex;
+    align-items:flex-start;
+    gap:14px;
+    padding:14px 18px;
+    border:1px solid var(--line);
+    border-radius:18px;
+    background:#FFFDF7;
+    margin-bottom:12px;
+    box-shadow:0 2px 10px rgba(32,48,59,0.05);
+  }
+  .unused-row input[type=checkbox]{
+    margin-top:4px;
+    flex:none;
+    accent-color:var(--red);
+    width:15px;height:15px;
+  }
+  .unused-row .badge{ background:var(--paper-deep); color:var(--ink-soft); }
+  /* ---------- Export bar ---------- */
+  .export-bar{
+    position:sticky;
+    bottom:0;
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    padding:16px 0 4px;
+    margin-top:24px;
+    background:linear-gradient(to top, rgba(250,247,239,0.85) 60%, transparent);
+  }
+  .btn-primary{
+    background:var(--navy);
+    color:#fff;
+    border:none;
+    padding:12px 22px;
+    border-radius:11px;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .btn-primary:hover{ background:var(--navy-soft); }
+  .btn-primary:disabled{ background:#B9B2A0; cursor:not-allowed; }
+  .btn-ghost{
+    background:none;
+    border:1px solid var(--line);
+    color:var(--ink-soft);
+    padding:12px 18px;
+    border-radius:11px;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .hidden{ display:none !important; }
+  .loading-text{
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:13px;
+    padding:30px 0;
+  }
+  @media (max-width:560px){
+    .page{ padding:24px 14px 60px; }
+    header{ gap:14px; }
+    header h1{ font-size:21px; }
+    .summary{ flex-direction:column; align-items:stretch; }
+    input.search{ width:100%; }
+  }
+</style>
+</head>
+<body>
+<div class="bg-gradient"></div>
+<div class="page">
+
+  <header>
+    <svg class="stamp" viewBox="0 0 64 64" aria-hidden="true">
+      <circle cx="32" cy="32" r="29" fill="none" stroke="#B23A2E" stroke-width="2.5"/>
+      <circle cx="32" cy="32" r="23" fill="none" stroke="#B23A2E" stroke-width="1"/>
+      <text x="32" y="27" text-anchor="middle" font-size="13" font-family="'Hiragino Mincho ProN','Yu Mincho',serif" fill="#B23A2E" font-weight="700">整理</text>
+      <text x="32" y="43" text-anchor="middle" font-size="10" font-family="'Hiragino Mincho ProN','Yu Mincho',serif" fill="#B23A2E">済</text>
+    </svg>
+    <div>
+      <h1>取引先台帳クリーニング</h1>
+      <p>freeeからエクスポートした取引先リストを読み込み、表記ゆれ・重複を見つけて整理済みのExcelを書き出します。</p>
+    </div>
+  </header>
+
+  <div id="uploadSection">
+    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択してアップロード">
+      <div class="big">クリックまたはドラッグ&ドロップでファイルを読み込む</div>
+      <div class="small">freeeの「取引先」エクスポート形式（CSV / Excel）に対応</div>
+      <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
+    </div>
+    <div class="privacy-note">ファイルはこの画面内だけで処理されます。外部のサーバーには送信されません。</div>
+    <div class="error-box" id="errorBox"></div>
+    <div class="loading-text hidden" id="loadingText">読み込み中です…</div>
+  </div>
+
+  <div id="resultSection" class="hidden">
+
+    <div id="dedupeScreen">
+      <div class="summary">
+        <div class="summary-stats">
+          <div class="stat"><span class="num" id="statTotal">0</span><span class="lbl">全取引先</span></div>
+          <div class="stat"><span class="num" id="statGroups">0</span><span class="lbl">重複の疑いグループ</span></div>
+          <div class="stat"><span class="num" id="statMembers">0</span><span class="lbl">重複候補の件数</span></div>
+        </div>
+        <div class="controls">
+          <input class="search" id="searchBox" placeholder="名前で検索">
+          <button class="toggle-btn active" id="viewDupBtn" type="button">重複候補のみ</button>
+          <button class="toggle-btn" id="viewAllBtn" type="button">全件表示</button>
+          <button class="btn-ghost" id="reuploadBtn" type="button" style="padding:7px 13px;font-size:12.5px;">別のファイルを読み込む</button>
+        </div>
+      </div>
+
+      <div id="groupsContainer"></div>
+
+      <div id="allTableWrap" class="hidden">
+        <table class="all-table">
+          <thead><tr>
+            <th>名前（通称）</th><th>正式名称</th><th>カナ名称</th><th>登録番号</th><th>住所</th><th>電話番号</th><th>状態</th>
+          </tr></thead>
+          <tbody id="allTableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="empty-state hidden" id="emptyState">
+        <div class="mark">◎</div>
+        <div>重複の疑いがある取引先は見つかりませんでした。</div>
+      </div>
+
+      <div class="screen-nav">
+        <button class="btn-primary" id="goUnusedBtn" type="button">続けて、取引がない取引先を確認する →</button>
+      </div>
+    </div>
+
+    <div id="unusedScreen" class="hidden">
+      <div class="screen-header">
+        <button class="back-btn" id="backToDedupeBtn" type="button">← 重複整理にもどる</button>
+        <h2>取引がない取引先を確認する</h2>
+        <p>freeeから出力した取引一覧・仕訳帳などのファイルを読み込むと、「取引先」列の名前と突き合わせて、取引実績のない取引先を洗い出します。</p>
+      </div>
+
+      <div class="dropzone dropzone-small" id="dropzone2" tabindex="0" role="button" aria-label="取引ファイルを選択してアップロード">
+        <div class="big">クリックまたはドラッグ&ドロップで取引ファイルを読み込む</div>
+        <div class="small">「取引先」列を含むCSV / Excelに対応</div>
+        <input type="file" id="fileInput2" accept=".csv,.xlsx,.xls">
+      </div>
+      <div class="error-box" id="errorBox2"></div>
+      <div class="loading-text hidden" id="loadingText2">読み込み中です…</div>
+
+      <div id="unusedSection" class="hidden">
+        <div class="summary" style="margin-top:20px;">
+          <div class="summary-stats">
+            <div class="stat"><span class="num" id="statUnused">0</span><span class="lbl">取引実績のない取引先</span></div>
+            <div class="stat"><span class="num" id="statArchive">0</span><span class="lbl">アーカイブ候補に選択中</span></div>
+          </div>
+          <div class="controls">
+            <button class="btn-ghost" id="reuploadBtn2" type="button" style="padding:7px 13px;font-size:12.5px;">別の取引ファイルを読み込む</button>
+          </div>
+        </div>
+        <div id="unusedList"></div>
+        <div class="empty-state hidden" id="unusedEmptyState">
+          <div class="mark">◎</div>
+          <div>すべての取引先に取引実績がありました。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="export-bar">
+      <button class="btn-primary" id="exportBtn" type="button">整理結果をExcelで書き出す</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- State ----------
+  let headers = [];
+  let records = [];      // {id, raw:[...], name, formalName, kana, invoiceNo, zip, pref, addr, tel, normName, normKana, invoiceKey}
+  let groups = [];        // {ids:[...], keepId, dismissed, confidence, reasons:[...]}
+  let viewMode = 'dup';   // 'dup' | 'all'
+  let searchTerm = '';
+  let txUsedSet = null;         // Set of normalized partner names found in the transaction file
+  let usageReps = [];           // computed via computeUsage()
+  let archiveFlags = new Map(); // repId -> boolean (default true = archive candidate)
+
+  // ---------- Column candidates ----------
+  const COLS = {
+    name: ['名前（通称）','名前(通称)','名前'],
+    formalName: ['正式名称（帳票出力時に使用される名称）','正式名称'],
+    kana: ['カナ名称'],
+    invoiceNo: ['適格請求書発行事業者の登録番号'],
+    zip: ['郵便番号'],
+    pref: ['都道府県'],
+    addr: ['市区町村・番地'],
+    bldg: ['建物名・部屋番号など'],
+    tel: ['電話番号'],
+    shortcut1: ['ショートカット1'],
+    shortcut2: ['ショートカット2'],
+  };
+  const TX_PARTNER_COLS = ['取引先','取引先名'];
+
+  function findColIndex(hdrs, candidates, fallbackIncludes){
+    for(const c of candidates){
+      const idx = hdrs.findIndex(h => (h||'').toString().trim() === c);
+      if(idx !== -1) return idx;
+    }
+    if(fallbackIncludes){
+      const idx = hdrs.findIndex(h => fallbackIncludes.every(f => (h||'').toString().includes(f)));
+      if(idx !== -1) return idx;
+    }
+    return -1;
+  }
+
+  function cell(row, idx){
+    if(idx === -1 || idx === undefined) return '';
+    const v = row[idx];
+    return (v === undefined || v === null) ? '' : String(v).trim();
+  }
+
+  // ---------- Normalization ----------
+  function toHalfWidth(s){
+    return s.replace(/[Ａ-Ｚａ-ｚ０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
+  }
+  function toHiragana(s){
+    return s.replace(/[\u30a1-\u30f6]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
+  }
+  const CORP_FORMS = ['株式会社','有限会社','合同会社','合名会社','合資会社','一般社団法人','公益社団法人','一般財団法人','公益財団法人','学校法人','医療法人','社会福祉法人','特定非営利活動法人','ＮＰＯ法人','NPO法人','宗教法人','協同組合','農業協同組合','㈱','㈲','（株）','(株)','（有）','(有)'];
+  const CORP_FORMS_KANA = ['かぶしきがいしゃ','ゆうげんがいしゃ','ごうどうがいしゃ','ごうめいがいしゃ','ごうしがいしゃ'];
+
+  function normalizeName(s){
+    if(!s) return '';
+    let t = toHalfWidth(s.trim());
+    t = t.replace(/[\s　]/g, '');
+    for(const f of CORP_FORMS){ t = t.split(f).join(''); }
+    return t;
+  }
+  function normalizeKana(s){
+    if(!s) return '';
+    let t = toHiragana(toHalfWidth(s.trim()));
+    t = t.replace(/[\s　]/g, '');
+    for(const f of CORP_FORMS_KANA){ t = t.split(f).join(''); }
+    return t;
+  }
+  function normalizeInvoice(s){
+    if(!s) return '';
+    return toHalfWidth(s.trim()).replace(/[\s\-ー―]/g, '').toUpperCase();
+  }
+
+  // ---------- Levenshtein similarity ----------
+  function levenshtein(a, b){
+    const m = a.length, n = b.length;
+    if(m === 0) return n;
+    if(n === 0) return m;
+    let prev = new Array(n+1);
+    for(let j=0;j<=n;j++) prev[j] = j;
+    for(let i=1;i<=m;i++){
+      const cur = [i];
+      for(let j=1;j<=n;j++){
+        const cost = a[i-1] === b[j-1] ? 0 : 1;
+        cur[j] = Math.min(prev[j]+1, cur[j-1]+1, prev[j-1]+cost);
+      }
+      prev = cur;
+    }
+    return prev[n];
+  }
+  function similarity(a, b){
+    if(!a.length && !b.length) return 1;
+    const d = levenshtein(a,b);
+    return 1 - d / Math.max(a.length, b.length);
+  }
+
+  // ---------- Union-Find ----------
+  function makeUF(n){
+    const parent = Array.from({length:n}, (_,i)=>i);
+    function find(x){
+      while(parent[x] !== x){ parent[x] = parent[parent[x]]; x = parent[x]; }
+      return x;
+    }
+    function union(a,b){
+      const ra = find(a), rb = find(b);
+      if(ra !== rb) parent[ra] = rb;
+    }
+    return {find, union};
+  }
+
+  // ---------- File reading ----------
+  async function readWorkbook(file){
+    const name = file.name.toLowerCase();
+    const buf = await file.arrayBuffer();
+    if(name.endsWith('.csv') || name.endsWith('.txt')){
+      let text;
+      try{
+        text = new TextDecoder('utf-8', {fatal:true}).decode(buf);
+      }catch(e){
+        text = new TextDecoder('shift_jis').decode(buf);
+      }
+      text = text.replace(/^\uFEFF/, '');
+      return XLSX.read(text, {type:'string'});
+    }
+    return XLSX.read(buf, {type:'array'});
+  }
+
+  function buildRecords(wb){
+    const sheetName = wb.SheetNames[0];
+    const sheet = wb.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:'', raw:false});
+    if(!rows.length) throw new Error('データが見つかりませんでした。');
+    headers = rows[0].map(h => (h||'').toString().trim());
+    const dataRows = rows.slice(1).filter(r => r.some(v => (v||'').toString().trim() !== ''));
+
+    const idx = {
+      name: findColIndex(headers, COLS.name),
+      formalName: findColIndex(headers, COLS.formalName),
+      kana: findColIndex(headers, COLS.kana),
+      invoiceNo: findColIndex(headers, COLS.invoiceNo, ['登録番号']),
+      zip: findColIndex(headers, COLS.zip),
+      pref: findColIndex(headers, COLS.pref),
+      addr: findColIndex(headers, COLS.addr),
+      tel: findColIndex(headers, COLS.tel),
+      shortcut1: findColIndex(headers, COLS.shortcut1),
+      shortcut2: findColIndex(headers, COLS.shortcut2),
+    };
+    if(idx.name === -1){
+      throw new Error('「名前（通称）」列が見つかりませんでした。freeeの取引先エクスポート形式のファイルをご確認ください。');
+    }
+
+    return dataRows.map((row, i) => {
+      const name = cell(row, idx.name);
+      const formalName = cell(row, idx.formalName);
+      const kana = cell(row, idx.kana);
+      const invoiceNo = cell(row, idx.invoiceNo);
+      const zip = cell(row, idx.zip);
+      const pref = cell(row, idx.pref);
+      const addr = cell(row, idx.addr);
+      const tel = cell(row, idx.tel);
+      const shortcut1 = cell(row, idx.shortcut1);
+      const shortcut2 = cell(row, idx.shortcut2);
+      return {
+        id: i,
+        raw: row,
+        name, formalName, kana, invoiceNo, zip, pref, addr, tel, shortcut1, shortcut2,
+        normName: normalizeName(formalName) || normalizeName(name),
+        normKana: normalizeKana(kana),
+        invoiceKey: normalizeInvoice(invoiceNo),
+      };
+    });
+  }
+
+  // ---------- Transaction file (used-partner detection) ----------
+  function findTxPartnerColIndex(hdrs){
+    return findColIndex(hdrs, TX_PARTNER_COLS);
+  }
+
+  async function parseTransactionFile(file){
+    const wb = await readWorkbook(file);
+    const sheetName = wb.SheetNames[0];
+    const sheet = wb.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:'', raw:false});
+    if(!rows.length) throw new Error('データが見つかりませんでした。');
+    const hdrs = rows[0].map(h => (h||'').toString().trim());
+    const colIdx = findTxPartnerColIndex(hdrs);
+    if(colIdx === -1){
+      throw new Error('「取引先」列が見つかりませんでした。freeeの取引エクスポート形式のファイルをご確認ください。');
+    }
+    const usedSet = new Set();
+    rows.slice(1).forEach(row => {
+      const v = cell(row, colIdx);
+      if(v) usedSet.add(normalizeName(v));
+    });
+    return usedSet;
+  }
+
+  function aliasesForIds(ids){
+    const set = new Set();
+    ids.forEach(id => {
+      const r = records[id];
+      [r.name, r.formalName, r.shortcut1, r.shortcut2].forEach(v => {
+        const n = normalizeName(v);
+        if(n) set.add(n);
+      });
+    });
+    return set;
+  }
+
+  function computeUsage(){
+    // representative aggregates: active (non-dismissed) groups combine all member aliases;
+    // dismissed groups and standalone records are treated individually.
+    const inActiveGroup = new Map(); // id -> group
+    groups.forEach(g => { if(!g.dismissed) g.ids.forEach(id => inActiveGroup.set(id, g)); });
+
+    const reps = [];
+    const seenGroups = new Set();
+    records.forEach(r => {
+      const g = inActiveGroup.get(r.id);
+      if(g){
+        if(seenGroups.has(g)) return;
+        seenGroups.add(g);
+        const aliases = aliasesForIds(g.ids);
+        const used = Array.from(aliases).some(a => txUsedSet.has(a));
+        reps.push({ repId: g.keepId, memberIds: g.ids.slice(), used });
+      } else {
+        const aliases = aliasesForIds([r.id]);
+        const used = Array.from(aliases).some(a => txUsedSet.has(a));
+        reps.push({ repId: r.id, memberIds: [r.id], used });
+      }
+    });
+    return reps;
+  }
+
+  // ---------- Duplicate detection ----------
+  function detectGroups(recs){
+    const n = recs.length;
+    const uf = makeUF(n);
+
+    function bucketAndUnion(keyFn){
+      const buckets = {};
+      recs.forEach((r, i) => {
+        const k = keyFn(r);
+        if(!k || k.length < 2) return;
+        (buckets[k] = buckets[k] || []).push(i);
+      });
+      Object.values(buckets).forEach(idxs => {
+        for(let i=1;i<idxs.length;i++) uf.union(idxs[0], idxs[i]);
+      });
+    }
+
+    bucketAndUnion(r => r.invoiceKey);
+    bucketAndUnion(r => r.normName);
+    bucketAndUnion(r => r.normKana);
+
+    // Fuzzy tier (only when dataset is a reasonable size, to stay fast)
+    if(n <= 4000){
+      const fbuckets = {};
+      recs.forEach((r, i) => {
+        if(!r.normName || r.normName.length < 2) return;
+        const k = r.normName[0];
+        (fbuckets[k] = fbuckets[k] || []).push(i);
+      });
+      Object.values(fbuckets).forEach(idxs => {
+        for(let a=0;a<idxs.length;a++){
+          for(let b=a+1;b<idxs.length;b++){
+            const i = idxs[a], j = idxs[b];
+            if(uf.find(i) === uf.find(j)) continue;
+            const ra = recs[i], rb = recs[j];
+            const sim = similarity(ra.normName, rb.normName);
+            if(sim >= 0.72){
+              const sameZip = ra.zip && ra.zip === rb.zip;
+              const sameTel = ra.tel && ra.tel === rb.tel;
+              if(sameZip || sameTel || sim >= 0.85){
+                uf.union(i, j);
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Collect groups
+    const groupMap = {};
+    for(let i=0;i<n;i++){
+      const root = uf.find(i);
+      (groupMap[root] = groupMap[root] || []).push(i);
+    }
+
+    const result = [];
+    Object.values(groupMap).forEach(ids => {
+      if(ids.length < 2) return;
+      const reasons = new Set();
+      let hasStrong = false;
+      for(let a=0;a<ids.length;a++){
+        for(let b=a+1;b<ids.length;b++){
+          const ra = recs[ids[a]], rb = recs[ids[b]];
+          if(ra.invoiceKey && ra.invoiceKey === rb.invoiceKey){ reasons.add('登録番号が一致'); hasStrong = true; }
+          if(ra.normName && ra.normName === rb.normName){ reasons.add('名称の表記ゆれ'); hasStrong = true; }
+          if(ra.normKana && ra.normKana === rb.normKana){ reasons.add('カナ名称が一致'); hasStrong = true; }
+        }
+      }
+      if(!hasStrong) reasons.add('名称が類似（要確認）');
+
+      // choose default keeper: most filled cells, tie-break by longer formal/name
+      let best = ids[0], bestScore = -1;
+      ids.forEach(i => {
+        const r = recs[i];
+        const filled = r.raw.filter(v => (v||'').toString().trim() !== '').length;
+        const nameLen = (r.formalName || r.name || '').length;
+        const score = filled * 100 + nameLen;
+        if(score > bestScore){ bestScore = score; best = i; }
+      });
+
+      result.push({
+        ids,
+        keepId: best,
+        dismissed: false,
+        confidence: hasStrong ? 'high' : 'medium',
+        reasons: Array.from(reasons),
+      });
+    });
+
+    // stable-ish order: high confidence first, then by first id
+    result.sort((g1, g2) => {
+      if(g1.confidence !== g2.confidence) return g1.confidence === 'high' ? -1 : 1;
+      return g1.ids[0] - g2.ids[0];
+    });
+    return result;
+  }
+
+  // ---------- Rendering ----------
+  const $ = sel => document.querySelector(sel);
+
+  function fmtMeta(r){
+    const parts = [];
+    if(r.formalName && r.formalName !== r.name) parts.push(['正式', r.formalName]);
+    if(r.kana) parts.push(['カナ', r.kana]);
+    if(r.invoiceNo) parts.push(['登録番号', r.invoiceNo]);
+    const addrFull = [r.zip, r.pref, r.addr].filter(Boolean).join(' ');
+    if(addrFull) parts.push(['住所', addrFull]);
+    if(r.tel) parts.push(['電話', r.tel]);
+    return parts;
+  }
+
+  function recordMatchesSearch(r){
+    if(!searchTerm) return true;
+    const t = searchTerm;
+    return (r.name && r.name.includes(t)) || (r.formalName && r.formalName.includes(t)) || (r.kana && r.kana.includes(t));
+  }
+
+  function renderGroups(){
+    const container = $('#groupsContainer');
+    container.innerHTML = '';
+    const visibleGroups = groups.filter(g => {
+      if(!g.ids.some(id => recordMatchesSearch(records[id]))) return false;
+      return true;
+    });
+
+    let gi = 0;
+    visibleGroups.forEach(g => {
+      gi++;
+      const div = document.createElement('div');
+      div.className = 'group';
+
+      const head = document.createElement('div');
+      head.className = 'group-head';
+      const left = document.createElement('div');
+      left.className = 'group-head-left';
+      left.innerHTML = `<span class="group-num">グループ ${gi}</span>
+        <span class="badge ${g.confidence}">${g.confidence === 'high' ? '確実' : '要確認'}</span>
+        <span class="reason">${g.reasons.join(' / ')}</span>`;
+      head.appendChild(left);
+
+      const btn = document.createElement('button');
+      btn.className = 'dismiss-btn';
+      btn.type = 'button';
+      btn.textContent = g.dismissed ? '重複候補に戻す' : '重複ではない（分離する）';
+      btn.addEventListener('click', () => {
+        g.dismissed = !g.dismissed;
+        render();
+      });
+      head.appendChild(btn);
+      div.appendChild(head);
+
+      if(g.dismissed){
+        const note = document.createElement('div');
+        note.className = 'group-dismissed-note';
+        note.textContent = 'このグループは別々の取引先として扱われます（全件とも書き出し対象に残ります）。';
+        div.appendChild(note);
+      } else {
+        g.ids.forEach(id => {
+          const r = records[id];
+          const row = document.createElement('label');
+          row.className = 'member' + (id === g.keepId ? ' keep' : '');
+          const radio = document.createElement('input');
+          radio.type = 'radio';
+          radio.name = 'group-' + g.ids[0];
+          radio.checked = id === g.keepId;
+          radio.addEventListener('change', () => {
+            g.keepId = id;
+            render();
+          });
+          row.appendChild(radio);
+
+          const body = document.createElement('div');
+          body.className = 'member-body';
+          const nameRow = document.createElement('div');
+          nameRow.className = 'member-name-row';
+          nameRow.innerHTML = `<span class="member-name">${escapeHtml(r.name || '(名称未設定)')}</span>` +
+            (id === g.keepId ? '<span class="keep-tag">残す</span>' : '');
+          body.appendChild(nameRow);
+
+          const meta = document.createElement('div');
+          meta.className = 'member-meta';
+          meta.innerHTML = fmtMeta(r).map(([k,v]) => `<span><b>${k}:</b> ${escapeHtml(v)}</span>`).join('');
+          body.appendChild(meta);
+
+          row.appendChild(body);
+          div.appendChild(row);
+        });
+      }
+
+      container.appendChild(div);
+    });
+
+    $('#emptyState').classList.toggle('hidden', groups.length !== 0 || viewMode !== 'dup');
+    container.classList.toggle('hidden', viewMode !== 'dup');
+  }
+
+  function renderAllTable(){
+    const wrap = $('#allTableWrap');
+    wrap.classList.toggle('hidden', viewMode !== 'all');
+    if(viewMode !== 'all') return;
+    const dupIds = new Set();
+    groups.forEach(g => { if(!g.dismissed) g.ids.forEach(id => { if(id !== g.keepId) dupIds.add(id); }); });
+
+    const tbody = $('#allTableBody');
+    tbody.innerHTML = '';
+    records.filter(recordMatchesSearch).forEach(r => {
+      const tr = document.createElement('tr');
+      const isDup = dupIds.has(r.id);
+      if(isDup) tr.className = 'is-dup';
+      const addrFull = [r.zip, r.pref, r.addr].filter(Boolean).join(' ');
+      tr.innerHTML = `<td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.formalName)}</td><td>${escapeHtml(r.kana)}</td>
+        <td>${escapeHtml(r.invoiceNo)}</td><td>${escapeHtml(addrFull)}</td><td>${escapeHtml(r.tel)}</td>
+        <td>${isDup ? '重複候補（除外予定）' : ''}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderSummary(){
+    const activeGroups = groups.filter(g => !g.dismissed);
+    const memberCount = activeGroups.reduce((s,g) => s + g.ids.length, 0);
+    $('#statTotal').textContent = records.length;
+    $('#statGroups').textContent = activeGroups.length;
+    $('#statMembers').textContent = memberCount;
+  }
+
+  function escapeHtml(s){
+    return (s||'').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  function render(){
+    renderSummary();
+    renderGroups();
+    renderAllTable();
+    renderUnused();
+  }
+
+  function renderUnused(){
+    if(!txUsedSet) return;
+    usageReps = computeUsage();
+    const unused = usageReps.filter(u => !u.used);
+
+    unused.forEach(u => {
+      if(!archiveFlags.has(u.repId)) archiveFlags.set(u.repId, true);
+    });
+
+    const list = $('#unusedList');
+    list.innerHTML = '';
+    unused.filter(u => recordMatchesSearch(records[u.repId])).forEach(u => {
+      const r = records[u.repId];
+      const row = document.createElement('label');
+      row.className = 'unused-row';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = !!archiveFlags.get(u.repId);
+      cb.addEventListener('change', () => {
+        archiveFlags.set(u.repId, cb.checked);
+        renderUnusedStats();
+      });
+      row.appendChild(cb);
+
+      const body = document.createElement('div');
+      body.className = 'member-body';
+      const nameRow = document.createElement('div');
+      nameRow.className = 'member-name-row';
+      nameRow.innerHTML = `<span class="member-name">${escapeHtml(r.name || '(名称未設定)')}</span><span class="badge">取引実績なし</span>`;
+      body.appendChild(nameRow);
+      const meta = document.createElement('div');
+      meta.className = 'member-meta';
+      meta.innerHTML = fmtMeta(r).map(([k,v]) => `<span><b>${k}:</b> ${escapeHtml(v)}</span>`).join('');
+      body.appendChild(meta);
+      row.appendChild(body);
+      list.appendChild(row);
+    });
+
+    $('#unusedEmptyState').classList.toggle('hidden', unused.length !== 0);
+    list.classList.toggle('hidden', unused.length === 0);
+    renderUnusedStats();
+  }
+
+  function renderUnusedStats(){
+    const unused = usageReps.filter(u => !u.used);
+    $('#statUnused').textContent = unused.length;
+    $('#statArchive').textContent = unused.filter(u => archiveFlags.get(u.repId)).length;
+  }
+
+  // ---------- Export ----------
+  function buildExportWorkbook(){
+    const wb = XLSX.utils.book_new();
+
+    // Sheet 1: duplicate candidates
+    const dupHeader = ['グループ','判定','対応','名前（通称）','正式名称','カナ名称','登録番号','郵便番号','都道府県','市区町村・番地','電話番号'];
+    const dupRows = [dupHeader];
+    let gi = 0;
+    groups.forEach(g => {
+      if(g.dismissed) return;
+      gi++;
+      g.ids.forEach(id => {
+        const r = records[id];
+        dupRows.push([
+          gi,
+          g.confidence === 'high' ? '確実' : '要確認',
+          id === g.keepId ? '残す' : '重複（削除候補）',
+          r.name, r.formalName, r.kana, r.invoiceNo, r.zip, r.pref, r.addr, r.tel
+        ]);
+      });
+    });
+    const wsDup = XLSX.utils.aoa_to_sheet(dupRows);
+    XLSX.utils.book_append_sheet(wb, wsDup, '重複候補');
+
+    // Sheet 2: cleaned full list, original columns preserved (+ usage columns if stage2 was run)
+    const excludeIds = new Set();
+    groups.forEach(g => { if(!g.dismissed) g.ids.forEach(id => { if(id !== g.keepId) excludeIds.add(id); }); });
+
+    const extraHeader = txUsedSet ? ['取引実績', '対応提案'] : [];
+    const cleanHeader = headers.concat(extraHeader);
+    const cleanRows = [cleanHeader];
+
+    let usageByRep = null;
+    if(txUsedSet){
+      usageByRep = new Map();
+      usageReps.forEach(u => usageByRep.set(u.repId, u));
+    }
+
+    records.forEach(r => {
+      if(excludeIds.has(r.id)) return;
+      let extra = [];
+      if(txUsedSet){
+        const u = usageByRep.get(r.id);
+        const used = u ? u.used : true;
+        const archive = u && !used && archiveFlags.get(u.repId);
+        extra = [used ? 'あり' : 'なし', archive ? 'アーカイブ候補' : ''];
+      }
+      cleanRows.push(r.raw.concat(extra));
+    });
+    const wsClean = XLSX.utils.aoa_to_sheet(cleanRows);
+    XLSX.utils.book_append_sheet(wb, wsClean, '整理後リスト');
+
+    // Sheet 3: unused (no-transaction) candidates, when stage2 has run
+    if(txUsedSet){
+      const unusedHeader = ['対応','名前（通称）','正式名称','カナ名称','登録番号','郵便番号','都道府県','市区町村・番地','電話番号'];
+      const unusedRows = [unusedHeader];
+      usageReps.filter(u => !u.used).forEach(u => {
+        const r = records[u.repId];
+        unusedRows.push([
+          archiveFlags.get(u.repId) ? 'アーカイブ候補' : '保留',
+          r.name, r.formalName, r.kana, r.invoiceNo, r.zip, r.pref, r.addr, r.tel
+        ]);
+      });
+      const wsUnused = XLSX.utils.aoa_to_sheet(unusedRows);
+      XLSX.utils.book_append_sheet(wb, wsUnused, '取引なし候補');
+    }
+
+    return wb;
+  }
+
+  function doExport(){
+    if(!records.length) return;
+    const wb = buildExportWorkbook();
+    const today = new Date();
+    const ymd = today.getFullYear() + String(today.getMonth()+1).padStart(2,'0') + String(today.getDate()).padStart(2,'0');
+    XLSX.writeFile(wb, `取引先整理_${ymd}.xlsx`);
+  }
+
+  // ---------- File handling ----------
+  function showError(msg){
+    const box = $('#errorBox');
+    box.textContent = msg;
+    box.style.display = 'block';
+  }
+  function clearError(){
+    $('#errorBox').style.display = 'none';
+  }
+
+  async function handleFile(file){
+    clearError();
+    $('#loadingText').classList.remove('hidden');
+    try{
+      const wb = await readWorkbook(file);
+      const recs = buildRecords(wb);
+      records = recs;
+      groups = detectGroups(recs);
+      $('#uploadSection').classList.add('hidden');
+      $('#resultSection').classList.remove('hidden');
+      showScreen('dedupe');
+      render();
+    }catch(e){
+      showError('ファイルの読み込みに失敗しました：' + (e && e.message ? e.message : e));
+    }finally{
+      $('#loadingText').classList.add('hidden');
+    }
+  }
+
+  // ---------- Wire up UI ----------
+  const dropzone = $('#dropzone');
+  const fileInput = $('#fileInput');
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+  fileInput.addEventListener('change', e => {
+    if(e.target.files && e.target.files[0]) handleFile(e.target.files[0]);
+  });
+  ['dragenter','dragover'].forEach(evt => {
+    dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.add('drag'); });
+  });
+  ['dragleave','drop'].forEach(evt => {
+    dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.remove('drag'); });
+  });
+  dropzone.addEventListener('drop', e => {
+    if(e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+
+  $('#viewDupBtn').addEventListener('click', () => {
+    viewMode = 'dup';
+    $('#viewDupBtn').classList.add('active');
+    $('#viewAllBtn').classList.remove('active');
+    render();
+  });
+  $('#viewAllBtn').addEventListener('click', () => {
+    viewMode = 'all';
+    $('#viewAllBtn').classList.add('active');
+    $('#viewDupBtn').classList.remove('active');
+    render();
+  });
+  $('#searchBox').addEventListener('input', e => {
+    searchTerm = e.target.value.trim();
+    render();
+  });
+  $('#reuploadBtn').addEventListener('click', () => {
+    records = []; groups = []; headers = [];
+    txUsedSet = null; archiveFlags = new Map(); usageReps = [];
+    fileInput.value = '';
+    fileInput2.value = '';
+    $('#unusedSection').classList.add('hidden');
+    $('#resultSection').classList.add('hidden');
+    $('#uploadSection').classList.remove('hidden');
+    showScreen('dedupe');
+  });
+  $('#exportBtn').addEventListener('click', doExport);
+
+  // ---------- Screen navigation ----------
+  function showScreen(name){
+    $('#dedupeScreen').classList.toggle('hidden', name !== 'dedupe');
+    $('#unusedScreen').classList.toggle('hidden', name !== 'unused');
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+  $('#goUnusedBtn').addEventListener('click', () => showScreen('unused'));
+  $('#backToDedupeBtn').addEventListener('click', () => showScreen('dedupe'));
+
+  // ---------- Stage 2 wiring ----------
+  const dropzone2 = $('#dropzone2');
+  const fileInput2 = $('#fileInput2');
+
+  function showError2(msg){
+    const box = $('#errorBox2');
+    box.textContent = msg;
+    box.style.display = 'block';
+  }
+  function clearError2(){
+    $('#errorBox2').style.display = 'none';
+  }
+
+  async function handleTxFile(file){
+    clearError2();
+    $('#loadingText2').classList.remove('hidden');
+    try{
+      const used = await parseTransactionFile(file);
+      txUsedSet = used;
+      archiveFlags = new Map();
+      $('#unusedSection').classList.remove('hidden');
+      render();
+    }catch(e){
+      showError2('ファイルの読み込みに失敗しました：' + (e && e.message ? e.message : e));
+    }finally{
+      $('#loadingText2').classList.add('hidden');
+    }
+  }
+
+  dropzone2.addEventListener('click', () => fileInput2.click());
+  dropzone2.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' ') fileInput2.click(); });
+  fileInput2.addEventListener('change', e => {
+    if(e.target.files && e.target.files[0]) handleTxFile(e.target.files[0]);
+  });
+  ['dragenter','dragover'].forEach(evt => {
+    dropzone2.addEventListener(evt, e => { e.preventDefault(); dropzone2.classList.add('drag'); });
+  });
+  ['dragleave','drop'].forEach(evt => {
+    dropzone2.addEventListener(evt, e => { e.preventDefault(); dropzone2.classList.remove('drag'); });
+  });
+  dropzone2.addEventListener('drop', e => {
+    if(e.dataTransfer.files && e.dataTransfer.files[0]) handleTxFile(e.dataTransfer.files[0]);
+  });
+  $('#reuploadBtn2').addEventListener('click', () => {
+    txUsedSet = null;
+    archiveFlags = new Map();
+    fileInput2.value = '';
+    $('#unusedSection').classList.add('hidden');
+  });
+
+})();
+</script>
+</body>
+</html>
