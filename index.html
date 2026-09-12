@@ -249,19 +249,28 @@
       border-radius: 12px;
     }
 
-    .filter-panel {
-      background: #FFFDF7;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 14px 16px;
-      margin-bottom: 16px;
+    .action-btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
     }
 
-    .filter-title {
-      font-size: 12.5px;
-      font-weight: 700;
-      color: var(--navy);
-      margin-bottom: 8px;
+    /* 期間設定モーダル内のスタイル */
+    .radio-option-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 16px 0;
+    }
+
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
     }
 
     .preset-btns {
@@ -282,6 +291,14 @@
     }
     .preset-btn:hover { border-color: var(--navy); color: var(--navy); }
 
+    .date-range-box {
+      background: var(--paper-deep);
+      border: 1px solid var(--line-soft);
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 8px;
+    }
+
     .date-range-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -297,13 +314,6 @@
     .date-field label {
       font-size: 10.5px;
       color: var(--ink-soft);
-    }
-
-    .action-btn-group {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-bottom: 20px;
     }
 
     .dropzone {
@@ -745,30 +755,10 @@
         <span class="app-tag">使用中：取引先台帳クリーニング</span>
       </div>
 
-      <!-- 照合期間の指定パネル -->
-      <div class="filter-panel">
-        <div class="filter-title">照合する取引期間（取引チェック対象）</div>
-        <div class="preset-btns">
-          <button class="preset-btn" id="presetAll" type="button">全期間 (デフォルト)</button>
-          <button class="preset-btn" id="preset1Y" type="button">直近1年</button>
-          <button class="preset-btn" id="preset3Y" type="button">直近3年</button>
-        </div>
-        <div class="date-range-grid">
-          <div class="date-field">
-            <label>開始日</label>
-            <input type="date" class="form-input" id="startDateInput" style="margin-bottom:0;">
-          </div>
-          <div class="date-field">
-            <label>終了日</label>
-            <input type="date" class="form-input" id="endDateInput" style="margin-bottom:0;">
-          </div>
-        </div>
-      </div>
-
       <!-- 操作ボタンエリア -->
       <div class="action-btn-group">
         <button class="btn-secondary" id="findDupBtn" type="button">取引先の重複登録を探す</button>
-        <button class="btn-secondary" id="findUnusedBtn" type="button">過去に取引がない取引先を探す</button>
+        <button class="btn-secondary" id="openUnusedModalBtn" type="button">過去に取引がない取引先を探す</button>
       </div>
 
       <div id="uploadSection">
@@ -830,6 +820,7 @@
     </div>
   </div>
 
+  <!-- 判定基準モーダル -->
   <div class="modal-overlay hidden" id="criteriaModal">
     <div class="modal-card">
       <div class="modal-head">
@@ -849,6 +840,49 @@
           <div class="crit-title"><span class="badge medium">要確認</span>③ 名称が似ている（住所・電話番号も一致）</div>
           <p>名前の類似度が高く(70%以上)、郵便番号か電話番号が一致する場合に提示します。</p>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ★新設：未取引検索の設定モーダル -->
+  <div class="modal-overlay hidden" id="unusedConfigModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>照合する取引期間の選択</h3>
+        <button class="modal-close" id="unusedConfigCloseBtn" type="button" aria-label="閉じる">×</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:12.5px; color:var(--ink-soft); margin-top:0;">チェック対象とする過去取引の期間を選択してください。</p>
+        
+        <div class="radio-option-group">
+          <label class="radio-option">
+            <input type="radio" name="dateMode" value="all" checked id="radioModeAll">
+            全期間で照合する
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="dateMode" value="range" id="radioModeRange">
+            期間を指定して照合する
+          </label>
+        </div>
+
+        <div class="date-range-box hidden" id="dateRangeBox">
+          <div class="preset-btns">
+            <button class="preset-btn" id="preset1Y" type="button">直近1年</button>
+            <button class="preset-btn" id="preset3Y" type="button">直近3年</button>
+          </div>
+          <div class="date-range-grid">
+            <div class="date-field">
+              <label>開始日</label>
+              <input type="date" class="form-input" id="startDateInput" style="margin-bottom:0;">
+            </div>
+            <div class="date-field">
+              <label>終了日</label>
+              <input type="date" class="form-input" id="endDateInput" style="margin-bottom:0;">
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-primary" id="startUnusedSearchBtn" type="button" style="margin-top:20px;">検索を開始する</button>
       </div>
     </div>
   </div>
@@ -1401,27 +1435,32 @@
         }
       }
 
-      // 未取引データの検出（事前確認ダイアログ＋進行表示＋キャンセル対応）
+      // 未取引データの検出実行（ダイアログ後のメイン処理）
       async function runUnusedCheck() {
         try {
           currentMode = 'unused';
           isCancelRequested = false;
           clearError();
+          
+          // モーダルを閉じる
+          $('#unusedConfigModal').classList.add('hidden');
+
           showProgressLoading(true, '取引先一覧を取得中…');
 
           // 1. 全取引先を取得
           const partnersRes = await callFreeeApi('/partners', { company_id: currentCompanyId, limit: 3000 });
           records = buildRecordsFromApi(partnersRes.partners);
 
-          // 2. 期間パラメータの準備
-          const startIssueDate = $('#startDateInput').value;
-          const endIssueDate = $('#endDateInput').value;
+          // 2. 期間パラメータの判定
+          const isRangeMode = $('#radioModeRange').checked;
+          const startIssueDate = isRangeMode ? $('#startDateInput').value : '';
+          const endIssueDate = isRangeMode ? $('#endDateInput').value : '';
 
           const queryParams = { company_id: currentCompanyId, limit: 1 };
           if (startIssueDate) queryParams.start_issue_date = startIssueDate;
           if (endIssueDate) queryParams.end_issue_date = endIssueDate;
 
-          // 3. 総件数(X-Total-Count)を最初に取得
+          // 3. 総件数(X-Total-Count)を取得
           showProgressLoading(true, '対象期間の取引データ件数を計算中…');
           const token = getAccessToken();
           const firstUrl = new URL(CONFIG.apiBase + '/deals');
@@ -1445,18 +1484,16 @@
 
           showProgressLoading(false);
 
-          // ★事前確認ダイアログの表示
+          // 4. 確認ダイアログ（総件数の通知）
           let confirmMsg = `${totalDealsCount.toLocaleString()} 件の取引データが見つかりました。\n続けて過去に取引がない取引先を探しますか？`;
           if (totalDealsCount > 1000) {
             confirmMsg += `\n\n※件数が多いため、データ照合の完了まで少し時間がかかる場合があります。`;
           }
 
           const userConfirmed = confirm(confirmMsg);
-          if (!userConfirmed) {
-            return; // ユーザーがキャンセルを選択した場合は終了
-          }
+          if (!userConfirmed) return;
 
-          // 4. 100件ずつループで照合実行
+          // 5. 100件ずつループで照合実行
           const usedPartnerIds = new Set();
           let offset = 0;
           const limit = 100;
@@ -1487,7 +1524,7 @@
             }
           }
 
-          // 5. 抽出結果の画面レンダリング
+          // 6. 画面レンダリング
           unusedPartners = records.filter(r => r.partnerId && !usedPartnerIds.has(r.partnerId));
 
           $('#uploadSection').classList.add('hidden');
@@ -1531,27 +1568,6 @@
         return `${y}-${m}-${day}`;
       }
 
-      $('#presetAll').addEventListener('click', () => {
-        $('#startDateInput').value = '';
-        $('#endDateInput').value = '';
-      });
-
-      $('#preset1Y').addEventListener('click', () => {
-        const now = new Date();
-        const past = new Date();
-        past.setFullYear(now.getFullYear() - 1);
-        $('#startDateInput').value = formatDate(past);
-        $('#endDateInput').value = formatDate(now);
-      });
-
-      $('#preset3Y').addEventListener('click', () => {
-        const now = new Date();
-        const past = new Date();
-        past.setFullYear(now.getFullYear() - 3);
-        $('#startDateInput').value = formatDate(past);
-        $('#endDateInput').value = formatDate(now);
-      });
-
       // イベントバインド
       $('#loginBtn').addEventListener('click', redirectToAuth);
 
@@ -1581,7 +1597,46 @@
       });
 
       $('#findDupBtn').addEventListener('click', runDedupeCheck);
-      $('#findUnusedBtn').addEventListener('click', runUnusedCheck);
+
+      // 未取引モードモーダルの制御
+      const unusedModal = $('#unusedConfigModal');
+      $('#openUnusedModalBtn').addEventListener('click', () => {
+        unusedModal.classList.remove('hidden');
+      });
+      $('#unusedConfigCloseBtn').addEventListener('click', () => {
+        unusedModal.classList.add('hidden');
+      });
+
+      // ラジオボタンによる切り替え
+      const radioAll = $('#radioModeAll');
+      const radioRange = $('#radioModeRange');
+      const dateBox = $('#dateRangeBox');
+
+      radioAll.addEventListener('change', () => {
+        if (radioAll.checked) dateBox.classList.add('hidden');
+      });
+      radioRange.addEventListener('change', () => {
+        if (radioRange.checked) dateBox.classList.remove('hidden');
+      });
+
+      // プリセットボタン
+      $('#preset1Y').addEventListener('click', () => {
+        const now = new Date();
+        const past = new Date();
+        past.setFullYear(now.getFullYear() - 1);
+        $('#startDateInput').value = formatDate(past);
+        $('#endDateInput').value = formatDate(now);
+      });
+
+      $('#preset3Y').addEventListener('click', () => {
+        const now = new Date();
+        const past = new Date();
+        past.setFullYear(now.getFullYear() - 3);
+        $('#startDateInput').value = formatDate(past);
+        $('#endDateInput').value = formatDate(now);
+      });
+
+      $('#startUnusedSearchBtn').addEventListener('click', runUnusedCheck);
 
       $('#cancelProcessBtn').addEventListener('click', () => {
         isCancelRequested = true;
