@@ -249,7 +249,6 @@
       border-radius: 12px;
     }
 
-    /* 期間設定エリア */
     .filter-panel {
       background: #FFFDF7;
       border: 1px solid var(--line);
@@ -644,7 +643,7 @@
     .crit-item p { margin: 0; font-size: 12.5px; color: var(--ink-soft); }
 
     .hidden { display: none !important; }
-    
+
     .loading-container {
       text-align: center;
       padding: 24px 16px;
@@ -732,7 +731,7 @@
 
     <!-- 共通エラー・ローディング表示 -->
     <div class="error-box" id="errorBox"></div>
-    
+
     <div class="loading-container hidden" id="loadingContainer">
       <div class="loading-title" id="loadingTitle">freee APIと通信中です…</div>
       <div class="loading-status" id="loadingStatus"></div>
@@ -1402,7 +1401,7 @@
         }
       }
 
-      // 未取引データの検出（キャンセル・期間フィルタ対応）
+      // 未取引データの検出（事前確認ダイアログ＋進行表示＋キャンセル対応）
       async function runUnusedCheck() {
         try {
           currentMode = 'unused';
@@ -1414,7 +1413,7 @@
           const partnersRes = await callFreeeApi('/partners', { company_id: currentCompanyId, limit: 3000 });
           records = buildRecordsFromApi(partnersRes.partners);
 
-          // 2. パラメータの準備（期間指定）
+          // 2. 期間パラメータの準備
           const startIssueDate = $('#startDateInput').value;
           const endIssueDate = $('#endDateInput').value;
 
@@ -1422,8 +1421,8 @@
           if (startIssueDate) queryParams.start_issue_date = startIssueDate;
           if (endIssueDate) queryParams.end_issue_date = endIssueDate;
 
-          // 3. 総件数(X-Total-Count)を取得
-          showProgressLoading(true, '対象期間の取引データ総数を計算中…');
+          // 3. 総件数(X-Total-Count)を最初に取得
+          showProgressLoading(true, '対象期間の取引データ件数を計算中…');
           const token = getAccessToken();
           const firstUrl = new URL(CONFIG.apiBase + '/deals');
           Object.keys(queryParams).forEach(k => firstUrl.searchParams.append(k, queryParams[k]));
@@ -1444,7 +1443,20 @@
           const firstData = await firstRes.json();
           const totalDealsCount = totalHeader ? parseInt(totalHeader, 10) : (firstData.meta ? firstData.meta.total_count : 0);
 
-          // 4. 100件ずつ取得（キャンセルボタンあり）
+          showProgressLoading(false);
+
+          // ★事前確認ダイアログの表示
+          let confirmMsg = `${totalDealsCount.toLocaleString()} 件の取引データが見つかりました。\n続けて過去に取引がない取引先を探しますか？`;
+          if (totalDealsCount > 1000) {
+            confirmMsg += `\n\n※件数が多いため、データ照合の完了まで少し時間がかかる場合があります。`;
+          }
+
+          const userConfirmed = confirm(confirmMsg);
+          if (!userConfirmed) {
+            return; // ユーザーがキャンセルを選択した場合は終了
+          }
+
+          // 4. 100件ずつループで照合実行
           const usedPartnerIds = new Set();
           let offset = 0;
           const limit = 100;
@@ -1475,7 +1487,7 @@
             }
           }
 
-          // 5. 結果を表示
+          // 5. 抽出結果の画面レンダリング
           unusedPartners = records.filter(r => r.partnerId && !usedPartnerIds.has(r.partnerId));
 
           $('#uploadSection').classList.add('hidden');
@@ -1485,7 +1497,7 @@
           render();
 
           if (isCancelRequested) {
-            showError('処理を中断しました。読み込み完了分のデータのみ表示しています。');
+            showError('処理を途中で中断しました。現在まで読み込んだデータのみで照合結果を表示しています。');
           }
         } catch (e) {
           showError('未取引データの取得に失敗しました: ' + e.message);
@@ -1512,7 +1524,6 @@
         }
       }
 
-      // 期間プリセット機能
       function formatDate(d) {
         const y = d.getFullYear();
         const m = String(d.getMonth() + 1).padStart(2, '0');
