@@ -1,1276 +1,1689 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>取引先台帳クリーニング</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<style>
-  :root{
-    --paper:#FAF7EF;
-    --paper-deep:#F2EDE0;
-    --ink:#20303B;
-    --ink-soft:#5B6B72;
-    --line:#DCD3BE;
-    --line-soft:#EAE3D2;
-    --red:#B23A2E;
-    --red-soft:#F3E1DD;
-    --amber:#A8792A;
-    --amber-soft:#F1E6D2;
-    --green:#2E6B4E;
-    --green-soft:#DFEAE2;
-    --navy:#22384C;
-    --navy-soft:#2E4A63;
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;background:transparent;}
-  body{
-    font-family:"Hiragino Sans","Yu Gothic Medium","Yu Gothic","Meiryo",sans-serif;
-    color:var(--ink);
-    background:transparent;
-    line-height:1.6;
-  }
-  .bg-gradient {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: linear-gradient(120deg, #ffecd2 0%, #fcb69f 25%, #a18cd1 50%, #fbc2eb 75%, #8fd3f4 100%);
-    background-size: 400% 400%;
-    animation: gradientBG 15s ease infinite;
-    opacity: 0.6;
-    z-index: 1;
-    pointer-events: none;
-  }
-  @keyframes gradientBG {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
-  /* カスタムカーソル（◎の形） */
-  .cursor-dot {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 24px;
-    height: 24px;
-    border: 2px solid #333;
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 9999;
-    transform: translate(-50%, -50%);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-  .cursor-dot::after {
-    content: "";
-    width: 6px;
-    height: 6px;
-    background-color: #333;
-    border-radius: 50%;
-  }
-  /* カーソルに遅れて追従する虹色のブラー */
-  .cursor-glow {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 150px;
-    height: 150px;
-    background: radial-gradient(circle, rgba(255, 105, 180, 0.6), rgba(135, 206, 250, 0.6), transparent 70%);
-    border-radius: 50%;
-    filter: blur(30px);
-    pointer-events: none;
-    z-index: 2;
-    transform: translate(-50%, -50%);
-    opacity: 0;
-    transition: left 0.5s ease-out, top 0.5s ease-out, width 0.3s, height 0.3s, opacity 0.3s;
-  }
-  /* クリック時に広がるリッチな波紋エフェクト */
-  .ripple-wave {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 150px;
-    height: 150px;
-    background: radial-gradient(
-      circle,
-      rgba(255, 182, 193, 0.65) 0%,
-      rgba(251, 194, 235, 0.6) 25%,
-      rgba(161, 140, 209, 0.55) 50%,
-      rgba(143, 211, 244, 0.55) 70%,
-      transparent 85%
-    );
-    border-radius: 50%;
-    filter: blur(25px);
-    pointer-events: none;
-    z-index: 3;
-    transform: translate(-50%, -50%);
-    animation: waveAnimation 0.8s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
-  }
-  @keyframes waveAnimation {
-    0% { width: 50px; height: 50px; opacity: 0.95; }
-    100% { width: 350px; height: 350px; opacity: 0; }
-  }
-  html,body{ min-height:100%; }
-  .page{
-    position:relative;
-    z-index:2;
-    max-width:460px;
-    margin:44px auto;
-    padding:36px 24px 56px;
-    background:rgba(255,253,247,0.6);
-    backdrop-filter:blur(22px);
-    -webkit-backdrop-filter:blur(22px);
-    border-radius:34px;
-    box-shadow:0 30px 80px rgba(32,48,59,0.22), 0 4px 16px rgba(32,48,59,0.08);
-  }
-  @media (max-width:520px){
-    .page{
-      margin:0;
-      border-radius:0;
-      min-height:100vh;
-      box-shadow:none;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>freee アプリポータル & 取引先クリーニング</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --paper: #FAF7EF;
+      --paper-deep: #F2EDE0;
+      --ink: #20303B;
+      --ink-soft: #5B6B72;
+      --line: #DCD3BE;
+      --line-soft: #EAE3D2;
+      --red: #B23A2E;
+      --red-soft: #F3E1DD;
+      --amber: #A8792A;
+      --amber-soft: #F1E6D2;
+      --green: #2E6B4E;
+      --green-soft: #DFEAE2;
+      --navy: #22384C;
+      --navy-soft: #2E4A63;
     }
-  }
-  /* ---------- Header ---------- */
-  header{
-    display:flex;
-    align-items:center;
-    gap:20px;
-    padding-bottom:24px;
-    border-bottom:2px solid var(--ink);
-    margin-bottom:28px;
-  }
-  .stamp{
-    flex:none;
-    width:64px;height:64px;
-  }
-  header h1{
-    font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;
-    font-size:26px;
-    font-weight:600;
-    margin:0 0 4px;
-    letter-spacing:.02em;
-  }
-  header p{
-    margin:0;
-    color:var(--ink-soft);
-    font-size:13.5px;
-  }
-  /* ---------- Upload zone ---------- */
-  .dropzone{
-    border:1.5px dashed var(--line);
-    background:#FFFDF7;
-    border-radius:18px;
-    padding:44px 26px;
-    text-align:center;
-    cursor:pointer;
-    transition:border-color .15s ease, background .15s ease;
-  }
-  .dropzone.drag{
-    border-color:var(--navy);
-    background:var(--paper-deep);
-  }
-  .dropzone .big{
-    font-size:15.5px;
-    font-weight:600;
-    margin-bottom:6px;
-  }
-  .dropzone .small{
-    font-size:12.5px;
-    color:var(--ink-soft);
-  }
-  .dropzone input{display:none;}
-  .privacy-note{
-    margin-top:10px;
-    font-size:11.5px;
-    color:var(--ink-soft);
-    text-align:center;
-  }
-  /* ---------- Export guide ---------- */
-  .export-guide{
-    margin-top:14px;
-    border:1px solid var(--line-soft);
-    border-radius:14px;
-    background:rgba(255,253,247,0.7);
-    overflow:hidden;
-  }
-  .export-guide summary{
-    list-style:none;
-    cursor:pointer;
-    padding:11px 16px;
-    font-size:12.5px;
-    font-weight:600;
-    color:var(--navy);
-    display:flex;
-    align-items:center;
-    gap:6px;
-  }
-  .export-guide summary::-webkit-details-marker{ display:none; }
-  .export-guide summary::before{
-    content:'▸';
-    font-size:11px;
-    transition:transform .15s ease;
-  }
-  .export-guide[open] summary::before{ transform:rotate(90deg); }
-  .guide-img{
-    display:block;
-    width:100%;
-    height:auto;
-    border-top:1px solid var(--line-soft);
-    border-bottom:1px solid var(--line-soft);
-  }
-  .export-guide ol{
-    margin:0;
-    padding:14px 18px 14px 34px;
-    font-size:12.5px;
-    color:var(--ink-soft);
-  }
-  .export-guide ol li{ margin-bottom:5px; }
-  .export-guide ol li b{ color:var(--ink); font-weight:600; }
-  /* ---------- Error ---------- */
-  .error-box{
-    margin-top:16px;
-    border:1px solid var(--red);
-    background:var(--red-soft);
-    color:var(--red);
-    padding:12px 16px;
-    border-radius:11px;
-    font-size:13px;
-    display:none;
-  }
-  /* ---------- Summary bar ---------- */
-  .summary{
-    display:flex;
-    flex-wrap:wrap;
-    gap:12px;
-    align-items:center;
-    justify-content:space-between;
-    margin:36px 0 22px;
-    padding:20px 20px;
-    background:var(--paper-deep);
-    border:1px solid var(--line-soft);
-    border-radius:18px;
-  }
-  .summary-stats{
-    display:flex;
-    gap:22px;
-    flex-wrap:wrap;
-  }
-  .stat{
-    display:flex;
-    flex-direction:column;
-  }
-  .stat .num{
-    font-size:20px;
-    font-weight:700;
-    font-variant-numeric:tabular-nums;
-  }
-  .stat .lbl{
-    font-size:11px;
-    color:var(--ink-soft);
-  }
-  .controls{
-    display:flex;
-    gap:8px;
-    align-items:center;
-    flex-wrap:wrap;
-  }
-  .toggle-btn{
-    border:1px solid var(--line);
-    background:#fff;
-    padding:7px 13px;
-    font-size:12.5px;
-    border-radius:11px;
-    cursor:pointer;
-    color:var(--ink);
-  }
-  .toggle-btn.active{
-    background:var(--navy);
-    border-color:var(--navy);
-    color:#fff;
-  }
-  input.search{
-    border:1px solid var(--line);
-    border-radius:11px;
-    padding:7px 10px;
-    font-size:12.5px;
-    width:160px;
-    background:#fff;
-    color:var(--ink);
-  }
-  input.search:focus, .toggle-btn:focus, button:focus, input[type=radio]:focus{
-    outline:2px solid var(--navy-soft);
-    outline-offset:1px;
-  }
-  /* ---------- Groups ---------- */
-  .group{
-    border:1px solid var(--line);
-    border-radius:18px;
-    margin-bottom:18px;
-    box-shadow:0 2px 10px rgba(32,48,59,0.05);
-    background:#FFFDF7;
-    overflow:hidden;
-  }
-  .group-head{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:13px 18px;
-    background:var(--paper-deep);
-    border-bottom:1px solid var(--line-soft);
-    flex-wrap:wrap;
-    gap:8px;
-  }
-  .group-head-left{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    flex-wrap:wrap;
-  }
-  .group-num{
-    font-size:12px;
-    color:var(--ink-soft);
-    font-variant-numeric:tabular-nums;
-  }
-  .badge{
-    font-size:11px;
-    padding:2px 9px;
-    border-radius:20px;
-    font-weight:600;
-    white-space:nowrap;
-  }
-  .badge.high{ background:var(--red-soft); color:var(--red); }
-  .badge.medium{ background:var(--amber-soft); color:var(--amber); }
-  .reason{
-    font-size:12px;
-    color:var(--ink-soft);
-  }
-  .dismiss-btn{
-    font-size:11.5px;
-    color:var(--ink-soft);
-    background:none;
-    border:1px solid var(--line);
-    border-radius:11px;
-    padding:4px 10px;
-    cursor:pointer;
-  }
-  .dismiss-btn:hover{ border-color:var(--ink-soft); color:var(--ink); }
-  .member{
-    display:flex;
-    align-items:flex-start;
-    gap:14px;
-    padding:14px 18px;
-    border-bottom:1px solid var(--line-soft);
-  }
-  .member:last-child{ border-bottom:none; }
-  .member.keep{ background:var(--green-soft); }
-  .member input[type=radio]{
-    margin-top:4px;
-    flex:none;
-    accent-color:var(--green);
-    width:15px;height:15px;
-  }
-  .member-body{ flex:1; min-width:0; }
-  .member-name-row{
-    display:flex;
-    align-items:baseline;
-    gap:8px;
-    flex-wrap:wrap;
-  }
-  .member-name{
-    font-weight:700;
-    font-size:14.5px;
-  }
-  .keep-tag{
-    font-size:10.5px;
-    color:var(--green);
-    font-weight:700;
-    border:1px solid var(--green);
-    border-radius:20px;
-    padding:0px 7px;
-  }
-  .member-meta{
-    margin-top:3px;
-    font-size:12px;
-    color:var(--ink-soft);
-    display:flex;
-    flex-wrap:wrap;
-    gap:4px 14px;
-  }
-  .member-meta span b{ color:var(--ink); font-weight:600; }
-  .group-dismissed-note{
-    padding:10px 16px;
-    font-size:12.5px;
-    color:var(--ink-soft);
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-  }
-  .restore-btn{
-    font-size:11.5px;
-    background:none;
-    border:1px solid var(--line);
-    border-radius:11px;
-    padding:4px 10px;
-    cursor:pointer;
-    color:var(--ink-soft);
-  }
-  /* ---------- All-records table (view all) ---------- */
-  .all-table{
-    width:100%;
-    border-collapse:collapse;
-    font-size:12.5px;
-    margin-top:6px;
-  }
-  .all-table th{
-    text-align:left;
-    font-size:11px;
-    color:var(--ink-soft);
-    font-weight:600;
-    border-bottom:1.5px solid var(--ink);
-    padding:6px 8px;
-  }
-  .all-table td{
-    padding:7px 8px;
-    border-bottom:1px solid var(--line-soft);
-    vertical-align:top;
-  }
-  .all-table tr.is-dup td{ background:var(--paper-deep); }
-  .empty-state{
-    text-align:center;
-    padding:50px 20px;
-    color:var(--ink-soft);
-  }
-  .empty-state .mark{ font-size:34px; margin-bottom:10px; }
-  #dedupeScreen{
-    animation: screenIn .25s ease;
-  }
-  @keyframes screenIn{
-    from{ opacity:0; transform:translateY(6px); }
-    to{ opacity:1; transform:translateY(0); }
-  }
-  /* ---------- Export bar ---------- */
-  .export-bar{
-    position:sticky;
-    bottom:0;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:10px;
-    padding:16px 0 4px;
-    margin-top:24px;
-    background:linear-gradient(to top, rgba(250,247,239,0.85) 60%, transparent);
-  }
-  .btn-primary{
-    background:var(--navy);
-    color:#fff;
-    border:none;
-    padding:12px 22px;
-    border-radius:11px;
-    font-size:14px;
-    font-weight:600;
-    cursor:pointer;
-  }
-  .btn-primary:hover{ background:var(--navy-soft); }
-  .btn-primary:disabled{ background:#B9B2A0; cursor:not-allowed; }
-  .btn-ghost{
-    background:none;
-    border:1px solid var(--line);
-    color:var(--ink-soft);
-    padding:12px 18px;
-    border-radius:11px;
-    font-size:13px;
-    cursor:pointer;
-  }
-  .help-link{
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    background:none;
-    border:none;
-    color:var(--ink-soft);
-    font-size:12px;
-    cursor:pointer;
-    padding:4px 2px;
-  }
-  .help-link:hover{ color:var(--ink); }
-  .help-fab-sm{
-    flex:none;
-    width:20px;
-    height:20px;
-    border-radius:50%;
-    border:1.5px solid var(--navy);
-    color:var(--navy);
-    font-size:11px;
-    font-weight:700;
-    font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-  }
-  /* ---------- Criteria modal (bottom sheet) ---------- */
-  .modal-overlay{
-    position:fixed;
-    inset:0;
-    background:rgba(32,48,59,0.45);
-    display:flex;
-    align-items:flex-end;
-    justify-content:center;
-    z-index:50;
-  }
-  .modal-card{
-    width:100%;
-    max-width:460px;
-    max-height:82vh;
-    overflow-y:auto;
-    background:var(--paper);
-    border-radius:26px 26px 0 0;
-    box-shadow:0 -10px 40px rgba(32,48,59,0.3);
-    animation:sheetUp .22s ease;
-  }
-  @keyframes sheetUp{
-    from{ transform:translateY(24px); opacity:0; }
-    to{ transform:translateY(0); opacity:1; }
-  }
-  .modal-head{
-    position:sticky;
-    top:0;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:18px 22px 14px;
-    background:var(--paper);
-    border-bottom:1px solid var(--line-soft);
-  }
-  .modal-head h3{
-    margin:0;
-    font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;
-    font-size:16.5px;
-  }
-  .modal-close{
-    flex:none;
-    width:30px;height:30px;
-    border-radius:50%;
-    border:none;
-    background:var(--paper-deep);
-    color:var(--ink-soft);
-    font-size:16px;
-    cursor:pointer;
-  }
-  .modal-close:hover{ color:var(--ink); }
-  .modal-body{
-    padding:18px 22px 30px;
-  }
-  .crit-item{ margin-bottom:18px; }
-  .crit-title{
-    display:flex;
-    align-items:center;
-    gap:9px;
-    font-weight:700;
-    font-size:13.5px;
-    margin-bottom:6px;
-  }
-  .crit-item p{
-    margin:0;
-    font-size:12.5px;
-    color:var(--ink-soft);
-  }
-  .crit-note{
-    font-size:12px;
-    color:var(--ink-soft);
-    border-top:1px solid var(--line-soft);
-    padding-top:14px;
-    margin:0;
-  }
-  .hidden{ display:none !important; }
-  .loading-text{
-    text-align:center;
-    color:var(--ink-soft);
-    font-size:13px;
-    padding:30px 0;
-  }
-  @media (max-width:560px){
-    .page{ padding:24px 14px 60px; }
-    header{ gap:14px; }
-    header h1{ font-size:21px; }
-    .summary{ flex-direction:column; align-items:stretch; }
-    input.search{ width:100%; }
-  }
-</style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      font-family: "Hiragino Sans", "Yu Gothic Medium", "Yu Gothic", "Meiryo", sans-serif;
+      color: var(--ink);
+      line-height: 1.6;
+      min-height: 100%;
+    }
+
+    .bg-gradient {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: linear-gradient(120deg, #ffecd2 0%, #fcb69f 25%, #a18cd1 50%, #fbc2eb 75%, #8fd3f4 100%);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      opacity: 0.6;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* カスタムカーソル */
+    .cursor-dot {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 24px;
+      height: 24px;
+      border: 2px solid #333;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .cursor-dot::after {
+      content: "";
+      width: 6px;
+      height: 6px;
+      background-color: #333;
+      border-radius: 50%;
+    }
+
+    .cursor-glow {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 150px;
+      height: 150px;
+      background: radial-gradient(circle, rgba(255, 105, 180, 0.6), rgba(135, 206, 250, 0.6), transparent 70%);
+      border-radius: 50%;
+      filter: blur(30px);
+      pointer-events: none;
+      z-index: 2;
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      transition: left 0.5s ease-out, top 0.5s ease-out, width 0.3s, height 0.3s, opacity 0.3s;
+    }
+
+    .ripple-wave {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 150px;
+      height: 150px;
+      background: radial-gradient(
+        circle,
+        rgba(255, 182, 193, 0.65) 0%,
+        rgba(251, 194, 235, 0.6) 25%,
+        rgba(161, 140, 209, 0.55) 50%,
+        rgba(143, 211, 244, 0.55) 70%,
+        transparent 85%
+      );
+      border-radius: 50%;
+      filter: blur(25px);
+      pointer-events: none;
+      z-index: 3;
+      transform: translate(-50%, -50%);
+      animation: waveAnimation 0.8s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+    }
+
+    @keyframes waveAnimation {
+      0% { width: 50px; height: 50px; opacity: 0.95; }
+      100% { width: 350px; height: 350px; opacity: 0; }
+    }
+
+    .page {
+      position: relative;
+      z-index: 2;
+      max-width: 480px;
+      margin: 44px auto;
+      padding: 36px 24px 56px;
+      background: rgba(255, 253, 247, 0.65);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border-radius: 34px;
+      box-shadow: 0 30px 80px rgba(32, 48, 59, 0.22), 0 4px 16px rgba(32, 48, 59, 0.08);
+    }
+
+    @media (max-width: 520px) {
+      .page {
+        margin: 0;
+        border-radius: 0;
+        min-height: 100vh;
+        box-shadow: none;
+      }
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding-bottom: 24px;
+      border-bottom: 2px solid var(--ink);
+      margin-bottom: 28px;
+    }
+
+    .stamp {
+      flex: none;
+      width: 64px;
+      height: 64px;
+    }
+
+    header h1 {
+      font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+      font-size: 24px;
+      font-weight: 600;
+      margin: 0 0 4px;
+      letter-spacing: .02em;
+    }
+
+    header p {
+      margin: 0;
+      color: var(--ink-soft);
+      font-size: 13px;
+    }
+
+    /* ポータルステップ共通スタイル */
+    .step-box {
+      background: #FFFDF7;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(32, 48, 59, 0.04);
+    }
+
+    .step-title {
+      font-weight: 700;
+      font-size: 15px;
+      margin-bottom: 8px;
+      color: var(--navy);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .step-desc {
+      font-size: 12.5px;
+      color: var(--ink-soft);
+      margin-bottom: 16px;
+    }
+
+    .form-select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 11px;
+      border: 1px solid var(--line);
+      background: #fff;
+      font-size: 13.5px;
+      color: var(--ink);
+      margin-bottom: 16px;
+    }
+
+    .app-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .app-card {
+      border: 1.5px solid var(--line);
+      background: #FFFDF7;
+      border-radius: 14px;
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .app-card:hover {
+      border-color: var(--navy);
+      background: var(--paper-deep);
+    }
+
+    .app-card-title {
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--navy);
+      margin-bottom: 4px;
+    }
+
+    .app-card-desc {
+      font-size: 11.5px;
+      color: var(--ink-soft);
+    }
+
+    .btn-nav {
+      background: var(--paper-deep);
+      border: 1px solid var(--line);
+      color: var(--ink-soft);
+      font-size: 11.5px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn-nav:hover {
+      color: var(--ink);
+      border-color: var(--ink-soft);
+    }
+
+    /* Upload zone & Other components */
+    .dropzone {
+      border: 1.5px dashed var(--line);
+      background: #FFFDF7;
+      border-radius: 18px;
+      padding: 30px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .15s ease, background .15s ease;
+    }
+
+    .dropzone.drag {
+      border-color: var(--navy);
+      background: var(--paper-deep);
+    }
+
+    .dropzone .big {
+      font-size: 14.5px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .dropzone .small {
+      font-size: 12px;
+      color: var(--ink-soft);
+    }
+
+    .dropzone input {
+      display: none;
+    }
+
+    .privacy-note {
+      margin-top: 10px;
+      font-size: 11.5px;
+      color: var(--ink-soft);
+      text-align: center;
+    }
+
+    .export-guide {
+      margin-top: 14px;
+      border: 1px solid var(--line-soft);
+      border-radius: 14px;
+      background: rgba(255, 253, 247, 0.7);
+      overflow: hidden;
+    }
+
+    .export-guide summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 11px 16px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--navy);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .export-guide summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .export-guide summary::before {
+      content: '▸';
+      font-size: 11px;
+      transition: transform .15s ease;
+    }
+
+    .export-guide[open] summary::before {
+      transform: rotate(90deg);
+    }
+
+    .guide-img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-top: 1px solid var(--line-soft);
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    .export-guide ol {
+      margin: 0;
+      padding: 14px 18px 14px 34px;
+      font-size: 12.5px;
+      color: var(--ink-soft);
+    }
+
+    .export-guide ol li {
+      margin-bottom: 5px;
+    }
+
+    .export-guide ol li b {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    .error-box {
+      margin-top: 16px;
+      border: 1px solid var(--red);
+      background: var(--red-soft);
+      color: var(--red);
+      padding: 12px 16px;
+      border-radius: 11px;
+      font-size: 13px;
+      display: none;
+    }
+
+    .summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      margin: 24px 0 22px;
+      padding: 16px;
+      background: var(--paper-deep);
+      border: 1px solid var(--line-soft);
+      border-radius: 18px;
+    }
+
+    .summary-stats {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat .num {
+      font-size: 18px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat .lbl {
+      font-size: 10.5px;
+      color: var(--ink-soft);
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .toggle-btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 6px 11px;
+      font-size: 12px;
+      border-radius: 11px;
+      cursor: pointer;
+      color: var(--ink);
+    }
+
+    .toggle-btn.active {
+      background: var(--navy);
+      border-color: var(--navy);
+      color: #fff;
+    }
+
+    input.search {
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      padding: 6px 10px;
+      font-size: 12px;
+      width: 140px;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    input.search:focus, .toggle-btn:focus, button:focus, input[type=radio]:focus {
+      outline: 2px solid var(--navy-soft);
+      outline-offset: 1px;
+    }
+
+    .group {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      margin-bottom: 18px;
+      box-shadow: 0 2px 10px rgba(32, 48, 59, 0.05);
+      background: #FFFDF7;
+      overflow: hidden;
+    }
+
+    .group-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 13px 18px;
+      background: var(--paper-deep);
+      border-bottom: 1px solid var(--line-soft);
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .group-head-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .group-num {
+      font-size: 12px;
+      color: var(--ink-soft);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .badge {
+      font-size: 11px;
+      padding: 2px 9px;
+      border-radius: 20px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .badge.high {
+      background: var(--red-soft);
+      color: var(--red);
+    }
+
+    .badge.medium {
+      background: var(--amber-soft);
+      color: var(--amber);
+    }
+
+    .reason {
+      font-size: 12px;
+      color: var(--ink-soft);
+    }
+
+    .dismiss-btn {
+      font-size: 11.5px;
+      color: var(--ink-soft);
+      background: none;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      padding: 4px 10px;
+      cursor: pointer;
+    }
+
+    .dismiss-btn:hover {
+      border-color: var(--ink-soft);
+      color: var(--ink);
+    }
+
+    .member {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    .member:last-child {
+      border-bottom: none;
+    }
+
+    .member.keep {
+      background: var(--green-soft);
+    }
+
+    .member input[type=radio] {
+      margin-top: 4px;
+      flex: none;
+      accent-color: var(--green);
+      width: 15px;
+      height: 15px;
+    }
+
+    .member-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .member-name-row {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .member-name {
+      font-weight: 700;
+      font-size: 14.5px;
+    }
+
+    .keep-tag {
+      font-size: 10.5px;
+      color: var(--green);
+      font-weight: 700;
+      border: 1px solid var(--green);
+      border-radius: 20px;
+      padding: 0px 7px;
+    }
+
+    .member-meta {
+      margin-top: 3px;
+      font-size: 12px;
+      color: var(--ink-soft);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 14px;
+    }
+
+    .member-meta span b {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    .group-dismissed-note {
+      padding: 10px 16px;
+      font-size: 12.5px;
+      color: var(--ink-soft);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .all-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 6px;
+    }
+
+    .all-table th {
+      text-align: left;
+      font-size: 11px;
+      color: var(--ink-soft);
+      font-weight: 600;
+      border-bottom: 1.5px solid var(--ink);
+      padding: 6px 8px;
+    }
+
+    .all-table td {
+      padding: 7px 8px;
+      border-bottom: 1px solid var(--line-soft);
+      vertical-align: top;
+    }
+
+    .all-table tr.is-dup td {
+      background: var(--paper-deep);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 50px 20px;
+      color: var(--ink-soft);
+    }
+
+    .empty-state .mark {
+      font-size: 34px;
+      margin-bottom: 10px;
+    }
+
+    #dedupeScreen {
+      animation: screenIn .25s ease;
+    }
+
+    @keyframes screenIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .export-bar {
+      position: sticky;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 0 4px;
+      margin-top: 24px;
+      background: linear-gradient(to top, rgba(250, 247, 239, 0.85) 60%, transparent);
+    }
+
+    .btn-primary {
+      background: var(--navy);
+      color: #fff;
+      border: none;
+      padding: 12px 22px;
+      border-radius: 11px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      text-align: center;
+    }
+
+    .btn-primary:hover {
+      background: var(--navy-soft);
+    }
+
+    .btn-primary:disabled {
+      background: #B9B2A0;
+      cursor: not-allowed;
+    }
+
+    .btn-ghost {
+      background: none;
+      border: 1px solid var(--line);
+      color: var(--ink-soft);
+      padding: 12px 18px;
+      border-radius: 11px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .help-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: none;
+      color: var(--ink-soft);
+      font-size: 12px;
+      cursor: pointer;
+      padding: 4px 2px;
+    }
+
+    .help-link:hover {
+      color: var(--ink);
+    }
+
+    .help-fab-sm {
+      flex: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 1.5px solid var(--navy);
+      color: var(--navy);
+      font-size: 11px;
+      font-weight: 700;
+      font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(32, 48, 59, 0.45);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 50;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 460px;
+      max-height: 82vh;
+      overflow-y: auto;
+      background: var(--paper);
+      border-radius: 26px 26px 0 0;
+      box-shadow: 0 -10px 40px rgba(32, 48, 59, 0.3);
+      animation: sheetUp .22s ease;
+    }
+
+    @keyframes sheetUp {
+      from { transform: translateY(24px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-head {
+      position: sticky;
+      top: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 22px 14px;
+      background: var(--paper);
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    .modal-head h3 {
+      margin: 0;
+      font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+      font-size: 16.5px;
+    }
+
+    .modal-close {
+      flex: none;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: none;
+      background: var(--paper-deep);
+      color: var(--ink-soft);
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .modal-close:hover {
+      color: var(--ink);
+    }
+
+    .modal-body {
+      padding: 18px 22px 30px;
+    }
+
+    .crit-item {
+      margin-bottom: 18px;
+    }
+
+    .crit-title {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-weight: 700;
+      font-size: 13.5px;
+      margin-bottom: 6px;
+    }
+
+    .crit-item p {
+      margin: 0;
+      font-size: 12.5px;
+      color: var(--ink-soft);
+    }
+
+    .crit-note {
+      font-size: 12px;
+      color: var(--ink-soft);
+      border-top: 1px solid var(--line-soft);
+      padding-top: 14px;
+      margin: 0;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .loading-text {
+      text-align: center;
+      color: var(--ink-soft);
+      font-size: 13px;
+      padding: 20px 0;
+    }
+
+    @media (max-width: 560px) {
+      .page {
+        padding: 24px 14px 60px;
+      }
+      header {
+        gap: 14px;
+      }
+      header h1 {
+        font-size: 21px;
+      }
+      .summary {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      input.search {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
-<div class="bg-gradient"></div>
-<div class="cursor-glow" id="cursorGlow"></div>
-<div class="cursor-dot" id="cursorDot"></div>
-<div class="page">
+  <div class="bg-gradient"></div>
+  <div class="cursor-glow" id="cursorGlow"></div>
+  <div class="cursor-dot" id="cursorDot"></div>
 
-  <header>
-    <svg class="stamp" viewBox="0 0 64 64" aria-hidden="true">
-      <circle cx="32" cy="32" r="29" fill="none" stroke="#B23A2E" stroke-width="2.5"/>
-      <circle cx="32" cy="32" r="23" fill="none" stroke="#B23A2E" stroke-width="1"/>
-      <text x="32" y="27" text-anchor="middle" font-size="13" font-family="'Hiragino Mincho ProN','Yu Mincho',serif" fill="#B23A2E" font-weight="700">整理</text>
-      <text x="32" y="43" text-anchor="middle" font-size="10" font-family="'Hiragino Mincho ProN','Yu Mincho',serif" fill="#B23A2E">済</text>
-    </svg>
-    <div>
-      <h1>取引先台帳クリーニング</h1>
-      <p>freeeからエクスポートした取引先リストを読み込み、表記ゆれ・重複を見つけて整理済みのExcelを書き出します。</p>
-    </div>
-  </header>
+  <div class="page">
+    <header>
+      <svg class="stamp" viewBox="0 0 64 64" aria-hidden="true">
+        <circle cx="32" cy="32" r="29" fill="none" stroke="#B23A2E" stroke-width="2.5" />
+        <circle cx="32" cy="32" r="23" fill="none" stroke="#B23A2E" stroke-width="1" />
+        <text x="32" y="27" text-anchor="middle" font-size="13" font-family="'Hiragino Mincho ProN','Yu Mincho',serif" fill="#B23A2E" font-weight="700">整理</text>
+        <text x="32" y="43" text-anchor="middle" font-size="10" font-family="'Hiragino Mincho ProN','Yu Mincho',serif" fill="#B23A2E">済</text>
+      </svg>
+      <div>
+        <h1 id="headerTitle">freee 拡張ポータル</h1>
+        <p id="headerDesc">freee APIを活用して業務効率化ツールを利用・管理します。</p>
+      </div>
+    </header>
 
-  <div id="uploadSection">
-    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択してアップロード">
-      <div class="big">クリックまたはドラッグ&ドロップでファイルを読み込む</div>
-      <div class="small">freeeの「取引先」エクスポート形式（CSV / Excel）に対応</div>
-      <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
+    <!-- Step 1: ログイン画面 -->
+    <div id="stepLogin" class="step-box">
+      <div class="step-title">1. freee連携ログイン</div>
+      <div class="step-desc">freeeアカウントで認証を行い、安全にAPIデータと連携します。</div>
+      <button class="btn-primary" id="loginBtn" type="button">freeeアカウントでログイン</button>
     </div>
-    <div class="privacy-note">ファイルはこの画面内だけで処理されます。外部のサーバーには送信されません。</div>
-    <details class="export-guide">
-      <summary>freeeでのエクスポート方法</summary>
-      <img class="guide-img" src="data:image/png;base64,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" alt="freeeの取引先ページで「…」メニューからCSVエクスポートを選ぶ場所のスクリーンショット">
-      <ol>
-        <li>freeeで<b>「取引先」</b>ページを開く</li>
-        <li>右上の<b>「…」</b>メニューをクリック</li>
-        <li><b>「CSVエクスポート」</b>を選んでダウンロード</li>
-      </ol>
-    </details>
+
+    <!-- Step 2: 事務所（事業所）選択画面 -->
+    <div id="stepCompany" class="step-box hidden">
+      <div class="step-title">2. 事業所を選択</div>
+      <div class="step-desc">処理を行う対象の事業所を選択してください。</div>
+      <select class="form-select" id="companySelect">
+        <option value="">事業所を読み込んでいます...</option>
+      </select>
+      <button class="btn-primary" id="selectCompanyBtn" type="button">この事業所で進む</button>
+    </div>
+
+    <!-- Step 3: アプリ選択画面 -->
+    <div id="stepApps" class="step-box hidden">
+      <button class="btn-nav" id="backToCompanyBtn" type="button">← 事業所選択へ戻る</button>
+      <div class="step-title">3. 利用するアプリを選択</div>
+      <div class="step-desc">選択した事業所：<b id="selectedCompanyName" style="color:var(--ink);"></b></div>
+      <div class="app-grid">
+        <div class="app-card" id="appDedupeCard">
+          <div class="app-card-title">取引先台帳クリーニング</div>
+          <div class="app-card-desc">API経由で取引先を自動取得し、表記ゆれ・重複候補を判定してExcel出力します。</div>
+        </div>
+        <div class="app-card" style="opacity: 0.6; cursor: not-allowed;">
+          <div class="app-card-title">【開発予定】仕訳データチェック</div>
+          <div class="app-card-desc">今後拡張するアプリケーションのサンプルです。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 共通エラー・ローディング表示 -->
     <div class="error-box" id="errorBox"></div>
-    <div class="loading-text hidden" id="loadingText">読み込み中です…</div>
-  </div>
+    <div class="loading-text hidden" id="loadingText">freee APIと通信中です…</div>
 
-  <div id="resultSection" class="hidden">
+    <!-- アプリ本体: 取引先整理画面 -->
+    <div id="appDedupeSection" class="hidden">
+      <button class="btn-nav" id="backToAppsBtn" type="button">← アプリ選択へ戻る</button>
 
-    <div id="dedupeScreen">
-      <div class="summary">
-        <div class="summary-stats">
-          <div class="stat"><span class="num" id="statTotal">0</span><span class="lbl">全取引先</span></div>
-          <div class="stat"><span class="num" id="statGroups">0</span><span class="lbl">重複の疑いグループ</span></div>
-          <div class="stat"><span class="num" id="statMembers">0</span><span class="lbl">重複候補の件数</span></div>
+      <!-- ファイルアップロードのバックアップフォールバック -->
+      <div id="uploadSection">
+        <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択してアップロード">
+          <div class="big">または、ファイル（CSV/Excel）から読み込む</div>
+          <div class="small">クリックまたはドラッグ&ドロップで指定</div>
+          <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
         </div>
-        <div class="controls">
-          <input class="search" id="searchBox" placeholder="名前で検索">
-          <button class="toggle-btn active" id="viewDupBtn" type="button">重複候補のみ</button>
-          <button class="toggle-btn" id="viewAllBtn" type="button">全件表示</button>
-          <button class="btn-ghost" id="reuploadBtn" type="button" style="padding:7px 13px;font-size:12.5px;">別のファイルを読み込む</button>
+        <div class="privacy-note">ファイルはこの画面内だけで処理されます。外部のサーバーには送信されません。</div>
+        <details class="export-guide">
+          <summary>手動エクスポートの手順</summary>
+          <img class="guide-img" src="data:image/png;base64,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" alt="freeeの取引先ページエクスポートガイド">
+          <ol>
+            <li>freeeで<b>「取引先」</b>ページを開く</li>
+            <li>右上の<b>「…」</b>メニューをクリック</li>
+            <li><b>「CSVエクスポート」</b>を選んでダウンロード</li>
+          </ol>
+        </details>
+      </div>
+
+      <!-- 判定結果画面 -->
+      <div id="resultSection" class="hidden">
+        <div id="dedupeScreen">
+          <div class="summary">
+            <div class="summary-stats">
+              <div class="stat"><span class="num" id="statTotal">0</span><span class="lbl">全取引先</span></div>
+              <div class="stat"><span class="num" id="statGroups">0</span><span class="lbl">重複の疑いグループ</span></div>
+              <div class="stat"><span class="num" id="statMembers">0</span><span class="lbl">重複候補の件数</span></div>
+            </div>
+            <div class="controls">
+              <input class="search" id="searchBox" placeholder="名前で検索">
+              <button class="toggle-btn active" id="viewDupBtn" type="button">重複候補のみ</button>
+              <button class="toggle-btn" id="viewAllBtn" type="button">全件表示</button>
+            </div>
+          </div>
+
+          <div id="groupsContainer"></div>
+
+          <div id="allTableWrap" class="hidden">
+            <table class="all-table">
+              <thead>
+                <tr>
+                  <th>名前（通称）</th>
+                  <th>正式名称</th>
+                  <th>カナ名称</th>
+                  <th>登録番号</th>
+                  <th>住所</th>
+                  <th>電話番号</th>
+                  <th>状態</th>
+                </tr>
+              </thead>
+              <tbody id="allTableBody"></tbody>
+            </table>
+          </div>
+
+          <div class="empty-state hidden" id="emptyState">
+            <div class="mark">◎</div>
+            <div>重複の疑いがある取引先は見つかりませんでした。</div>
+          </div>
+        </div>
+
+        <div class="export-bar">
+          <button class="help-link" id="criteriaBtn" type="button">
+            <span class="help-fab-sm" aria-hidden="true">？</span>重複はどう判定していますか？
+          </button>
+          <button class="btn-primary" id="exportBtn" type="button">整理結果をExcelで書き出す</button>
         </div>
       </div>
-
-      <div id="groupsContainer"></div>
-
-      <div id="allTableWrap" class="hidden">
-        <table class="all-table">
-          <thead><tr>
-            <th>名前（通称）</th><th>正式名称</th><th>カナ名称</th><th>登録番号</th><th>住所</th><th>電話番号</th><th>状態</th>
-          </tr></thead>
-          <tbody id="allTableBody"></tbody>
-        </table>
-      </div>
-
-      <div class="empty-state hidden" id="emptyState">
-        <div class="mark">◎</div>
-        <div>重複の疑いがある取引先は見つかりませんでした。</div>
-      </div>
-    </div>
-
-
-    <div class="export-bar">
-      <button class="help-link" id="criteriaBtn" type="button">
-        <span class="help-fab-sm" aria-hidden="true">？</span>重複はどう判定していますか？
-      </button>
-      <button class="btn-primary" id="exportBtn" type="button">整理結果をExcelで書き出す</button>
     </div>
   </div>
 
-</div>
-
-<div class="modal-overlay hidden" id="criteriaModal">
-  <div class="modal-card">
-    <div class="modal-head">
-      <h3>重複はどう判定していますか？</h3>
-      <button class="modal-close" id="criteriaCloseBtn" type="button" aria-label="閉じる">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="crit-item">
-        <div class="crit-title"><span class="badge high">確実</span>① 登録番号が一致</div>
-        <p>「適格請求書発行事業者の登録番号」が同じなら、名前がまったく違っても同一の取引先とみなします。「商工中金」と「商中」のように略称で表記が違っても、登録番号が同じなら重複候補としてグループ化します。最も信頼できる手がかりです。</p>
+  <!-- モーダル -->
+  <div class="modal-overlay hidden" id="criteriaModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>重複はどう判定していますか？</h3>
+        <button class="modal-close" id="criteriaCloseBtn" type="button" aria-label="閉じる">×</button>
       </div>
-      <div class="crit-item">
-        <div class="crit-title"><span class="badge high">確実</span>② 名称・カナ名称の表記ゆれ</div>
-        <p>「株式会社」「㈱」「(株)」「有限会社」「㈲」などの法人格の表記や、全角/半角・スペースの違いを取り除いてから名前を比較します。「ソニー生命保険株式会社」と「ソニー生命保険㈱」はどちらも「ソニー生命保険」になるので一致とみなします。カナ名称も同じ考え方でひらがなに揃えて比較します。</p>
+      <div class="modal-body">
+        <div class="crit-item">
+          <div class="crit-title"><span class="badge high">確実</span>① 登録番号が一致</div>
+          <p>「適格請求書発行事業者の登録番号」が同じなら重複候補としてグループ化します。</p>
+        </div>
+        <div class="crit-item">
+          <div class="crit-title"><span class="badge high">確実</span>② 名称・カナ名称の表記ゆれ</div>
+          <p>「株式会社」「㈱」「(株)」などの法人格やスペースを除去して比較します。</p>
+        </div>
+        <div class="crit-item">
+          <div class="crit-title"><span class="badge medium">要確認</span>③ 名称が似ている（住所・電話番号も一致）</div>
+          <p>名前の類似度が高く(70%以上)、郵便番号か電話番号が一致する場合に提示します。</p>
+        </div>
       </div>
-      <div class="crit-item">
-        <div class="crit-title"><span class="badge medium">要確認</span>③ 名称が似ている（住所・電話番号も一致）</div>
-        <p>①②で一致しなくても、名前の類似度が高く(70%以上)、かつ郵便番号か電話番号が同じ場合は「要確認」として提示します。「山田商店」と「山田商事」のような別会社を誤って統合しないよう、確度が低いものは自動グループ化せず人の目でのチェックに回します。</p>
-      </div>
-      <p class="crit-note">いずれの基準にも当てはまらなければグループ化しません。ただし、登録番号もなく名前も大きく違う支店違いの表記などは見逃す可能性があるので、「全件表示」での目視チェックも合わせておすすめします。</p>
     </div>
   </div>
-</div>
 
-<script>
-(function(){
-  "use strict";
+  <script>
+    (function () {
+      "use strict";
 
-  // ---------- State ----------
-  let headers = [];
-  let records = [];      // {id, raw:[...], name, formalName, kana, invoiceNo, zip, pref, addr, tel, normName, normKana, invoiceKey}
-  let groups = [];        // {ids:[...], keepId, dismissed, confidence, reasons:[...]}
-  let viewMode = 'dup';   // 'dup' | 'all'
-  let searchTerm = '';
-
-  // ---------- Column candidates ----------
-  const COLS = {
-    name: ['名前（通称）','名前(通称)','名前'],
-    formalName: ['正式名称（帳票出力時に使用される名称）','正式名称'],
-    kana: ['カナ名称'],
-    invoiceNo: ['適格請求書発行事業者の登録番号'],
-    zip: ['郵便番号'],
-    pref: ['都道府県'],
-    addr: ['市区町村・番地'],
-    bldg: ['建物名・部屋番号など'],
-    tel: ['電話番号'],
-  };
-
-  function findColIndex(hdrs, candidates, fallbackIncludes){
-    for(const c of candidates){
-      const idx = hdrs.findIndex(h => (h||'').toString().trim() === c);
-      if(idx !== -1) return idx;
-    }
-    if(fallbackIncludes){
-      const idx = hdrs.findIndex(h => fallbackIncludes.every(f => (h||'').toString().includes(f)));
-      if(idx !== -1) return idx;
-    }
-    return -1;
-  }
-
-  function cell(row, idx){
-    if(idx === -1 || idx === undefined) return '';
-    const v = row[idx];
-    return (v === undefined || v === null) ? '' : String(v).trim();
-  }
-
-  // ---------- Normalization ----------
-  function toHalfWidth(s){
-    return s.replace(/[Ａ-Ｚａ-ｚ０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
-  }
-  function toHiragana(s){
-    return s.replace(/[\u30a1-\u30f6]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
-  }
-  const CORP_FORMS = ['株式会社','有限会社','合同会社','合名会社','合資会社','一般社団法人','公益社団法人','一般財団法人','公益財団法人','学校法人','医療法人','社会福祉法人','特定非営利活動法人','ＮＰＯ法人','NPO法人','宗教法人','協同組合','農業協同組合','㈱','㈲','（株）','(株)','（有）','(有)'];
-  const CORP_FORMS_KANA = ['かぶしきがいしゃ','ゆうげんがいしゃ','ごうどうがいしゃ','ごうめいがいしゃ','ごうしがいしゃ'];
-
-  function normalizeName(s){
-    if(!s) return '';
-    let t = toHalfWidth(s.trim());
-    t = t.replace(/[\s　]/g, '');
-    for(const f of CORP_FORMS){ t = t.split(f).join(''); }
-    return t;
-  }
-  function normalizeKana(s){
-    if(!s) return '';
-    let t = toHiragana(toHalfWidth(s.trim()));
-    t = t.replace(/[\s　]/g, '');
-    for(const f of CORP_FORMS_KANA){ t = t.split(f).join(''); }
-    return t;
-  }
-  function normalizeInvoice(s){
-    if(!s) return '';
-    return toHalfWidth(s.trim()).replace(/[\s\-ー―]/g, '').toUpperCase();
-  }
-
-  // ---------- Levenshtein similarity ----------
-  function levenshtein(a, b){
-    const m = a.length, n = b.length;
-    if(m === 0) return n;
-    if(n === 0) return m;
-    let prev = new Array(n+1);
-    for(let j=0;j<=n;j++) prev[j] = j;
-    for(let i=1;i<=m;i++){
-      const cur = [i];
-      for(let j=1;j<=n;j++){
-        const cost = a[i-1] === b[j-1] ? 0 : 1;
-        cur[j] = Math.min(prev[j]+1, cur[j-1]+1, prev[j-1]+cost);
-      }
-      prev = cur;
-    }
-    return prev[n];
-  }
-  function similarity(a, b){
-    if(!a.length && !b.length) return 1;
-    const d = levenshtein(a,b);
-    return 1 - d / Math.max(a.length, b.length);
-  }
-
-  // ---------- Union-Find ----------
-  function makeUF(n){
-    const parent = Array.from({length:n}, (_,i)=>i);
-    function find(x){
-      while(parent[x] !== x){ parent[x] = parent[parent[x]]; x = parent[x]; }
-      return x;
-    }
-    function union(a,b){
-      const ra = find(a), rb = find(b);
-      if(ra !== rb) parent[ra] = rb;
-    }
-    return {find, union};
-  }
-
-  // ---------- File reading ----------
-  async function readWorkbook(file){
-    const name = file.name.toLowerCase();
-    const buf = await file.arrayBuffer();
-    if(name.endsWith('.csv') || name.endsWith('.txt')){
-      let text;
-      try{
-        text = new TextDecoder('utf-8', {fatal:true}).decode(buf);
-      }catch(e){
-        text = new TextDecoder('shift_jis').decode(buf);
-      }
-      text = text.replace(/^\uFEFF/, '');
-      return XLSX.read(text, {type:'string'});
-    }
-    return XLSX.read(buf, {type:'array'});
-  }
-
-  function buildRecords(wb){
-    const sheetName = wb.SheetNames[0];
-    const sheet = wb.Sheets[sheetName];
-    const rows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:'', raw:false});
-    if(!rows.length) throw new Error('データが見つかりませんでした。');
-    headers = rows[0].map(h => (h||'').toString().trim());
-    const dataRows = rows.slice(1).filter(r => r.some(v => (v||'').toString().trim() !== ''));
-
-    const idx = {
-      name: findColIndex(headers, COLS.name),
-      formalName: findColIndex(headers, COLS.formalName),
-      kana: findColIndex(headers, COLS.kana),
-      invoiceNo: findColIndex(headers, COLS.invoiceNo, ['登録番号']),
-      zip: findColIndex(headers, COLS.zip),
-      pref: findColIndex(headers, COLS.pref),
-      addr: findColIndex(headers, COLS.addr),
-      tel: findColIndex(headers, COLS.tel),
-    };
-    if(idx.name === -1){
-      throw new Error('「名前（通称）」列が見つかりませんでした。freeeの取引先エクスポート形式のファイルをご確認ください。');
-    }
-
-    return dataRows.map((row, i) => {
-      const name = cell(row, idx.name);
-      const formalName = cell(row, idx.formalName);
-      const kana = cell(row, idx.kana);
-      const invoiceNo = cell(row, idx.invoiceNo);
-      const zip = cell(row, idx.zip);
-      const pref = cell(row, idx.pref);
-      const addr = cell(row, idx.addr);
-      const tel = cell(row, idx.tel);
-      return {
-        id: i,
-        raw: row,
-        name, formalName, kana, invoiceNo, zip, pref, addr, tel,
-        normName: normalizeName(formalName) || normalizeName(name),
-        normKana: normalizeKana(kana),
-        invoiceKey: normalizeInvoice(invoiceNo),
+      // ==========================================
+      // 1. OAuth 2.0 PKCE 認証 & API設定
+      // ==========================================
+      const CONFIG = {
+        clientId: "803164151598495",
+        redirectUri: window.location.origin + window.location.pathname,
+        authEndpoint: "https://accounts.secure.freee.co.jp/public_api/authorize",
+        tokenEndpoint: "https://accounts.secure.freee.co.jp/public_api/token",
+        apiBase: "https://api.freee.co.jp/api/1"
       };
-    });
-  }
 
-  // ---------- Duplicate detection ----------
-  function detectGroups(recs){
-    const n = recs.length;
-    const uf = makeUF(n);
-
-    function bucketAndUnion(keyFn){
-      const buckets = {};
-      recs.forEach((r, i) => {
-        const k = keyFn(r);
-        if(!k || k.length < 2) return;
-        (buckets[k] = buckets[k] || []).push(i);
-      });
-      Object.values(buckets).forEach(idxs => {
-        for(let i=1;i<idxs.length;i++) uf.union(idxs[0], idxs[i]);
-      });
-    }
-
-    bucketAndUnion(r => r.invoiceKey);
-    bucketAndUnion(r => r.normName);
-    bucketAndUnion(r => r.normKana);
-
-    // Fuzzy tier (only when dataset is a reasonable size, to stay fast)
-    if(n <= 4000){
-      const fbuckets = {};
-      recs.forEach((r, i) => {
-        if(!r.normName || r.normName.length < 2) return;
-        const k = r.normName[0];
-        (fbuckets[k] = fbuckets[k] || []).push(i);
-      });
-      Object.values(fbuckets).forEach(idxs => {
-        for(let a=0;a<idxs.length;a++){
-          for(let b=a+1;b<idxs.length;b++){
-            const i = idxs[a], j = idxs[b];
-            if(uf.find(i) === uf.find(j)) continue;
-            const ra = recs[i], rb = recs[j];
-            const sim = similarity(ra.normName, rb.normName);
-            if(sim >= 0.72){
-              const sameZip = ra.zip && ra.zip === rb.zip;
-              const sameTel = ra.tel && ra.tel === rb.tel;
-              if(sameZip || sameTel || sim >= 0.85){
-                uf.union(i, j);
-              }
-            }
-          }
-        }
-      });
-    }
-
-    // Collect groups
-    const groupMap = {};
-    for(let i=0;i<n;i++){
-      const root = uf.find(i);
-      (groupMap[root] = groupMap[root] || []).push(i);
-    }
-
-    const result = [];
-    Object.values(groupMap).forEach(ids => {
-      if(ids.length < 2) return;
-      const reasons = new Set();
-      let hasStrong = false;
-      for(let a=0;a<ids.length;a++){
-        for(let b=a+1;b<ids.length;b++){
-          const ra = recs[ids[a]], rb = recs[ids[b]];
-          if(ra.invoiceKey && ra.invoiceKey === rb.invoiceKey){ reasons.add('登録番号が一致'); hasStrong = true; }
-          if(ra.normName && ra.normName === rb.normName){ reasons.add('名称の表記ゆれ'); hasStrong = true; }
-          if(ra.normKana && ra.normKana === rb.normKana){ reasons.add('カナ名称が一致'); hasStrong = true; }
-        }
+      // PKCE暗号ヘルパー関数
+      function generateRandomString(length) {
+        const validChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+        let array = new Uint8Array(length);
+        window.crypto.getRandomValues(array);
+        return Array.from(array, x => validChars[x % validChars.length]).join('');
       }
-      if(!hasStrong) reasons.add('名称が類似（要確認）');
 
-      // choose default keeper: most filled cells, tie-break by longer formal/name
-      let best = ids[0], bestScore = -1;
-      ids.forEach(i => {
-        const r = recs[i];
-        const filled = r.raw.filter(v => (v||'').toString().trim() !== '').length;
-        const nameLen = (r.formalName || r.name || '').length;
-        const score = filled * 100 + nameLen;
-        if(score > bestScore){ bestScore = score; best = i; }
-      });
+      async function sha256(plain) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(plain);
+        return window.crypto.subtle.digest('SHA-256', data);
+      }
 
-      result.push({
-        ids,
-        keepId: best,
-        dismissed: false,
-        confidence: hasStrong ? 'high' : 'medium',
-        reasons: Array.from(reasons),
-      });
-    });
+      function base64urlencode(str) {
+        return btoa(String.fromCharCode.apply(null, new Uint8Array(str)))
+          .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      }
 
-    // stable-ish order: high confidence first, then by first id
-    result.sort((g1, g2) => {
-      if(g1.confidence !== g2.confidence) return g1.confidence === 'high' ? -1 : 1;
-      return g1.ids[0] - g2.ids[0];
-    });
-    return result;
-  }
+      async function generateCodeChallenge(v) {
+        const hashed = await sha256(v);
+        return base64urlencode(hashed);
+      }
 
-  // ---------- Rendering ----------
-  const $ = sel => document.querySelector(sel);
+      // Auth ログイン実行
+      async function redirectToAuth() {
+        const verifier = generateRandomString(64);
+        sessionStorage.setItem('pkce_verifier', verifier);
+        const challenge = await generateCodeChallenge(verifier);
 
-  function fmtMeta(r){
-    const parts = [];
-    if(r.formalName && r.formalName !== r.name) parts.push(['正式', r.formalName]);
-    if(r.kana) parts.push(['カナ', r.kana]);
-    if(r.invoiceNo) parts.push(['登録番号', r.invoiceNo]);
-    const addrFull = [r.zip, r.pref, r.addr].filter(Boolean).join(' ');
-    if(addrFull) parts.push(['住所', addrFull]);
-    if(r.tel) parts.push(['電話', r.tel]);
-    return parts;
-  }
+        const params = new URLSearchParams({
+          client_id: CONFIG.clientId,
+          redirect_uri: CONFIG.redirectUri,
+          response_type: 'code',
+          scope: 'read write',
+          code_challenge: challenge,
+          code_challenge_method: 'S256'
+        });
+        window.location.href = `${CONFIG.authEndpoint}?${params.toString()}`;
+      }
 
-  function recordMatchesSearch(r){
-    if(!searchTerm) return true;
-    const t = searchTerm;
-    return (r.name && r.name.includes(t)) || (r.formalName && r.formalName.includes(t)) || (r.kana && r.kana.includes(t));
-  }
+      // Token 取得処理
+      async function fetchToken(code) {
+        const verifier = sessionStorage.getItem('pkce_verifier');
+        const params = new URLSearchParams({
+          grant_type: 'authorization_code',
+          client_id: CONFIG.clientId,
+          redirect_uri: CONFIG.redirectUri,
+          code: code,
+          code_verifier: verifier
+        });
 
-  function renderGroups(){
-    const container = $('#groupsContainer');
-    container.innerHTML = '';
-    const visibleGroups = groups.filter(g => {
-      if(!g.ids.some(id => recordMatchesSearch(records[id]))) return false;
-      return true;
-    });
+        const res = await fetch(CONFIG.tokenEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: params.toString()
+        });
 
-    let gi = 0;
-    visibleGroups.forEach(g => {
-      gi++;
-      const div = document.createElement('div');
-      div.className = 'group';
+        if (!res.ok) throw new Error('アクセストークンの取得に失敗しました。');
+        const data = await res.json();
+        sessionStorage.setItem('access_token', data.access_token);
+        
+        // クエリパラメータをブラウザから消去
+        window.history.replaceState({}, document.title, CONFIG.redirectUri);
+        return data.access_token;
+      }
 
-      const head = document.createElement('div');
-      head.className = 'group-head';
-      const left = document.createElement('div');
-      left.className = 'group-head-left';
-      left.innerHTML = `<span class="group-num">グループ ${gi}</span>
-        <span class="badge ${g.confidence}">${g.confidence === 'high' ? '確実' : '要確認'}</span>
-        <span class="reason">${g.reasons.join(' / ')}</span>`;
-      head.appendChild(left);
+      function getAccessToken() {
+        return sessionStorage.getItem('access_token');
+      }
 
-      const btn = document.createElement('button');
-      btn.className = 'dismiss-btn';
-      btn.type = 'button';
-      btn.textContent = g.dismissed ? '重複候補に戻す' : '重複ではない（分離する）';
-      btn.addEventListener('click', () => {
-        g.dismissed = !g.dismissed;
-        render();
-      });
-      head.appendChild(btn);
-      div.appendChild(head);
+      // freee API呼び出し関数
+      async function callFreeeApi(endpoint, params = {}) {
+        const token = getAccessToken();
+        if (!token) throw new Error('認証が切れています。再度ログインしてください。');
+        
+        const url = new URL(CONFIG.apiBase + endpoint);
+        Object.keys(params).forEach(k => url.searchParams.append(k, params[k]));
 
-      if(g.dismissed){
-        const note = document.createElement('div');
-        note.className = 'group-dismissed-note';
-        note.textContent = 'このグループは別々の取引先として扱われます（全件とも書き出し対象に残ります）。';
-        div.appendChild(note);
-      } else {
-        g.ids.forEach(id => {
-          const r = records[id];
-          const row = document.createElement('label');
-          row.className = 'member' + (id === g.keepId ? ' keep' : '');
-          const radio = document.createElement('input');
-          radio.type = 'radio';
-          radio.name = 'group-' + g.ids[0];
-          radio.checked = id === g.keepId;
-          radio.addEventListener('change', () => {
-            g.keepId = id;
-            render();
-          });
-          row.appendChild(radio);
+        const res = await fetch(url.toString(), {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error(`API呼び出しエラー: ${res.statusText}`);
+        return await res.json();
+      }
 
-          const body = document.createElement('div');
-          body.className = 'member-body';
-          const nameRow = document.createElement('div');
-          nameRow.className = 'member-name-row';
-          nameRow.innerHTML = `<span class="member-name">${escapeHtml(r.name || '(名称未設定)')}</span>` +
-            (id === g.keepId ? '<span class="keep-tag">残す</span>' : '');
-          body.appendChild(nameRow);
+      // ==========================================
+      // 2. 既存ツール連携 & 画面遷移状態
+      // ==========================================
+      let headers = [];
+      let records = [];
+      let groups = [];
+      let viewMode = 'dup';
+      let searchTerm = '';
+      let currentCompanyId = null;
 
-          const meta = document.createElement('div');
-          meta.className = 'member-meta';
-          meta.innerHTML = fmtMeta(r).map(([k,v]) => `<span><b>${k}:</b> ${escapeHtml(v)}</span>`).join('');
-          body.appendChild(meta);
+      const COLS = {
+        name: ['名前（通称）', '名前(通称)', '名前'],
+        formalName: ['正式名称（帳票出力時に使用される名称）', '正式名称'],
+        kana: ['カナ名称'],
+        invoiceNo: ['適格請求書発行事業者の登録番号'],
+        zip: ['郵便番号'],
+        pref: ['都道府県'],
+        addr: ['市区町村・番地'],
+        tel: ['電話番号'],
+      };
 
-          row.appendChild(body);
-          div.appendChild(row);
+      function findColIndex(hdrs, candidates, fallbackIncludes) {
+        for (const c of candidates) {
+          const idx = hdrs.findIndex(h => (h || '').toString().trim() === c);
+          if (idx !== -1) return idx;
+        }
+        if (fallbackIncludes) {
+          const idx = hdrs.findIndex(h => fallbackIncludes.every(f => (h || '').toString().includes(f)));
+          if (idx !== -1) return idx;
+        }
+        return -1;
+      }
+
+      function cell(row, idx) {
+        if (idx === -1 || idx === undefined) return '';
+        const v = row[idx];
+        return (v === undefined || v === null) ? '' : String(v).trim();
+      }
+
+      function toHalfWidth(s) {
+        return s.replace(/[Ａ-Ｚａ-ｚ０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
+      }
+
+      function toHiragana(s) {
+        return s.replace(/[\u30a1-\u30f6]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
+      }
+
+      const CORP_FORMS = ['株式会社', '有限会社', '合同会社', '合名会社', '合資会社', '一般社団法人', '公益社団法人', '一般財団法人', '公益財団法人', '学校法人', '医療法人', '社会福祉法人', '特定非営利活動法人', 'ＮＰＯ法人', 'NPO法人', '宗教法人', '協同組合', '農業協同組合', '㈱', '㈲', '（株）', '(株)', '（有）', '(有)'];
+      const CORP_FORMS_KANA = ['かぶしきがいしゃ', 'ゆうげんがいしゃ', 'ごうどうがいしゃ', 'ごうめいがいしゃ', 'ごうしがいしゃ'];
+
+      function normalizeName(s) {
+        if (!s) return '';
+        let t = toHalfWidth(s.trim()).replace(/[\s ]/g, '');
+        for (const f of CORP_FORMS) { t = t.split(f).join(''); }
+        return t;
+      }
+
+      function normalizeKana(s) {
+        if (!s) return '';
+        let t = toHiragana(toHalfWidth(s.trim())).replace(/[\s ]/g, '');
+        for (const f of CORP_FORMS_KANA) { t = t.split(f).join(''); }
+        return t;
+      }
+
+      function normalizeInvoice(s) {
+        if (!s) return '';
+        return toHalfWidth(s.trim()).replace(/[\s\-ー―]/g, '').toUpperCase();
+      }
+
+      function levenshtein(a, b) {
+        const m = a.length, n = b.length;
+        if (m === 0) return n;
+        if (n === 0) return m;
+        let prev = new Array(n + 1);
+        for (let j = 0; j <= n; j++) prev[j] = j;
+        for (let i = 1; i <= m; i++) {
+          const cur = [i];
+          for (let j = 1; j <= n; j++) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+            cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+          }
+          prev = cur;
+        }
+        return prev[n];
+      }
+
+      function similarity(a, b) {
+        if (!a.length && !b.length) return 1;
+        return 1 - levenshtein(a, b) / Math.max(a.length, b.length);
+      }
+
+      function makeUF(n) {
+        const parent = Array.from({ length: n }, (_, i) => i);
+        function find(x) {
+          while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; }
+          return x;
+        }
+        function union(a, b) {
+          const ra = find(a), rb = find(b);
+          if (ra !== rb) parent[ra] = rb;
+        }
+        return { find, union };
+      }
+
+      // APIデータからのレコード構築
+      function buildRecordsFromApi(partners) {
+        headers = ['名前（通称）', '正式名称', 'カナ名称', '適格請求書発行事業者の登録番号', '郵便番号', '都道府県', '市区町村・番地', '電話番号'];
+        return partners.map((p, i) => {
+          const name = p.name || '';
+          const formalName = p.long_name || '';
+          const kana = p.kana_name || '';
+          const invoiceNo = p.qualified_invoice_issuer_number || '';
+          const zip = p.zipcode || '';
+          const pref = p.prefecture_code !== undefined ? '' : '';
+          const addr = (p.street_name1 || '') + (p.street_name2 || '');
+          const tel = p.phone || '';
+
+          return {
+            id: i,
+            raw: [name, formalName, kana, invoiceNo, zip, pref, addr, tel],
+            name, formalName, kana, invoiceNo, zip, pref, addr, tel,
+            normName: normalizeName(formalName) || normalizeName(name),
+            normKana: normalizeKana(kana),
+            invoiceKey: normalizeInvoice(invoiceNo)
+          };
         });
       }
 
-      container.appendChild(div);
-    });
-
-    $('#emptyState').classList.toggle('hidden', groups.length !== 0 || viewMode !== 'dup');
-    container.classList.toggle('hidden', viewMode !== 'dup');
-  }
-
-  function renderAllTable(){
-    const wrap = $('#allTableWrap');
-    wrap.classList.toggle('hidden', viewMode !== 'all');
-    if(viewMode !== 'all') return;
-    const dupIds = new Set();
-    groups.forEach(g => { if(!g.dismissed) g.ids.forEach(id => { if(id !== g.keepId) dupIds.add(id); }); });
-
-    const tbody = $('#allTableBody');
-    tbody.innerHTML = '';
-    records.filter(recordMatchesSearch).forEach(r => {
-      const tr = document.createElement('tr');
-      const isDup = dupIds.has(r.id);
-      if(isDup) tr.className = 'is-dup';
-      const addrFull = [r.zip, r.pref, r.addr].filter(Boolean).join(' ');
-      tr.innerHTML = `<td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.formalName)}</td><td>${escapeHtml(r.kana)}</td>
-        <td>${escapeHtml(r.invoiceNo)}</td><td>${escapeHtml(addrFull)}</td><td>${escapeHtml(r.tel)}</td>
-        <td>${isDup ? '重複候補（除外予定）' : ''}</td>`;
-      tbody.appendChild(tr);
-    });
-  }
-
-  function renderSummary(){
-    const activeGroups = groups.filter(g => !g.dismissed);
-    const memberCount = activeGroups.reduce((s,g) => s + g.ids.length, 0);
-    $('#statTotal').textContent = records.length;
-    $('#statGroups').textContent = activeGroups.length;
-    $('#statMembers').textContent = memberCount;
-  }
-
-  function escapeHtml(s){
-    return (s||'').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-  }
-
-  function render(){
-    renderSummary();
-    renderGroups();
-    renderAllTable();
-  }
-
-  // ---------- Export ----------
-  function buildExportWorkbook(){
-    const wb = XLSX.utils.book_new();
-
-    // Sheet 1: duplicate candidates
-    const dupHeader = ['グループ','判定','対応','名前（通称）','正式名称','カナ名称','登録番号','郵便番号','都道府県','市区町村・番地','電話番号'];
-    const dupRows = [dupHeader];
-    let gi = 0;
-    groups.forEach(g => {
-      if(g.dismissed) return;
-      gi++;
-      g.ids.forEach(id => {
-        const r = records[id];
-        dupRows.push([
-          gi,
-          g.confidence === 'high' ? '確実' : '要確認',
-          id === g.keepId ? '残す' : '重複（削除候補）',
-          r.name, r.formalName, r.kana, r.invoiceNo, r.zip, r.pref, r.addr, r.tel
-        ]);
-      });
-    });
-    const wsDup = XLSX.utils.aoa_to_sheet(dupRows);
-    XLSX.utils.book_append_sheet(wb, wsDup, '重複候補');
-
-    // Sheet 2: cleaned full list, original columns preserved
-    const excludeIds = new Set();
-    groups.forEach(g => { if(!g.dismissed) g.ids.forEach(id => { if(id !== g.keepId) excludeIds.add(id); }); });
-
-    const cleanRows = [headers];
-    records.forEach(r => {
-      if(excludeIds.has(r.id)) return;
-      cleanRows.push(r.raw);
-    });
-    const wsClean = XLSX.utils.aoa_to_sheet(cleanRows);
-    XLSX.utils.book_append_sheet(wb, wsClean, '整理後リスト');
-
-    return wb;
-  }
-
-  function doExport(){
-    if(!records.length) return;
-    const wb = buildExportWorkbook();
-    const today = new Date();
-    const ymd = today.getFullYear() + String(today.getMonth()+1).padStart(2,'0') + String(today.getDate()).padStart(2,'0');
-    XLSX.writeFile(wb, `取引先整理_${ymd}.xlsx`);
-  }
-
-  // ---------- File handling ----------
-  function showError(msg){
-    const box = $('#errorBox');
-    box.textContent = msg;
-    box.style.display = 'block';
-  }
-  function clearError(){
-    $('#errorBox').style.display = 'none';
-  }
-
-  async function handleFile(file){
-    clearError();
-    $('#loadingText').classList.remove('hidden');
-    try{
-      const wb = await readWorkbook(file);
-      const recs = buildRecords(wb);
-      records = recs;
-      groups = detectGroups(recs);
-      $('#uploadSection').classList.add('hidden');
-      $('#resultSection').classList.remove('hidden');
-      render();
-    }catch(e){
-      showError('ファイルの読み込みに失敗しました：' + (e && e.message ? e.message : e));
-    }finally{
-      $('#loadingText').classList.add('hidden');
-    }
-  }
-
-  // ---------- Wire up UI ----------
-  const dropzone = $('#dropzone');
-  const fileInput = $('#fileInput');
-
-  dropzone.addEventListener('click', () => fileInput.click());
-  dropzone.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' ') fileInput.click(); });
-  fileInput.addEventListener('change', e => {
-    if(e.target.files && e.target.files[0]) handleFile(e.target.files[0]);
-  });
-  ['dragenter','dragover'].forEach(evt => {
-    dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.add('drag'); });
-  });
-  ['dragleave','drop'].forEach(evt => {
-    dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.remove('drag'); });
-  });
-  dropzone.addEventListener('drop', e => {
-    if(e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
-  });
-
-  $('#viewDupBtn').addEventListener('click', () => {
-    viewMode = 'dup';
-    $('#viewDupBtn').classList.add('active');
-    $('#viewAllBtn').classList.remove('active');
-    render();
-  });
-  $('#viewAllBtn').addEventListener('click', () => {
-    viewMode = 'all';
-    $('#viewAllBtn').classList.add('active');
-    $('#viewDupBtn').classList.remove('active');
-    render();
-  });
-  $('#searchBox').addEventListener('input', e => {
-    searchTerm = e.target.value.trim();
-    render();
-  });
-  $('#reuploadBtn').addEventListener('click', () => {
-    records = []; groups = []; headers = [];
-    fileInput.value = '';
-    $('#resultSection').classList.add('hidden');
-    $('#uploadSection').classList.remove('hidden');
-  });
-  $('#exportBtn').addEventListener('click', doExport);
-
-  // ---------- Criteria modal ----------
-  const criteriaModal = $('#criteriaModal');
-  function openCriteriaModal(){ criteriaModal.classList.remove('hidden'); }
-  function closeCriteriaModal(){ criteriaModal.classList.add('hidden'); }
-  $('#criteriaBtn').addEventListener('click', openCriteriaModal);
-  $('#criteriaCloseBtn').addEventListener('click', closeCriteriaModal);
-  criteriaModal.addEventListener('click', e => { if(e.target === criteriaModal) closeCriteriaModal(); });
-  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeCriteriaModal(); });
-
-  // ---------- Custom cursor effects ----------
-  if(window.matchMedia('(pointer: fine)').matches){
-    const cursorDot = document.getElementById('cursorDot');
-    const cursorGlow = document.getElementById('cursorGlow');
-    let cursorShown = false;
-    window.addEventListener('mousemove', e => {
-      cursorDot.style.left = e.clientX + 'px';
-      cursorDot.style.top = e.clientY + 'px';
-      cursorGlow.style.left = e.clientX + 'px';
-      cursorGlow.style.top = e.clientY + 'px';
-      if(!cursorShown){
-        cursorDot.style.opacity = '1';
-        cursorGlow.style.opacity = '1';
-        cursorShown = true;
+      // ファイル読込レコード構築
+      async function readWorkbook(file) {
+        const name = file.name.toLowerCase();
+        const buf = await file.arrayBuffer();
+        if (name.endsWith('.csv') || name.endsWith('.txt')) {
+          let text;
+          try { text = new TextDecoder('utf-8', { fatal: true }).decode(buf); }
+          catch (e) { text = new TextDecoder('shift_jis').decode(buf); }
+          return XLSX.read(text.replace(/^\uFEFF/, ''), { type: 'string' });
+        }
+        return XLSX.read(buf, { type: 'array' });
       }
-    });
-    document.addEventListener('mouseleave', () => {
-      cursorDot.style.opacity = '0';
-      cursorGlow.style.opacity = '0';
-    });
-    window.addEventListener('click', e => {
-      const wave = document.createElement('div');
-      wave.className = 'ripple-wave';
-      wave.style.left = e.clientX + 'px';
-      wave.style.top = e.clientY + 'px';
-      document.body.appendChild(wave);
-      wave.addEventListener('animationend', () => wave.remove());
-    });
-  }
 
-})();
-</script>
+      function buildRecordsFromFile(wb) {
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false });
+        if (!rows.length) throw new Error('データが見つかりませんでした。');
+        headers = rows[0].map(h => (h || '').toString().trim());
+        const dataRows = rows.slice(1).filter(r => r.some(v => (v || '').toString().trim() !== ''));
+
+        const idx = {
+          name: findColIndex(headers, COLS.name),
+          formalName: findColIndex(headers, COLS.formalName),
+          kana: findColIndex(headers, COLS.kana),
+          invoiceNo: findColIndex(headers, COLS.invoiceNo, ['登録番号']),
+          zip: findColIndex(headers, COLS.zip),
+          pref: findColIndex(headers, COLS.pref),
+          addr: findColIndex(headers, COLS.addr),
+          tel: findColIndex(headers, COLS.tel),
+        };
+        if (idx.name === -1) throw new Error('「名前（通称）」列が見つかりませんでした。');
+
+        return dataRows.map((row, i) => {
+          const name = cell(row, idx.name), formalName = cell(row, idx.formalName), kana = cell(row, idx.kana);
+          const invoiceNo = cell(row, idx.invoiceNo), zip = cell(row, idx.zip), pref = cell(row, idx.pref);
+          const addr = cell(row, idx.addr), tel = cell(row, idx.tel);
+          return {
+            id: i, raw: row, name, formalName, kana, invoiceNo, zip, pref, addr, tel,
+            normName: normalizeName(formalName) || normalizeName(name),
+            normKana: normalizeKana(kana),
+            invoiceKey: normalizeInvoice(invoiceNo),
+          };
+        });
+      }
+
+      // 重複判定ロジック
+      function detectGroups(recs) {
+        const n = recs.length;
+        const uf = makeUF(n);
+
+        function bucketAndUnion(keyFn) {
+          const buckets = {};
+          recs.forEach((r, i) => {
+            const k = keyFn(r);
+            if (!k || k.length < 2) return;
+            (buckets[k] = buckets[k] || []).push(i);
+          });
+          Object.values(buckets).forEach(idxs => {
+            for (let i = 1; i < idxs.length; i++) uf.union(idxs[0], idxs[i]);
+          });
+        }
+
+        bucketAndUnion(r => r.invoiceKey);
+        bucketAndUnion(r => r.normName);
+        bucketAndUnion(r => r.normKana);
+
+        if (n <= 4000) {
+          const fbuckets = {};
+          recs.forEach((r, i) => {
+            if (!r.normName || r.normName.length < 2) return;
+            (fbuckets[r.normName[0]] = fbuckets[r.normName[0]] || []).push(i);
+          });
+          Object.values(fbuckets).forEach(idxs => {
+            for (let a = 0; a < idxs.length; a++) {
+              for (let b = a + 1; b < idxs.length; b++) {
+                const i = idxs[a], j = idxs[b];
+                if (uf.find(i) === uf.find(j)) continue;
+                const ra = recs[i], rb = recs[j];
+                const sim = similarity(ra.normName, rb.normName);
+                if (sim >= 0.72 && (ra.zip === rb.zip || ra.tel === rb.tel || sim >= 0.85)) {
+                  uf.union(i, j);
+                }
+              }
+            }
+          });
+        }
+
+        const groupMap = {};
+        for (let i = 0; i < n; i++) {
+          (groupMap[uf.find(i)] = groupMap[uf.find(i)] || []).push(i);
+        }
+
+        const result = [];
+        Object.values(groupMap).forEach(ids => {
+          if (ids.length < 2) return;
+          const reasons = new Set();
+          let hasStrong = false;
+          for (let a = 0; a < ids.length; a++) {
+            for (let b = a + 1; b < ids.length; b++) {
+              const ra = recs[ids[a]], rb = recs[ids[b]];
+              if (ra.invoiceKey && ra.invoiceKey === rb.invoiceKey) { reasons.add('登録番号が一致'); hasStrong = true; }
+              if (ra.normName && ra.normName === rb.normName) { reasons.add('名称の表記ゆれ'); hasStrong = true; }
+              if (ra.normKana && ra.normKana === rb.normKana) { reasons.add('カナ名称が一致'); hasStrong = true; }
+            }
+          }
+          if (!hasStrong) reasons.add('名称が類似（要確認）');
+
+          let best = ids[0], bestScore = -1;
+          ids.forEach(i => {
+            const r = recs[i];
+            const score = r.raw.filter(v => (v || '').toString().trim() !== '').length * 100 + (r.formalName || r.name || '').length;
+            if (score > bestScore) { bestScore = score; best = i; }
+          });
+          result.push({
+            ids,
+            keepId: best,
+            dismissed: false,
+            confidence: hasStrong ? 'high' : 'medium',
+            reasons: Array.from(reasons)
+          });
+        });
+
+        return result.sort((g1, g2) => g1.confidence === g2.confidence ? g1.ids[0] - g2.ids[0] : (g1.confidence === 'high' ? -1 : 1));
+      }
+
+      // UI描写
+      const $ = sel => document.querySelector(sel);
+
+      function fmtMeta(r) {
+        const parts = [];
+        if (r.formalName && r.formalName !== r.name) parts.push(['正式', r.formalName]);
+        if (r.kana) parts.push(['カナ', r.kana]);
+        if (r.invoiceNo) parts.push(['登録番号', r.invoiceNo]);
+        const addrFull = [r.zip, r.pref, r.addr].filter(Boolean).join(' ');
+        if (addrFull) parts.push(['住所', addrFull]);
+        if (r.tel) parts.push(['電話', r.tel]);
+        return parts;
+      }
+
+      function recordMatchesSearch(r) {
+        if (!searchTerm) return true;
+        return (r.name && r.name.includes(searchTerm)) || (r.formalName && r.formalName.includes(searchTerm)) || (r.kana && r.kana.includes(searchTerm));
+      }
+
+      function renderGroups() {
+        const container = $('#groupsContainer');
+        container.innerHTML = '';
+        const visibleGroups = groups.filter(g => g.ids.some(id => recordMatchesSearch(records[id])));
+        let gi = 0;
+
+        visibleGroups.forEach(g => {
+          gi++;
+          const div = document.createElement('div');
+          div.className = 'group';
+
+          const head = document.createElement('div');
+          head.className = 'group-head';
+          head.innerHTML = `<div class="group-head-left"><span class="group-num">グループ ${gi}</span><span class="badge ${g.confidence}">${g.confidence === 'high' ? '確実' : '要確認'}</span><span class="reason">${g.reasons.join(' / ')}</span></div>`;
+
+          const btn = document.createElement('button');
+          btn.className = 'dismiss-btn';
+          btn.type = 'button';
+          btn.textContent = g.dismissed ? '重複候補に戻す' : '重複ではない（分離する）';
+          btn.addEventListener('click', () => { g.dismissed = !g.dismissed; render(); });
+
+          head.appendChild(btn);
+          div.appendChild(head);
+
+          if (g.dismissed) {
+            const note = document.createElement('div');
+            note.className = 'group-dismissed-note';
+            note.textContent = 'このグループは別々の取引先として扱われます（全件とも書き出し対象に残ります）。';
+            div.appendChild(note);
+          } else {
+            g.ids.forEach(id => {
+              const r = records[id];
+              const row = document.createElement('label');
+              row.className = 'member' + (id === g.keepId ? ' keep' : '');
+              row.innerHTML = `<input type="radio" name="group-${g.ids[0]}" ${id === g.keepId ? 'checked' : ''}><div class="member-body"><div class="member-name-row"><span class="member-name">${escapeHtml(r.name || '(名称未設定)')}</span>${id === g.keepId ? '<span class="keep-tag">残す</span>' : ''}</div><div class="member-meta">${fmtMeta(r).map(([k, v]) => `<span><b>${k}:</b> ${escapeHtml(v)}</span>`).join('')}</div></div>`;
+              row.querySelector('input').addEventListener('change', () => { g.keepId = id; render(); });
+              div.appendChild(row);
+            });
+          }
+          container.appendChild(div);
+        });
+
+        $('#emptyState').classList.toggle('hidden', groups.length !== 0 || viewMode !== 'dup');
+        container.classList.toggle('hidden', viewMode !== 'dup');
+      }
+
+      function renderAllTable() {
+        const wrap = $('#allTableWrap');
+        wrap.classList.toggle('hidden', viewMode !== 'all');
+        if (viewMode !== 'all') return;
+
+        const dupIds = new Set();
+        groups.forEach(g => {
+          if (!g.dismissed) g.ids.forEach(id => { if (id !== g.keepId) dupIds.add(id); });
+        });
+
+        const tbody = $('#allTableBody');
+        tbody.innerHTML = '';
+        records.filter(recordMatchesSearch).forEach(r => {
+          const tr = document.createElement('tr');
+          if (dupIds.has(r.id)) tr.className = 'is-dup';
+          tr.innerHTML = `<td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.formalName)}</td><td>${escapeHtml(r.kana)}</td><td>${escapeHtml(r.invoiceNo)}</td><td>${escapeHtml([r.zip, r.pref, r.addr].filter(Boolean).join(' '))}</td><td>${escapeHtml(r.tel)}</td><td>${dupIds.has(r.id) ? '重複候補（除外予定）' : ''}</td>`;
+          tbody.appendChild(tr);
+        });
+      }
+
+      function renderSummary() {
+        const activeGroups = groups.filter(g => !g.dismissed);
+        $('#statTotal').textContent = records.length;
+        $('#statGroups').textContent = activeGroups.length;
+        $('#statMembers').textContent = activeGroups.reduce((s, g) => s + g.ids.length, 0);
+      }
+
+      function escapeHtml(s) {
+        return (s || '').toString().replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+      }
+
+      function render() {
+        renderSummary();
+        renderGroups();
+        renderAllTable();
+      }
+
+      function buildExportWorkbook() {
+        const wb = XLSX.utils.book_new();
+        const dupHeader = ['グループ', '判定', '対応', '名前（通称）', '正式名称', 'カナ名称', '登録番号', '郵便番号', '都道府県', '市区町村・番地', '電話番号'];
+        const dupRows = [dupHeader];
+        let gi = 0;
+
+        groups.forEach(g => {
+          if (g.dismissed) return;
+          gi++;
+          g.ids.forEach(id => {
+            const r = records[id];
+            dupRows.push([gi, g.confidence === 'high' ? '確実' : '要確認', id === g.keepId ? '残す' : '重複（削除候補）', r.name, r.formalName, r.kana, r.invoiceNo, r.zip, r.pref, r.addr, r.tel]);
+          });
+        });
+
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(dupRows), '重複候補');
+
+        const excludeIds = new Set();
+        groups.forEach(g => {
+          if (!g.dismissed) g.ids.forEach(id => { if (id !== g.keepId) excludeIds.add(id); });
+        });
+
+        const cleanRows = [headers];
+        records.forEach(r => { if (!excludeIds.has(r.id)) cleanRows.push(r.raw); });
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(cleanRows), '整理後リスト');
+
+        return wb;
+      }
+
+      function doExport() {
+        if (!records.length) return;
+        const today = new Date();
+        const ymd = today.getFullYear() + String(today.getMonth() + 1).padStart(2, '0') + String(today.getDate()).padStart(2, '0');
+        XLSX.writeFile(buildExportWorkbook(), `取引先整理_${ymd}.xlsx`);
+      }
+
+      function showError(msg) {
+        const box = $('#errorBox');
+        box.textContent = msg;
+        box.style.display = 'block';
+      }
+
+      function clearError() {
+        $('#errorBox').style.display = 'none';
+      }
+
+      function showLoading(show) {
+        $('#loadingText').classList.toggle('hidden', !show);
+      }
+
+      // ==========================================
+      // 3. 画面フロー制御 & 初期化
+      // ==========================================
+      async function loadCompanies() {
+        try {
+          showLoading(true);
+          clearError();
+          const res = await callFreeeApi('/companies');
+          const select = $('#companySelect');
+          select.innerHTML = '';
+          res.companies.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = c.display_name;
+            select.appendChild(opt);
+          });
+          $('#stepLogin').classList.add('hidden');
+          $('#stepCompany').classList.remove('hidden');
+        } catch (e) {
+          showError(e.message);
+          $('#stepLogin').classList.remove('hidden');
+        } finally {
+          showLoading(false);
+        }
+      }
+
+      async function loadPartnersAndStartApp() {
+        try {
+          showLoading(true);
+          clearError();
+          // APIから取引先一覧を取得（上限2000件）
+          const res = await callFreeeApi('/partners', { company_id: currentCompanyId, limit: 2000 });
+          records = buildRecordsFromApi(res.partners);
+          groups = detectGroups(records);
+
+          $('#stepApps').classList.add('hidden');
+          $('#appDedupeSection').classList.remove('hidden');
+          $('#uploadSection').classList.add('hidden'); // API成功時はアップロードエリア非表示
+          $('#resultSection').classList.remove('hidden');
+          render();
+        } catch (e) {
+          showError('取引先データの取得に失敗しました: ' + e.message);
+        } finally {
+          showLoading(false);
+        }
+      }
+
+      async function handleFile(file) {
+        clearError();
+        showLoading(true);
+        try {
+          const wb = await readWorkbook(file);
+          records = buildRecordsFromFile(wb);
+          groups = detectGroups(records);
+          $('#uploadSection').classList.add('hidden');
+          $('#resultSection').classList.remove('hidden');
+          render();
+        } catch (e) {
+          showError('ファイルの読み込みに失敗しました：' + e.message);
+        } finally {
+          showLoading(false);
+        }
+      }
+
+      // イベントバインド
+      $('#loginBtn').addEventListener('click', redirectToAuth);
+
+      $('#selectCompanyBtn').addEventListener('click', () => {
+        const select = $('#companySelect');
+        currentCompanyId = select.value;
+        const name = select.options[select.selectedIndex].text;
+        if (!currentCompanyId) return;
+        $('#selectedCompanyName').textContent = name;
+        $('#stepCompany').classList.add('hidden');
+        $('#stepApps').classList.remove('hidden');
+      });
+
+      $('#backToCompanyBtn').addEventListener('click', () => {
+        $('#stepApps').classList.add('hidden');
+        $('#stepCompany').classList.remove('hidden');
+      });
+
+      $('#appDedupeCard').addEventListener('click', () => {
+        loadPartnersAndStartApp();
+      });
+
+      $('#backToAppsBtn').addEventListener('click', () => {
+        $('#appDedupeSection').classList.add('hidden');
+        $('#stepApps').classList.remove('hidden');
+      });
+
+      const dropzone = $('#dropzone');
+      const fileInput = $('#fileInput');
+
+      dropzone.addEventListener('click', () => fileInput.click());
+      dropzone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+      fileInput.addEventListener('change', e => { if (e.target.files && e.target.files[0]) handleFile(e.target.files[0]); });
+
+      ['dragenter', 'dragover'].forEach(evt => {
+        dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.add('drag'); });
+      });
+      ['dragleave', 'drop'].forEach(evt => {
+        dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.remove('drag'); });
+      });
+      dropzone.addEventListener('drop', e => {
+        e.preventDefault();
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+      });
+
+      $('#viewDupBtn').addEventListener('click', () => {
+        viewMode = 'dup';
+        $('#viewDupBtn').classList.add('active');
+        $('#viewAllBtn').classList.remove('active');
+        render();
+      });
+
+      $('#viewAllBtn').addEventListener('click', () => {
+        viewMode = 'all';
+        $('#viewAllBtn').classList.add('active');
+        $('#viewDupBtn').classList.remove('active');
+        render();
+      });
+
+      $('#searchBox').addEventListener('input', e => {
+        searchTerm = e.target.value.trim();
+        render();
+      });
+
+      $('#exportBtn').addEventListener('click', doExport);
+
+      const criteriaModal = $('#criteriaModal');
+      $('#criteriaBtn').addEventListener('click', () => criteriaModal.classList.remove('hidden'));
+      $('#criteriaCloseBtn').addEventListener('click', () => criteriaModal.classList.add('hidden'));
+      criteriaModal.addEventListener('click', e => { if (e.target === criteriaModal) criteriaModal.classList.add('hidden'); });
+
+      // カーソルエフェクト
+      if (window.matchMedia('(pointer: fine)').matches) {
+        const cursorDot = document.getElementById('cursorDot');
+        const cursorGlow = document.getElementById('cursorGlow');
+        let cursorShown = false;
+
+        window.addEventListener('mousemove', e => {
+          cursorDot.style.left = e.clientX + 'px';
+          cursorDot.style.top = e.clientY + 'px';
+          cursorGlow.style.left = e.clientX + 'px';
+          cursorGlow.style.top = e.clientY + 'px';
+          if (!cursorShown) {
+            cursorDot.style.opacity = '1';
+            cursorGlow.style.opacity = '1';
+            cursorShown = true;
+          }
+        });
+
+        document.addEventListener('mouseleave', () => {
+          cursorDot.style.opacity = '0';
+          cursorGlow.style.opacity = '0';
+        });
+
+        window.addEventListener('click', e => {
+          const wave = document.createElement('div');
+          wave.className = 'ripple-wave';
+          wave.style.left = e.clientX + 'px';
+          wave.style.top = e.clientY + 'px';
+          document.body.appendChild(wave);
+          wave.addEventListener('animationend', () => wave.remove());
+        });
+      }
+
+      // ページ読み込み時：OAuth リダイレクト戻り判定
+      async function init() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+
+        if (code) {
+          try {
+            showLoading(true);
+            await fetchToken(code);
+            await loadCompanies();
+          } catch (e) {
+            showError(e.message);
+          } finally {
+            showLoading(false);
+          }
+        } else if (getAccessToken()) {
+          // すでにトークンを保持している場合
+          loadCompanies();
+        }
+      }
+
+      init();
+    })();
+  </script>
 </body>
 </html>
