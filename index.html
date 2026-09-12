@@ -128,7 +128,7 @@
     .page {
       position: relative;
       z-index: 2;
-      max-width: 480px;
+      max-width: 520px;
       margin: 44px auto;
       padding: 36px 24px 56px;
       background: rgba(255, 253, 247, 0.65);
@@ -138,7 +138,7 @@
       box-shadow: 0 30px 80px rgba(32, 48, 59, 0.22), 0 4px 16px rgba(32, 48, 59, 0.08);
     }
 
-    @media (max-width: 520px) {
+    @media (max-width: 560px) {
       .page {
         margin: 0;
         border-radius: 0;
@@ -231,19 +231,26 @@
 
     .btn-nav:hover { color: var(--ink); border-color: var(--ink-soft); }
 
+    .action-btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
     .dropzone {
       border: 1.5px dashed var(--line);
       background: #FFFDF7;
       border-radius: 18px;
-      padding: 30px 20px;
+      padding: 24px 20px;
       text-align: center;
       cursor: pointer;
       transition: border-color .15s ease, background .15s ease;
     }
 
     .dropzone.drag { border-color: var(--navy); background: var(--paper-deep); }
-    .dropzone .big { font-size: 14.5px; font-weight: 600; margin-bottom: 6px; }
-    .dropzone .small { font-size: 12px; color: var(--ink-soft); }
+    .dropzone .big { font-size: 13.5px; font-weight: 600; margin-bottom: 4px; }
+    .dropzone .small { font-size: 11.5px; color: var(--ink-soft); }
     .dropzone input { display: none; }
     .privacy-note { margin-top: 10px; font-size: 11.5px; color: var(--ink-soft); text-align: center; }
 
@@ -475,6 +482,21 @@
       text-align: center;
     }
 
+    .btn-secondary {
+      background: #FFFDF7;
+      color: var(--navy);
+      border: 1.5px solid var(--navy);
+      padding: 12px 22px;
+      border-radius: 11px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+    .btn-secondary:hover { background: var(--paper-deep); }
+
     .btn-primary:hover { background: var(--navy-soft); }
     .btn-primary:disabled { background: #B9B2A0; cursor: not-allowed; }
     .btn-ghost { background: none; border: 1px solid var(--line); color: var(--ink-soft); padding: 12px 18px; border-radius: 11px; font-size: 13px; cursor: pointer; }
@@ -639,7 +661,7 @@
       <div class="app-grid">
         <div class="app-card" id="appDedupeCard">
           <div class="app-card-title">取引先台帳クリーニング</div>
-          <div class="app-card-desc">API経由で取引先を自動取得し、表記ゆれ・重複候補を判定してExcel出力します。</div>
+          <div class="app-card-desc">API経由で取引先を自動取得し、重複候補や未使用の取引先を整理します。</div>
         </div>
         <div class="app-card" style="opacity: 0.6; cursor: not-allowed;">
           <div class="app-card-title">【開発予定】仕訳データチェック</div>
@@ -656,6 +678,12 @@
     <div id="appDedupeSection" class="hidden">
       <button class="btn-nav" id="backToAppsBtn" type="button">← アプリ選択へ戻る</button>
 
+      <!-- 操作ボタンエリア -->
+      <div class="action-btn-group">
+        <button class="btn-primary" id="findDupBtn" type="button">取引先の重複登録を探す</button>
+        <button class="btn-secondary" id="findUnusedBtn" type="button">過去に取引がない取引先を探す</button>
+      </div>
+
       <div id="uploadSection">
         <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択してアップロード">
           <div class="big">または、ファイル（CSV/Excel）から読み込む</div>
@@ -663,15 +691,6 @@
           <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
         </div>
         <div class="privacy-note">ファイルはこの画面内だけで処理されます。外部のサーバーには送信されません。</div>
-        <details class="export-guide">
-          <summary>手動エクスポートの手順</summary>
-          <img class="guide-img" src="data:image/png;base64,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" alt="freeeの取引先ページエクスポートガイド">
-          <ol>
-            <li>freeeで<b>「取引先」</b>ページを開く</li>
-            <li>右上の<b>「…」</b>メニューをクリック</li>
-            <li><b>「CSVエクスポート」</b>を選んでダウンロード</li>
-          </ol>
-        </details>
       </div>
 
       <div id="resultSection" class="hidden">
@@ -679,12 +698,12 @@
           <div class="summary">
             <div class="summary-stats">
               <div class="stat"><span class="num" id="statTotal">0</span><span class="lbl">全取引先</span></div>
-              <div class="stat"><span class="num" id="statGroups">0</span><span class="lbl">重複の疑いグループ</span></div>
-              <div class="stat"><span class="num" id="statMembers">0</span><span class="lbl">重複候補の件数</span></div>
+              <div class="stat" id="statGroupWrap"><span class="num" id="statGroups">0</span><span class="lbl" id="statGroupsLbl">重複の疑いグループ</span></div>
+              <div class="stat"><span class="num" id="statMembers">0</span><span class="lbl" id="statMembersLbl">重複候補の件数</span></div>
             </div>
             <div class="controls">
               <input class="search" id="searchBox" placeholder="名前で検索">
-              <button class="toggle-btn active" id="viewDupBtn" type="button">重複候補のみ</button>
+              <button class="toggle-btn active" id="viewDupBtn" type="button">候補のみ</button>
               <button class="toggle-btn" id="viewAllBtn" type="button">全件表示</button>
             </div>
           </div>
@@ -710,7 +729,7 @@
 
           <div class="empty-state hidden" id="emptyState">
             <div class="mark">◎</div>
-            <div>重複の疑いがある取引先は見つかりませんでした。</div>
+            <div id="emptyText">対象の取引先は見つかりませんでした。</div>
           </div>
         </div>
 
@@ -751,9 +770,6 @@
     (function () {
       "use strict";
 
-      // ==========================================
-      // 1. OAuth 2.0 (Implicit Grant) 認証 & API設定
-      // ==========================================
       const CONFIG = {
         clientId: "803164151598495",
         redirectUri: window.location.origin + window.location.pathname,
@@ -793,12 +809,11 @@
         return await res.json();
       }
 
-      // ==========================================
-      // 2. 既存ツール連携 & 画面遷移状態
-      // ==========================================
       let headers = [];
       let records = [];
       let groups = [];
+      let unusedPartners = [];
+      let currentMode = 'dup'; // 'dup' | 'unused'
       let viewMode = 'dup';
       let searchTerm = '';
       let currentCompanyId = null;
@@ -911,6 +926,7 @@
 
           return {
             id: i,
+            partnerId: p.id,
             raw: [name, formalName, kana, invoiceNo, zip, pref, addr, tel],
             name, formalName, kana, invoiceNo, zip, pref, addr, tel,
             normName: normalizeName(formalName) || normalizeName(name),
@@ -956,7 +972,7 @@
           const invoiceNo = cell(row, idx.invoiceNo), zip = cell(row, idx.zip), pref = cell(row, idx.pref);
           const addr = cell(row, idx.addr), tel = cell(row, idx.tel);
           return {
-            id: i, raw: row, name, formalName, kana, invoiceNo, zip, pref, addr, tel,
+            id: i, partnerId: null, raw: row, name, formalName, kana, invoiceNo, zip, pref, addr, tel,
             normName: normalizeName(formalName) || normalizeName(name),
             normKana: normalizeKana(kana),
             invoiceKey: normalizeInvoice(invoiceNo),
@@ -1064,6 +1080,11 @@
       function renderGroups() {
         const container = $('#groupsContainer');
         container.innerHTML = '';
+        if (currentMode === 'unused') {
+          container.classList.add('hidden');
+          return;
+        }
+
         const visibleGroups = groups.filter(g => g.ids.some(id => recordMatchesSearch(records[id])));
         let gi = 0;
 
@@ -1109,29 +1130,49 @@
 
       function renderAllTable() {
         const wrap = $('#allTableWrap');
-        wrap.classList.toggle('hidden', viewMode !== 'all');
-        if (viewMode !== 'all') return;
-
-        const dupIds = new Set();
-        groups.forEach(g => {
-          if (!g.dismissed) g.ids.forEach(id => { if (id !== g.keepId) dupIds.add(id); });
-        });
+        const showTable = (currentMode === 'unused') || (viewMode === 'all');
+        wrap.classList.toggle('hidden', !showTable);
+        if (!showTable) return;
 
         const tbody = $('#allTableBody');
         tbody.innerHTML = '';
-        records.filter(recordMatchesSearch).forEach(r => {
-          const tr = document.createElement('tr');
-          if (dupIds.has(r.id)) tr.className = 'is-dup';
-          tr.innerHTML = `<td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.formalName)}</td><td>${escapeHtml(r.kana)}</td><td>${escapeHtml(r.invoiceNo)}</td><td>${escapeHtml([r.zip, r.pref, r.addr].filter(Boolean).join(' '))}</td><td>${escapeHtml(r.tel)}</td><td>${dupIds.has(r.id) ? '重複候補（除外予定）' : ''}</td>`;
-          tbody.appendChild(tr);
-        });
+
+        if (currentMode === 'unused') {
+          unusedPartners.filter(recordMatchesSearch).forEach(r => {
+            const tr = document.createElement('tr');
+            const addrFull = [r.zip, r.pref, r.addr].filter(Boolean).join(' ');
+            tr.innerHTML = `<td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.formalName)}</td><td>${escapeHtml(r.kana)}</td><td>${escapeHtml(r.invoiceNo)}</td><td>${escapeHtml(addrFull)}</td><td>${escapeHtml(r.tel)}</td><td><span class="badge medium">過去取引なし</span></td>`;
+            tbody.appendChild(tr);
+          });
+        } else {
+          const dupIds = new Set();
+          groups.forEach(g => {
+            if (!g.dismissed) g.ids.forEach(id => { if (id !== g.keepId) dupIds.add(id); });
+          });
+
+          records.filter(recordMatchesSearch).forEach(r => {
+            const tr = document.createElement('tr');
+            if (dupIds.has(r.id)) tr.className = 'is-dup';
+            tr.innerHTML = `<td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.formalName)}</td><td>${escapeHtml(r.kana)}</td><td>${escapeHtml(r.invoiceNo)}</td><td>${escapeHtml([r.zip, r.pref, r.addr].filter(Boolean).join(' '))}</td><td>${escapeHtml(r.tel)}</td><td>${dupIds.has(r.id) ? '重複候補（除外予定）' : ''}</td>`;
+            tbody.appendChild(tr);
+          });
+        }
       }
 
       function renderSummary() {
-        const activeGroups = groups.filter(g => !g.dismissed);
         $('#statTotal').textContent = records.length;
-        $('#statGroups').textContent = activeGroups.length;
-        $('#statMembers').textContent = activeGroups.reduce((s, g) => s + g.ids.length, 0);
+        if (currentMode === 'unused') {
+          $('#statGroupWrap').style.display = 'none';
+          $('#statMembersLbl').textContent = '未取引の取引先件数';
+          $('#statMembers').textContent = unusedPartners.length;
+        } else {
+          $('#statGroupWrap').style.display = 'flex';
+          $('#statGroupsLbl').textContent = '重複の疑いグループ';
+          $('#statMembersLbl').textContent = '重複候補の件数';
+          const activeGroups = groups.filter(g => !g.dismissed);
+          $('#statGroups').textContent = activeGroups.length;
+          $('#statMembers').textContent = activeGroups.reduce((s, g) => s + g.ids.length, 0);
+        }
       }
 
       function escapeHtml(s) {
@@ -1146,29 +1187,39 @@
 
       function buildExportWorkbook() {
         const wb = XLSX.utils.book_new();
-        const dupHeader = ['グループ', '判定', '対応', '名前（通称）', '正式名称', 'カナ名称', '登録番号', '郵便番号', '都道府県', '市区町村・番地', '電話番号'];
-        const dupRows = [dupHeader];
-        let gi = 0;
 
-        groups.forEach(g => {
-          if (g.dismissed) return;
-          gi++;
-          g.ids.forEach(id => {
-            const r = records[id];
-            dupRows.push([gi, g.confidence === 'high' ? '確実' : '要確認', id === g.keepId ? '残す' : '重複（削除候補）', r.name, r.formalName, r.kana, r.invoiceNo, r.zip, r.pref, r.addr, r.tel]);
+        if (currentMode === 'unused') {
+          const unusedHeader = ['名前（通称）', '正式名称', 'カナ名称', '登録番号', '郵便番号', '都道府県', '市区町村・番地', '電話番号', '判定'];
+          const unusedRows = [unusedHeader];
+          unusedPartners.forEach(r => {
+            unusedRows.push([r.name, r.formalName, r.kana, r.invoiceNo, r.zip, r.pref, r.addr, r.tel, '過去取引なし']);
           });
-        });
+          XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(unusedRows), '未取引の取引先');
+        } else {
+          const dupHeader = ['グループ', '判定', '対応', '名前（通称）', '正式名称', 'カナ名称', '登録番号', '郵便番号', '都道府県', '市区町村・番地', '電話番号'];
+          const dupRows = [dupHeader];
+          let gi = 0;
 
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(dupRows), '重複候補');
+          groups.forEach(g => {
+            if (g.dismissed) return;
+            gi++;
+            g.ids.forEach(id => {
+              const r = records[id];
+              dupRows.push([gi, g.confidence === 'high' ? '確実' : '要確認', id === g.keepId ? '残す' : '重複（削除候補）', r.name, r.formalName, r.kana, r.invoiceNo, r.zip, r.pref, r.addr, r.tel]);
+            });
+          });
 
-        const excludeIds = new Set();
-        groups.forEach(g => {
-          if (!g.dismissed) g.ids.forEach(id => { if (id !== g.keepId) excludeIds.add(id); });
-        });
+          XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(dupRows), '重複候補');
 
-        const cleanRows = [headers];
-        records.forEach(r => { if (!excludeIds.has(r.id)) cleanRows.push(r.raw); });
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(cleanRows), '整理後リスト');
+          const excludeIds = new Set();
+          groups.forEach(g => {
+            if (!g.dismissed) g.ids.forEach(id => { if (id !== g.keepId) excludeIds.add(id); });
+          });
+
+          const cleanRows = [headers];
+          records.forEach(r => { if (!excludeIds.has(r.id)) cleanRows.push(r.raw); });
+          XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(cleanRows), '整理後リスト');
+        }
 
         return wb;
       }
@@ -1177,7 +1228,8 @@
         if (!records.length) return;
         const today = new Date();
         const ymd = today.getFullYear() + String(today.getMonth() + 1).padStart(2, '0') + String(today.getDate()).padStart(2, '0');
-        XLSX.writeFile(buildExportWorkbook(), `取引先整理_${ymd}.xlsx`);
+        const filename = currentMode === 'unused' ? `未取引先リスト_${ymd}.xlsx` : `取引先整理_${ymd}.xlsx`;
+        XLSX.writeFile(buildExportWorkbook(), filename);
       }
 
       function showError(msg) {
@@ -1190,13 +1242,12 @@
         $('#errorBox').style.display = 'none';
       }
 
-      function showLoading(show) {
-        $('#loadingText').classList.toggle('hidden', !show);
+      function showLoading(show, text = 'freee APIと通信中です…') {
+        const el = $('#loadingText');
+        el.textContent = text;
+        el.classList.toggle('hidden', !show);
       }
 
-      // ==========================================
-      // 3. 画面フロー制御 & 初期化
-      // ==========================================
       async function loadCompanies() {
         try {
           showLoading(true);
@@ -1220,27 +1271,65 @@
         }
       }
 
-      async function loadPartnersAndStartApp() {
+      // 重複チェック実行
+      async function runDedupeCheck() {
         try {
-          showLoading(true);
+          currentMode = 'dup';
+          showLoading(true, '取引先データを取得中…');
           clearError();
-          const res = await callFreeeApi('/partners', { company_id: currentCompanyId, limit: 2000 });
+          const res = await callFreeeApi('/partners', { company_id: currentCompanyId, limit: 3000 });
           records = buildRecordsFromApi(res.partners);
           groups = detectGroups(records);
 
-          $('#stepApps').classList.add('hidden');
-          $('#appDedupeSection').classList.remove('hidden');
           $('#uploadSection').classList.add('hidden');
           $('#resultSection').classList.remove('hidden');
+          $('#viewDupBtn').style.display = 'inline-block';
           render();
         } catch (e) {
-          showError('取引先データの取得に失敗しました: ' + e.message);
+          showError('重複判定データの取得に失敗しました: ' + e.message);
+        } finally {
+          showLoading(false);
+        }
+      }
+
+      // 未使用（過去に取引がない）取引先の検出
+      async function runUnusedCheck() {
+        try {
+          currentMode = 'unused';
+          showLoading(true, '取引先データと過去取引データを照合中…');
+          clearError();
+
+          // 1. 全取引先を取得
+          const partnersRes = await callFreeeApi('/partners', { company_id: currentCompanyId, limit: 3000 });
+          records = buildRecordsFromApi(partnersRes.partners);
+
+          // 2. 取引（収入・支出）データを取得し、使用中の取引先IDを集計
+          const dealsRes = await callFreeeApi('/deals', { company_id: currentCompanyId, limit: 5000 });
+          const usedPartnerIds = new Set();
+          
+          if (dealsRes.deals) {
+            dealsRes.deals.forEach(deal => {
+              if (deal.partner_id) usedPartnerIds.add(deal.partner_id);
+            });
+          }
+
+          // 3. 一度も取引で指定されていない取引先を抽出
+          unusedPartners = records.filter(r => r.partnerId && !usedPartnerIds.has(r.partnerId));
+
+          $('#uploadSection').classList.add('hidden');
+          $('#resultSection').classList.remove('hidden');
+          $('#viewDupBtn').style.display = 'none'; // 未使用モード時は重複ボタン非表示
+          $('#viewAllBtn').classList.add('active');
+          render();
+        } catch (e) {
+          showError('未取引データの取得に失敗しました: ' + e.message);
         } finally {
           showLoading(false);
         }
       }
 
       async function handleFile(file) {
+        currentMode = 'dup';
         clearError();
         showLoading(true);
         try {
@@ -1276,13 +1365,17 @@
       });
 
       $('#appDedupeCard').addEventListener('click', () => {
-        loadPartnersAndStartApp();
+        $('#stepApps').classList.add('hidden');
+        $('#appDedupeSection').classList.remove('hidden');
       });
 
       $('#backToAppsBtn').addEventListener('click', () => {
         $('#appDedupeSection').classList.add('hidden');
         $('#stepApps').classList.remove('hidden');
       });
+
+      $('#findDupBtn').addEventListener('click', runDedupeCheck);
+      $('#findUnusedBtn').addEventListener('click', runUnusedCheck);
 
       const dropzone = $('#dropzone');
       const fileInput = $('#fileInput');
@@ -1360,7 +1453,6 @@
         });
       }
 
-      // 初期化処理（URLハッシュからトークンを取得）
       function init() {
         const hash = window.location.hash.substring(1);
         const params = new URLSearchParams(hash);
