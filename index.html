@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>freee アプリポータル & 取引先クリーニング</title>
+  <link rel="icon" href="data:,">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     :root {
@@ -23,9 +24,7 @@
       --navy-soft: #2E4A63;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     html, body {
       margin: 0;
@@ -57,7 +56,6 @@
       100% { background-position: 0% 50%; }
     }
 
-    /* カスタムカーソル */
     .cursor-dot {
       position: fixed;
       top: 0;
@@ -158,11 +156,7 @@
       margin-bottom: 28px;
     }
 
-    .stamp {
-      flex: none;
-      width: 64px;
-      height: 64px;
-    }
+    .stamp { flex: none; width: 64px; height: 64px; }
 
     header h1 {
       font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
@@ -172,13 +166,8 @@
       letter-spacing: .02em;
     }
 
-    header p {
-      margin: 0;
-      color: var(--ink-soft);
-      font-size: 13px;
-    }
+    header p { margin: 0; color: var(--ink-soft); font-size: 13px; }
 
-    /* ポータルステップ共通スタイル */
     .step-box {
       background: #FFFDF7;
       border: 1px solid var(--line);
@@ -198,11 +187,7 @@
       gap: 8px;
     }
 
-    .step-desc {
-      font-size: 12.5px;
-      color: var(--ink-soft);
-      margin-bottom: 16px;
-    }
+    .step-desc { font-size: 12.5px; color: var(--ink-soft); margin-bottom: 16px; }
 
     .form-select {
       width: 100%;
@@ -215,11 +200,7 @@
       margin-bottom: 16px;
     }
 
-    .app-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-    }
+    .app-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
 
     .app-card {
       border: 1.5px solid var(--line);
@@ -230,22 +211,9 @@
       transition: all 0.2s ease;
     }
 
-    .app-card:hover {
-      border-color: var(--navy);
-      background: var(--paper-deep);
-    }
-
-    .app-card-title {
-      font-weight: 700;
-      font-size: 14px;
-      color: var(--navy);
-      margin-bottom: 4px;
-    }
-
-    .app-card-desc {
-      font-size: 11.5px;
-      color: var(--ink-soft);
-    }
+    .app-card:hover { border-color: var(--navy); background: var(--paper-deep); }
+    .app-card-title { font-weight: 700; font-size: 14px; color: var(--navy); margin-bottom: 4px; }
+    .app-card-desc { font-size: 11.5px; color: var(--ink-soft); }
 
     .btn-nav {
       background: var(--paper-deep);
@@ -261,12 +229,8 @@
       gap: 4px;
     }
 
-    .btn-nav:hover {
-      color: var(--ink);
-      border-color: var(--ink-soft);
-    }
+    .btn-nav:hover { color: var(--ink); border-color: var(--ink-soft); }
 
-    /* Upload zone & Other components */
     .dropzone {
       border: 1.5px dashed var(--line);
       background: #FFFDF7;
@@ -277,32 +241,11 @@
       transition: border-color .15s ease, background .15s ease;
     }
 
-    .dropzone.drag {
-      border-color: var(--navy);
-      background: var(--paper-deep);
-    }
-
-    .dropzone .big {
-      font-size: 14.5px;
-      font-weight: 600;
-      margin-bottom: 6px;
-    }
-
-    .dropzone .small {
-      font-size: 12px;
-      color: var(--ink-soft);
-    }
-
-    .dropzone input {
-      display: none;
-    }
-
-    .privacy-note {
-      margin-top: 10px;
-      font-size: 11.5px;
-      color: var(--ink-soft);
-      text-align: center;
-    }
+    .dropzone.drag { border-color: var(--navy); background: var(--paper-deep); }
+    .dropzone .big { font-size: 14.5px; font-weight: 600; margin-bottom: 6px; }
+    .dropzone .small { font-size: 12px; color: var(--ink-soft); }
+    .dropzone input { display: none; }
+    .privacy-note { margin-top: 10px; font-size: 11.5px; color: var(--ink-soft); text-align: center; }
 
     .export-guide {
       margin-top: 14px;
@@ -324,19 +267,9 @@
       gap: 6px;
     }
 
-    .export-guide summary::-webkit-details-marker {
-      display: none;
-    }
-
-    .export-guide summary::before {
-      content: '▸';
-      font-size: 11px;
-      transition: transform .15s ease;
-    }
-
-    .export-guide[open] summary::before {
-      transform: rotate(90deg);
-    }
+    .export-guide summary::-webkit-details-marker { display: none; }
+    .export-guide summary::before { content: '▸'; font-size: 11px; transition: transform .15s ease; }
+    .export-guide[open] summary::before { transform: rotate(90deg); }
 
     .guide-img {
       display: block;
@@ -346,21 +279,9 @@
       border-bottom: 1px solid var(--line-soft);
     }
 
-    .export-guide ol {
-      margin: 0;
-      padding: 14px 18px 14px 34px;
-      font-size: 12.5px;
-      color: var(--ink-soft);
-    }
-
-    .export-guide ol li {
-      margin-bottom: 5px;
-    }
-
-    .export-guide ol li b {
-      color: var(--ink);
-      font-weight: 600;
-    }
+    .export-guide ol { margin: 0; padding: 14px 18px 14px 34px; font-size: 12.5px; color: var(--ink-soft); }
+    .export-guide ol li { margin-bottom: 5px; }
+    .export-guide ol li b { color: var(--ink); font-weight: 600; }
 
     .error-box {
       margin-top: 16px;
@@ -386,34 +307,11 @@
       border-radius: 18px;
     }
 
-    .summary-stats {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .stat {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .stat .num {
-      font-size: 18px;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .stat .lbl {
-      font-size: 10.5px;
-      color: var(--ink-soft);
-    }
-
-    .controls {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
+    .summary-stats { display: flex; gap: 16px; flex-wrap: wrap; }
+    .stat { display: flex; flex-direction: column; }
+    .stat .num { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .stat .lbl { font-size: 10.5px; color: var(--ink-soft); }
+    .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
     .toggle-btn {
       border: 1px solid var(--line);
@@ -425,11 +323,7 @@
       color: var(--ink);
     }
 
-    .toggle-btn.active {
-      background: var(--navy);
-      border-color: var(--navy);
-      color: #fff;
-    }
+    .toggle-btn.active { background: var(--navy); border-color: var(--navy); color: #fff; }
 
     input.search {
       border: 1px solid var(--line);
@@ -466,41 +360,12 @@
       gap: 8px;
     }
 
-    .group-head-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .group-num {
-      font-size: 12px;
-      color: var(--ink-soft);
-      font-variant-numeric: tabular-nums;
-    }
-
-    .badge {
-      font-size: 11px;
-      padding: 2px 9px;
-      border-radius: 20px;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-
-    .badge.high {
-      background: var(--red-soft);
-      color: var(--red);
-    }
-
-    .badge.medium {
-      background: var(--amber-soft);
-      color: var(--amber);
-    }
-
-    .reason {
-      font-size: 12px;
-      color: var(--ink-soft);
-    }
+    .group-head-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .group-num { font-size: 12px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+    .badge { font-size: 11px; padding: 2px 9px; border-radius: 20px; font-weight: 600; white-space: nowrap; }
+    .badge.high { background: var(--red-soft); color: var(--red); }
+    .badge.medium { background: var(--amber-soft); color: var(--amber); }
+    .reason { font-size: 12px; color: var(--ink-soft); }
 
     .dismiss-btn {
       font-size: 11.5px;
@@ -512,10 +377,7 @@
       cursor: pointer;
     }
 
-    .dismiss-btn:hover {
-      border-color: var(--ink-soft);
-      color: var(--ink);
-    }
+    .dismiss-btn:hover { border-color: var(--ink-soft); color: var(--ink); }
 
     .member {
       display: flex;
@@ -525,13 +387,8 @@
       border-bottom: 1px solid var(--line-soft);
     }
 
-    .member:last-child {
-      border-bottom: none;
-    }
-
-    .member.keep {
-      background: var(--green-soft);
-    }
+    .member:last-child { border-bottom: none; }
+    .member.keep { background: var(--green-soft); }
 
     .member input[type=radio] {
       margin-top: 4px;
@@ -541,22 +398,9 @@
       height: 15px;
     }
 
-    .member-body {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .member-name-row {
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .member-name {
-      font-weight: 700;
-      font-size: 14.5px;
-    }
+    .member-body { flex: 1; min-width: 0; }
+    .member-name-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+    .member-name { font-weight: 700; font-size: 14.5px; }
 
     .keep-tag {
       font-size: 10.5px;
@@ -576,10 +420,7 @@
       gap: 4px 14px;
     }
 
-    .member-meta span b {
-      color: var(--ink);
-      font-weight: 600;
-    }
+    .member-meta span b { color: var(--ink); font-weight: 600; }
 
     .group-dismissed-note {
       padding: 10px 16px;
@@ -590,12 +431,7 @@
       align-items: center;
     }
 
-    .all-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
-      margin-top: 6px;
-    }
+    .all-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 6px; }
 
     .all-table th {
       text-align: left;
@@ -606,35 +442,13 @@
       padding: 6px 8px;
     }
 
-    .all-table td {
-      padding: 7px 8px;
-      border-bottom: 1px solid var(--line-soft);
-      vertical-align: top;
-    }
+    .all-table td { padding: 7px 8px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+    .all-table tr.is-dup td { background: var(--paper-deep); }
+    .empty-state { text-align: center; padding: 50px 20px; color: var(--ink-soft); }
+    .empty-state .mark { font-size: 34px; margin-bottom: 10px; }
 
-    .all-table tr.is-dup td {
-      background: var(--paper-deep);
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 50px 20px;
-      color: var(--ink-soft);
-    }
-
-    .empty-state .mark {
-      font-size: 34px;
-      margin-bottom: 10px;
-    }
-
-    #dedupeScreen {
-      animation: screenIn .25s ease;
-    }
-
-    @keyframes screenIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    #dedupeScreen { animation: screenIn .25s ease; }
+    @keyframes screenIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
     .export-bar {
       position: sticky;
@@ -661,24 +475,9 @@
       text-align: center;
     }
 
-    .btn-primary:hover {
-      background: var(--navy-soft);
-    }
-
-    .btn-primary:disabled {
-      background: #B9B2A0;
-      cursor: not-allowed;
-    }
-
-    .btn-ghost {
-      background: none;
-      border: 1px solid var(--line);
-      color: var(--ink-soft);
-      padding: 12px 18px;
-      border-radius: 11px;
-      font-size: 13px;
-      cursor: pointer;
-    }
+    .btn-primary:hover { background: var(--navy-soft); }
+    .btn-primary:disabled { background: #B9B2A0; cursor: not-allowed; }
+    .btn-ghost { background: none; border: 1px solid var(--line); color: var(--ink-soft); padding: 12px 18px; border-radius: 11px; font-size: 13px; cursor: pointer; }
 
     .help-link {
       display: inline-flex;
@@ -692,9 +491,7 @@
       padding: 4px 2px;
     }
 
-    .help-link:hover {
-      color: var(--ink);
-    }
+    .help-link:hover { color: var(--ink); }
 
     .help-fab-sm {
       flex: none;
@@ -732,10 +529,7 @@
       animation: sheetUp .22s ease;
     }
 
-    @keyframes sheetUp {
-      from { transform: translateY(24px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
+    @keyframes sheetUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
     .modal-head {
       position: sticky;
@@ -766,17 +560,9 @@
       cursor: pointer;
     }
 
-    .modal-close:hover {
-      color: var(--ink);
-    }
-
-    .modal-body {
-      padding: 18px 22px 30px;
-    }
-
-    .crit-item {
-      margin-bottom: 18px;
-    }
+    .modal-close:hover { color: var(--ink); }
+    .modal-body { padding: 18px 22px 30px; }
+    .crit-item { margin-bottom: 18px; }
 
     .crit-title {
       display: flex;
@@ -787,11 +573,7 @@
       margin-bottom: 6px;
     }
 
-    .crit-item p {
-      margin: 0;
-      font-size: 12.5px;
-      color: var(--ink-soft);
-    }
+    .crit-item p { margin: 0; font-size: 12.5px; color: var(--ink-soft); }
 
     .crit-note {
       font-size: 12px;
@@ -801,34 +583,15 @@
       margin: 0;
     }
 
-    .hidden {
-      display: none !important;
-    }
-
-    .loading-text {
-      text-align: center;
-      color: var(--ink-soft);
-      font-size: 13px;
-      padding: 20px 0;
-    }
+    .hidden { display: none !important; }
+    .loading-text { text-align: center; color: var(--ink-soft); font-size: 13px; padding: 20px 0; }
 
     @media (max-width: 560px) {
-      .page {
-        padding: 24px 14px 60px;
-      }
-      header {
-        gap: 14px;
-      }
-      header h1 {
-        font-size: 21px;
-      }
-      .summary {
-        flex-direction: column;
-        align-items: stretch;
-      }
-      input.search {
-        width: 100%;
-      }
+      .page { padding: 24px 14px 60px; }
+      header { gap: 14px; }
+      header h1 { font-size: 21px; }
+      .summary { flex-direction: column; align-items: stretch; }
+      input.search { width: 100%; }
     }
   </style>
 </head>
@@ -893,7 +656,6 @@
     <div id="appDedupeSection" class="hidden">
       <button class="btn-nav" id="backToAppsBtn" type="button">← アプリ選択へ戻る</button>
 
-      <!-- ファイルアップロードのバックアップフォールバック -->
       <div id="uploadSection">
         <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択してアップロード">
           <div class="big">または、ファイル（CSV/Excel）から読み込む</div>
@@ -903,7 +665,7 @@
         <div class="privacy-note">ファイルはこの画面内だけで処理されます。外部のサーバーには送信されません。</div>
         <details class="export-guide">
           <summary>手動エクスポートの手順</summary>
-          <img class="guide-img" src="data:image/png;base64,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" alt="freeeの取引先ページエクスポートガイド">
+          <img class="guide-img" src="data:image/png;base64,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" alt="freeeの取引先ページエクスポートガイド">
           <ol>
             <li>freeeで<b>「取引先」</b>ページを開く</li>
             <li>右上の<b>「…」</b>メニューをクリック</li>
@@ -912,7 +674,6 @@
         </details>
       </div>
 
-      <!-- 判定結果画面 -->
       <div id="resultSection" class="hidden">
         <div id="dedupeScreen">
           <div class="summary">
@@ -963,7 +724,6 @@
     </div>
   </div>
 
-  <!-- モーダル -->
   <div class="modal-overlay hidden" id="criteriaModal">
     <div class="modal-card">
       <div class="modal-head">
@@ -992,72 +752,43 @@
       "use strict";
 
       // ==========================================
-      // 1. OAuth 2.0 PKCE 認証 & API設定
+      // 1. OAuth 2.0 (Implicit Grant) 認証 & API設定
       // ==========================================
       const CONFIG = {
-  clientId: "803164151598495",
-  // リダイレクトURI（末尾のスラッシュ等も含めてfreeeアプリ設定と完全一致させる）
-  redirectUri: window.location.origin + window.location.pathname,
-  authEndpoint: "https://accounts.secure.freee.co.jp/public_api/authorize",
-  apiBase: "https://api.freee.co.jp/api/1"
-};
+        clientId: "803164151598495",
+        redirectUri: window.location.origin + window.location.pathname,
+        authEndpoint: "https://accounts.secure.freee.co.jp/public_api/authorize",
+        apiBase: "https://api.freee.co.jp/api/1"
+      };
 
-// freeeログイン・事業所選択画面へリダイレクト
-function redirectToAuth() {
-  const params = new URLSearchParams({
-    client_id: CONFIG.clientId,
-    redirect_uri: CONFIG.redirectUri,
-    response_type: 'token', // 'code' ではなく 'token' を指定することでCORS通信を回避
-    scope: 'read write'
-  });
-  window.location.href = `${CONFIG.authEndpoint}?${params.toString()}`;
-}
-
-function getAccessToken() {
-  return sessionStorage.getItem('access_token');
-}
-
-// freee API呼び出し関数
-async function callFreeeApi(endpoint, params = {}) {
-  const token = getAccessToken();
-  if (!token) throw new Error('認証が切れています。再度ログインしてください。');
-  
-  const url = new URL(CONFIG.apiBase + endpoint);
-  Object.keys(params).forEach(k => url.searchParams.append(k, params[k]));
-
-  const res = await fetch(url.toString(), {
-    headers: { 
-      'Authorization': `Bearer ${token}`,
-      'accept': 'application/json'
-    }
-  });
-  if (!res.ok) throw new Error(`API呼び出しエラー: ${res.statusText}`);
-  return await res.json();
-}
-        
-        const data = await res.json();
-        sessionStorage.setItem('access_token', data.access_token);
-        
-        // クエリパラメータをブラウザから消去
-        window.history.replaceState({}, document.title, CONFIG.redirectUri);
-        return data.access_token;
+      function redirectToAuth() {
+        const params = new URLSearchParams({
+          client_id: CONFIG.clientId,
+          redirect_uri: CONFIG.redirectUri,
+          response_type: 'token',
+          scope: 'read write'
+        });
+        window.location.href = `${CONFIG.authEndpoint}?${params.toString()}`;
       }
 
       function getAccessToken() {
         return sessionStorage.getItem('access_token');
       }
 
-      // freee API呼び出し関数
       async function callFreeeApi(endpoint, params = {}) {
         const token = getAccessToken();
         if (!token) throw new Error('認証が切れています。再度ログインしてください。');
-        
+
         const url = new URL(CONFIG.apiBase + endpoint);
         Object.keys(params).forEach(k => url.searchParams.append(k, params[k]));
 
         const res = await fetch(url.toString(), {
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'accept': 'application/json'
+          }
         });
+
         if (!res.ok) throw new Error(`API呼び出しエラー: ${res.statusText}`);
         return await res.json();
       }
@@ -1166,7 +897,6 @@ async function callFreeeApi(endpoint, params = {}) {
         return { find, union };
       }
 
-      // APIデータからのレコード構築
       function buildRecordsFromApi(partners) {
         headers = ['名前（通称）', '正式名称', 'カナ名称', '適格請求書発行事業者の登録番号', '郵便番号', '都道府県', '市区町村・番地', '電話番号'];
         return partners.map((p, i) => {
@@ -1190,7 +920,6 @@ async function callFreeeApi(endpoint, params = {}) {
         });
       }
 
-      // ファイル読込レコード構築
       async function readWorkbook(file) {
         const name = file.name.toLowerCase();
         const buf = await file.arrayBuffer();
@@ -1235,7 +964,6 @@ async function callFreeeApi(endpoint, params = {}) {
         });
       }
 
-      // 重複判定ロジック
       function detectGroups(recs) {
         const n = recs.length;
         const uf = makeUF(n);
@@ -1315,7 +1043,6 @@ async function callFreeeApi(endpoint, params = {}) {
         return result.sort((g1, g2) => g1.confidence === g2.confidence ? g1.ids[0] - g2.ids[0] : (g1.confidence === 'high' ? -1 : 1));
       }
 
-      // UI描写
       const $ = sel => document.querySelector(sel);
 
       function fmtMeta(r) {
@@ -1497,14 +1224,13 @@ async function callFreeeApi(endpoint, params = {}) {
         try {
           showLoading(true);
           clearError();
-          // APIから取引先一覧を取得（上限2000件）
           const res = await callFreeeApi('/partners', { company_id: currentCompanyId, limit: 2000 });
           records = buildRecordsFromApi(res.partners);
           groups = detectGroups(records);
 
           $('#stepApps').classList.add('hidden');
           $('#appDedupeSection').classList.remove('hidden');
-          $('#uploadSection').classList.add('hidden'); // API成功時はアップロードエリア非表示
+          $('#uploadSection').classList.add('hidden');
           $('#resultSection').classList.remove('hidden');
           render();
         } catch (e) {
@@ -1602,7 +1328,6 @@ async function callFreeeApi(endpoint, params = {}) {
       $('#criteriaCloseBtn').addEventListener('click', () => criteriaModal.classList.add('hidden'));
       criteriaModal.addEventListener('click', e => { if (e.target === criteriaModal) criteriaModal.classList.add('hidden'); });
 
-      // カーソルエフェクト
       if (window.matchMedia('(pointer: fine)').matches) {
         const cursorDot = document.getElementById('cursorDot');
         const cursorGlow = document.getElementById('cursorGlow');
@@ -1635,20 +1360,19 @@ async function callFreeeApi(endpoint, params = {}) {
         });
       }
 
-      // ページ読み込み時：OAuth リダイレクト戻り判定
+      // 初期化処理（URLハッシュからトークンを取得）
       function init() {
         const hash = window.location.hash.substring(1);
         const params = new URLSearchParams(hash);
         const accessToken = params.get('access_token');
-      
+
         if (accessToken) {
           sessionStorage.setItem('access_token', accessToken);
           window.history.replaceState({}, document.title, CONFIG.redirectUri);
         }
-      
+
         if (getAccessToken()) {
-          $('#stepLogin').classList.add('hidden');
-          $('#stepApps').classList.remove('hidden');
+          loadCompanies();
         }
       }
 
