@@ -1043,24 +1043,30 @@
         window.location.href = `${CONFIG.authEndpoint}?${params.toString()}`;
       }
 
-      // Token 取得処理
+      // Token 取得処理（CORS回避のためFormData形式で送信）
       async function fetchToken(code) {
         const verifier = sessionStorage.getItem('pkce_verifier');
-        const params = new URLSearchParams({
-          grant_type: 'authorization_code',
-          client_id: CONFIG.clientId,
-          redirect_uri: CONFIG.redirectUri,
-          code: code,
-          code_verifier: verifier
-        });
+        
+        const bodyData = new URLSearchParams();
+        bodyData.append('grant_type', 'authorization_code');
+        bodyData.append('client_id', CONFIG.clientId);
+        bodyData.append('redirect_uri', CONFIG.redirectUri);
+        bodyData.append('code', code);
+        bodyData.append('code_verifier', verifier);
 
         const res = await fetch(CONFIG.tokenEndpoint, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: params.toString()
+          headers: { 
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: bodyData
         });
 
-        if (!res.ok) throw new Error('アクセストークンの取得に失敗しました。');
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`トークン取得失敗 (${res.status}): ${errText}`);
+        }
+        
         const data = await res.json();
         sessionStorage.setItem('access_token', data.access_token);
         
