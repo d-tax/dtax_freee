@@ -1316,7 +1316,7 @@
       }
 
       // プログレス（〇〇件 / 〇〇件）表示付き：未取引データの検出
-      async function runUnusedCheck() {
+      async function runUnusedCheck() {async function runUnusedCheck() {
         try {
           currentMode = 'unused';
           clearError();
@@ -1326,14 +1326,39 @@
           const partnersRes = await callFreeeApi('/partners', { company_id: currentCompanyId, limit: 3000 });
           records = buildRecordsFromApi(partnersRes.partners);
 
-          // 2. 過去の取引件数を取得して全件スキャン（100件ずつループ）
+          // 2. 最初に1件だけリクエストを送り、レスポンスヘッダーから総件数(X-Total-Count)を取得
+          showProgressLoading(true, '過去の取引データ総数を計算中…');
+          const token = getAccessToken();
+          const firstUrl = new URL(CONFIG.apiBase + '/deals');
+          firstUrl.searchParams.append('company_id', currentCompanyId);
+          firstUrl.searchParams.append('limit', '1');
+
+          const firstRes = await fetch(firstUrl.toString(), {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'accept': 'application/json'
+            }
+          });
+
+          if (firstRes.status === 403) {
+            throw new Error('403 Forbidden: freeeアプリ管理画面で「取引（閲覧）」の権限（スコープ）を許可してください。');
+          }
+          if (!firstRes.ok) throw new Error(`API呼び出しエラー: ${firstRes.statusText}`);
+
+          // 総件数をヘッダーから取得（取得できない場合はデータ配列の長さでフォールバック）
+          const totalHeader = firstRes.headers.get('X-Total-Count');
+          const firstData = await firstRes.json();
+          const totalDealsCount = totalHeader ? parseInt(totalHeader, 10) : (firstData.meta ? firstData.meta.total_count : 0);
+
+          // 3. 総件数を使って 100件ずつループ取得（プログレス表示）
           const usedPartnerIds = new Set();
           let offset = 0;
           const limit = 100;
           let hasMore = true;
 
           while (hasMore) {
-            showProgressLoading(true, '過去の取引データを照合中…', offset, offset + limit);
+            const currentFetched = Math.min(offset + limit, totalDealsCount || (offset + limit));
+            showProgressLoading(true, '過去の取引データを照合中…', currentFetched, totalDealsCount);
 
             const dealsRes = await callFreeeApi('/deals', { 
               company_id: currentCompanyId, 
@@ -1346,9 +1371,8 @@
                 if (deal.partner_id) usedPartnerIds.add(deal.partner_id);
               });
               
-              if (dealsRes.deals.length < limit) {
+              if (dealsRes.deals.length < limit || (totalDealsCount > 0 && offset + limit >= totalDealsCount)) {
                 hasMore = false;
-                showProgressLoading(true, '過去の取引データを照合中…', offset + dealsRes.deals.length, offset + dealsRes.deals.length);
               } else {
                 offset += limit;
               }
@@ -1357,7 +1381,7 @@
             }
           }
 
-          // 3. 取引履歴に含まれない取引先を特定
+          // 4. 取引履歴に含まれない取引先を抽出
           unusedPartners = records.filter(r => r.partnerId && !usedPartnerIds.has(r.partnerId));
 
           $('#uploadSection').classList.add('hidden');
