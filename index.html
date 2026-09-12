@@ -215,6 +215,15 @@
     .app-card-title { font-weight: 700; font-size: 14px; color: var(--navy); margin-bottom: 4px; }
     .app-card-desc { font-size: 11.5px; color: var(--ink-soft); }
 
+    .app-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
     .btn-nav {
       background: var(--paper-deep);
       border: 1px solid var(--line);
@@ -223,13 +232,22 @@
       padding: 4px 10px;
       border-radius: 8px;
       cursor: pointer;
-      margin-bottom: 16px;
       display: inline-flex;
       align-items: center;
       gap: 4px;
     }
 
     .btn-nav:hover { color: var(--ink); border-color: var(--ink-soft); }
+
+    .app-tag {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--navy);
+      background: var(--paper-deep);
+      border: 1px solid var(--line);
+      padding: 3px 10px;
+      border-radius: 12px;
+    }
 
     .action-btn-group {
       display: flex;
@@ -676,11 +694,14 @@
 
     <!-- アプリ本体: 取引先整理画面 -->
     <div id="appDedupeSection" class="hidden">
-      <button class="btn-nav" id="backToAppsBtn" type="button">← アプリ選択へ戻る</button>
+      <div class="app-header-bar">
+        <button class="btn-nav" id="backToAppsBtn" type="button">← アプリ選択へ戻る</button>
+        <span class="app-tag">使用中：取引先台帳クリーニング</span>
+      </div>
 
-      <!-- 操作ボタンエリア -->
+      <!-- 操作ボタンエリア（両方白背景に変更） -->
       <div class="action-btn-group">
-        <button class="btn-primary" id="findDupBtn" type="button">取引先の重複登録を探す</button>
+        <button class="btn-secondary" id="findDupBtn" type="button">取引先の重複登録を探す</button>
         <button class="btn-secondary" id="findUnusedBtn" type="button">過去に取引がない取引先を探す</button>
       </div>
 
@@ -813,7 +834,7 @@
       let records = [];
       let groups = [];
       let unusedPartners = [];
-      let currentMode = 'dup'; // 'dup' | 'unused'
+      let currentMode = 'dup';
       let viewMode = 'dup';
       let searchTerm = '';
       let currentCompanyId = null;
@@ -1271,7 +1292,6 @@
         }
       }
 
-      // 重複チェック実行
       async function runDedupeCheck() {
         try {
           currentMode = 'dup';
@@ -1292,33 +1312,48 @@
         }
       }
 
-      // 未使用（過去に取引がない）取引先の検出
       async function runUnusedCheck() {
         try {
           currentMode = 'unused';
           showLoading(true, '取引先データと過去取引データを照合中…');
           clearError();
 
-          // 1. 全取引先を取得
           const partnersRes = await callFreeeApi('/partners', { company_id: currentCompanyId, limit: 3000 });
           records = buildRecordsFromApi(partnersRes.partners);
 
-          // 2. 取引（収入・支出）データを取得し、使用中の取引先IDを集計
-          const dealsRes = await callFreeeApi('/deals', { company_id: currentCompanyId, limit: 5000 });
           const usedPartnerIds = new Set();
-          
-          if (dealsRes.deals) {
-            dealsRes.deals.forEach(deal => {
-              if (deal.partner_id) usedPartnerIds.add(deal.partner_id);
+          let offset = 0;
+          const limit = 100;
+          let hasMore = true;
+
+          while (hasMore) {
+            showLoading(true, `取引データを照合中 (${offset}件目〜)…`);
+            const dealsRes = await callFreeeApi('/deals', { 
+              company_id: currentCompanyId, 
+              limit: limit,
+              offset: offset
             });
+
+            if (dealsRes.deals && dealsRes.deals.length > 0) {
+              dealsRes.deals.forEach(deal => {
+                if (deal.partner_id) usedPartnerIds.add(deal.partner_id);
+              });
+              
+              if (dealsRes.deals.length < limit) {
+                hasMore = false;
+              } else {
+                offset += limit;
+              }
+            } else {
+              hasMore = false;
+            }
           }
 
-          // 3. 一度も取引で指定されていない取引先を抽出
           unusedPartners = records.filter(r => r.partnerId && !usedPartnerIds.has(r.partnerId));
 
           $('#uploadSection').classList.add('hidden');
           $('#resultSection').classList.remove('hidden');
-          $('#viewDupBtn').style.display = 'none'; // 未使用モード時は重複ボタン非表示
+          $('#viewDupBtn').style.display = 'none';
           $('#viewAllBtn').classList.add('active');
           render();
         } catch (e) {
