@@ -995,77 +995,45 @@
       // 1. OAuth 2.0 PKCE 認証 & API設定
       // ==========================================
       const CONFIG = {
-        clientId: "803164151598495",
-        redirectUri: window.location.origin + window.location.pathname,
-        authEndpoint: "https://accounts.secure.freee.co.jp/public_api/authorize",
-        tokenEndpoint: "https://accounts.secure.freee.co.jp/public_api/token",
-        apiBase: "https://api.freee.co.jp/api/1"
-      };
+  clientId: "803164151598495",
+  // リダイレクトURI（末尾のスラッシュ等も含めてfreeeアプリ設定と完全一致させる）
+  redirectUri: window.location.origin + window.location.pathname,
+  authEndpoint: "https://accounts.secure.freee.co.jp/public_api/authorize",
+  apiBase: "https://api.freee.co.jp/api/1"
+};
 
-      // PKCE暗号ヘルパー関数
-      function generateRandomString(length) {
-        const validChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
-        let array = new Uint8Array(length);
-        window.crypto.getRandomValues(array);
-        return Array.from(array, x => validChars[x % validChars.length]).join('');
-      }
+// freeeログイン・事業所選択画面へリダイレクト
+function redirectToAuth() {
+  const params = new URLSearchParams({
+    client_id: CONFIG.clientId,
+    redirect_uri: CONFIG.redirectUri,
+    response_type: 'token', // 'code' ではなく 'token' を指定することでCORS通信を回避
+    scope: 'read write'
+  });
+  window.location.href = `${CONFIG.authEndpoint}?${params.toString()}`;
+}
 
-      async function sha256(plain) {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(plain);
-        return window.crypto.subtle.digest('SHA-256', data);
-      }
+function getAccessToken() {
+  return sessionStorage.getItem('access_token');
+}
 
-      function base64urlencode(str) {
-        return btoa(String.fromCharCode.apply(null, new Uint8Array(str)))
-          .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-      }
+// freee API呼び出し関数
+async function callFreeeApi(endpoint, params = {}) {
+  const token = getAccessToken();
+  if (!token) throw new Error('認証が切れています。再度ログインしてください。');
+  
+  const url = new URL(CONFIG.apiBase + endpoint);
+  Object.keys(params).forEach(k => url.searchParams.append(k, params[k]));
 
-      async function generateCodeChallenge(v) {
-        const hashed = await sha256(v);
-        return base64urlencode(hashed);
-      }
-
-      // Auth ログイン実行
-      async function redirectToAuth() {
-        const verifier = generateRandomString(64);
-        sessionStorage.setItem('pkce_verifier', verifier);
-        const challenge = await generateCodeChallenge(verifier);
-
-        const params = new URLSearchParams({
-          client_id: CONFIG.clientId,
-          redirect_uri: CONFIG.redirectUri,
-          response_type: 'code',
-          scope: 'read write',
-          code_challenge: challenge,
-          code_challenge_method: 'S256'
-        });
-        window.location.href = `${CONFIG.authEndpoint}?${params.toString()}`;
-      }
-
-      // Token 取得処理（CORS回避のためFormData形式で送信）
-      async function fetchToken(code) {
-        const verifier = sessionStorage.getItem('pkce_verifier');
-        
-        const bodyData = new URLSearchParams();
-        bodyData.append('grant_type', 'authorization_code');
-        bodyData.append('client_id', CONFIG.clientId);
-        bodyData.append('redirect_uri', CONFIG.redirectUri);
-        bodyData.append('code', code);
-        bodyData.append('code_verifier', verifier);
-
-        const res = await fetch(CONFIG.tokenEndpoint, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          body: bodyData
-        });
-
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(`トークン取得失敗 (${res.status}): ${errText}`);
-        }
+  const res = await fetch(url.toString(), {
+    headers: { 
+      'Authorization': `Bearer ${token}`,
+      'accept': 'application/json'
+    }
+  });
+  if (!res.ok) throw new Error(`API呼び出しエラー: ${res.statusText}`);
+  return await res.json();
+}
         
         const data = await res.json();
         sessionStorage.setItem('access_token', data.access_token);
@@ -1668,23 +1636,19 @@
       }
 
       // ページ読み込み時：OAuth リダイレクト戻り判定
-      async function init() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-
-        if (code) {
-          try {
-            showLoading(true);
-            await fetchToken(code);
-            await loadCompanies();
-          } catch (e) {
-            showError(e.message);
-          } finally {
-            showLoading(false);
-          }
-        } else if (getAccessToken()) {
-          // すでにトークンを保持している場合
-          loadCompanies();
+      function init() {
+        const hash = window.location.hash.substring(1);
+        const params = new URLSearchParams(hash);
+        const accessToken = params.get('access_token');
+      
+        if (accessToken) {
+          sessionStorage.setItem('access_token', accessToken);
+          window.history.replaceState({}, document.title, CONFIG.redirectUri);
+        }
+      
+        if (getAccessToken()) {
+          $('#stepLogin').classList.add('hidden');
+          $('#stepApps').classList.remove('hidden');
         }
       }
 
