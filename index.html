@@ -272,42 +272,6 @@
     .dropzone input { display: none; }
     .privacy-note { margin-top: 10px; font-size: 11.5px; color: var(--ink-soft); text-align: center; }
 
-    .export-guide {
-      margin-top: 14px;
-      border: 1px solid var(--line-soft);
-      border-radius: 14px;
-      background: rgba(255, 253, 247, 0.7);
-      overflow: hidden;
-    }
-
-    .export-guide summary {
-      list-style: none;
-      cursor: pointer;
-      padding: 11px 16px;
-      font-size: 12.5px;
-      font-weight: 600;
-      color: var(--navy);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .export-guide summary::-webkit-details-marker { display: none; }
-    .export-guide summary::before { content: '▸'; font-size: 11px; transition: transform .15s ease; }
-    .export-guide[open] summary::before { transform: rotate(90deg); }
-
-    .guide-img {
-      display: block;
-      width: 100%;
-      height: auto;
-      border-top: 1px solid var(--line-soft);
-      border-bottom: 1px solid var(--line-soft);
-    }
-
-    .export-guide ol { margin: 0; padding: 14px 18px 14px 34px; font-size: 12.5px; color: var(--ink-soft); }
-    .export-guide ol li { margin-bottom: 5px; }
-    .export-guide ol li b { color: var(--ink); font-weight: 600; }
-
     .error-box {
       margin-top: 16px;
       border: 1px solid var(--red);
@@ -615,16 +579,31 @@
 
     .crit-item p { margin: 0; font-size: 12.5px; color: var(--ink-soft); }
 
-    .crit-note {
-      font-size: 12px;
-      color: var(--ink-soft);
-      border-top: 1px solid var(--line-soft);
-      padding-top: 14px;
-      margin: 0;
+    .hidden { display: none !important; }
+    
+    /* 読み込み中プログレス表示の拡張スタイル */
+    .loading-container {
+      text-align: center;
+      padding: 24px 16px;
+      background: var(--paper-deep);
+      border: 1px solid var(--line-soft);
+      border-radius: 18px;
+      margin-top: 16px;
     }
 
-    .hidden { display: none !important; }
-    .loading-text { text-align: center; color: var(--ink-soft); font-size: 13px; padding: 20px 0; }
+    .loading-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 6px;
+    }
+
+    .loading-status {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
 
     @media (max-width: 560px) {
       .page { padding: 24px 14px 60px; }
@@ -690,7 +669,11 @@
 
     <!-- 共通エラー・ローディング表示 -->
     <div class="error-box" id="errorBox"></div>
-    <div class="loading-text hidden" id="loadingText">freee APIと通信中です…</div>
+    
+    <div class="loading-container hidden" id="loadingContainer">
+      <div class="loading-title" id="loadingTitle">freee APIと通信中です…</div>
+      <div class="loading-status" id="loadingStatus"></div>
+    </div>
 
     <!-- アプリ本体: 取引先整理画面 -->
     <div id="appDedupeSection" class="hidden">
@@ -699,7 +682,7 @@
         <span class="app-tag">使用中：取引先台帳クリーニング</span>
       </div>
 
-      <!-- 操作ボタンエリア（両方白背景に変更） -->
+      <!-- 操作ボタンエリア -->
       <div class="action-btn-group">
         <button class="btn-secondary" id="findDupBtn" type="button">取引先の重複登録を探す</button>
         <button class="btn-secondary" id="findUnusedBtn" type="button">過去に取引がない取引先を探す</button>
@@ -825,6 +808,10 @@
             'accept': 'application/json'
           }
         });
+
+        if (res.status === 403) {
+          throw new Error('403 Forbidden: freeeアプリ管理画面で「取引（閲覧）」の権限（スコープ）を許可してください。');
+        }
 
         if (!res.ok) throw new Error(`API呼び出しエラー: ${res.statusText}`);
         return await res.json();
@@ -1263,15 +1250,31 @@
         $('#errorBox').style.display = 'none';
       }
 
-      function showLoading(show, text = 'freee APIと通信中です…') {
-        const el = $('#loadingText');
-        el.textContent = text;
-        el.classList.toggle('hidden', !show);
+      // 進捗表示対応ローディング関数
+      function showProgressLoading(show, title = 'freee APIと通信中です…', current = 0, total = 0) {
+        const container = $('#loadingContainer');
+        const titleEl = $('#loadingTitle');
+        const statusEl = $('#loadingStatus');
+
+        if (show) {
+          titleEl.textContent = title;
+          if (total > 0) {
+            statusEl.textContent = `${current.toLocaleString()} 件 / ${total.toLocaleString()} 件 読み込み中…`;
+          } else if (current > 0) {
+            statusEl.textContent = `${current.toLocaleString()} 件 読み込み中…`;
+          } else {
+            statusEl.textContent = '';
+          }
+          container.classList.remove('hidden');
+        } else {
+          container.classList.add('hidden');
+          statusEl.textContent = '';
+        }
       }
 
       async function loadCompanies() {
         try {
-          showLoading(true);
+          showProgressLoading(true, '事業所一覧を取得中…');
           clearError();
           const res = await callFreeeApi('/companies');
           const select = $('#companySelect');
@@ -1288,14 +1291,14 @@
           showError(e.message);
           $('#stepLogin').classList.remove('hidden');
         } finally {
-          showLoading(false);
+          showProgressLoading(false);
         }
       }
 
       async function runDedupeCheck() {
         try {
           currentMode = 'dup';
-          showLoading(true, '取引先データを取得中…');
+          showProgressLoading(true, '取引先データを取得中…');
           clearError();
           const res = await callFreeeApi('/partners', { company_id: currentCompanyId, limit: 3000 });
           records = buildRecordsFromApi(res.partners);
@@ -1308,26 +1311,30 @@
         } catch (e) {
           showError('重複判定データの取得に失敗しました: ' + e.message);
         } finally {
-          showLoading(false);
+          showProgressLoading(false);
         }
       }
 
+      // プログレス（〇〇件 / 〇〇件）表示付き：未取引データの検出
       async function runUnusedCheck() {
         try {
           currentMode = 'unused';
-          showLoading(true, '取引先データと過去取引データを照合中…');
           clearError();
+          showProgressLoading(true, '取引先一覧を取得中…');
 
+          // 1. 全取引先を取得
           const partnersRes = await callFreeeApi('/partners', { company_id: currentCompanyId, limit: 3000 });
           records = buildRecordsFromApi(partnersRes.partners);
 
+          // 2. 過去の取引件数を取得して全件スキャン（100件ずつループ）
           const usedPartnerIds = new Set();
           let offset = 0;
           const limit = 100;
           let hasMore = true;
 
           while (hasMore) {
-            showLoading(true, `取引データを照合中 (${offset}件目〜)…`);
+            showProgressLoading(true, '過去の取引データを照合中…', offset, offset + limit);
+
             const dealsRes = await callFreeeApi('/deals', { 
               company_id: currentCompanyId, 
               limit: limit,
@@ -1341,6 +1348,7 @@
               
               if (dealsRes.deals.length < limit) {
                 hasMore = false;
+                showProgressLoading(true, '過去の取引データを照合中…', offset + dealsRes.deals.length, offset + dealsRes.deals.length);
               } else {
                 offset += limit;
               }
@@ -1349,6 +1357,7 @@
             }
           }
 
+          // 3. 取引履歴に含まれない取引先を特定
           unusedPartners = records.filter(r => r.partnerId && !usedPartnerIds.has(r.partnerId));
 
           $('#uploadSection').classList.add('hidden');
@@ -1359,14 +1368,14 @@
         } catch (e) {
           showError('未取引データの取得に失敗しました: ' + e.message);
         } finally {
-          showLoading(false);
+          showProgressLoading(false);
         }
       }
 
       async function handleFile(file) {
         currentMode = 'dup';
         clearError();
-        showLoading(true);
+        showProgressLoading(true, 'ファイルを解析中…');
         try {
           const wb = await readWorkbook(file);
           records = buildRecordsFromFile(wb);
@@ -1377,7 +1386,7 @@
         } catch (e) {
           showError('ファイルの読み込みに失敗しました：' + e.message);
         } finally {
-          showLoading(false);
+          showProgressLoading(false);
         }
       }
 
