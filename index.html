@@ -189,7 +189,7 @@
 
     .step-desc { font-size: 12.5px; color: var(--ink-soft); margin-bottom: 16px; }
 
-    .form-select {
+    .form-select, .form-input {
       width: 100%;
       padding: 10px;
       border-radius: 11px;
@@ -197,7 +197,7 @@
       background: #fff;
       font-size: 13.5px;
       color: var(--ink);
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
 
     .app-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
@@ -247,6 +247,57 @@
       border: 1px solid var(--line);
       padding: 3px 10px;
       border-radius: 12px;
+    }
+
+    /* 期間設定エリア */
+    .filter-panel {
+      background: #FFFDF7;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+    }
+
+    .filter-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 8px;
+    }
+
+    .preset-btns {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .preset-btn {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      background: #fff;
+      cursor: pointer;
+      color: var(--ink-soft);
+    }
+    .preset-btn:hover { border-color: var(--navy); color: var(--navy); }
+
+    .date-range-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .date-field {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .date-field label {
+      font-size: 10.5px;
+      color: var(--ink-soft);
     }
 
     .action-btn-group {
@@ -479,6 +530,19 @@
     }
     .btn-secondary:hover { background: var(--paper-deep); }
 
+    .btn-cancel {
+      background: var(--red-soft);
+      color: var(--red);
+      border: 1px solid var(--red);
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .btn-cancel:hover { background: #f8d0cb; }
+
     .btn-primary:hover { background: var(--navy-soft); }
     .btn-primary:disabled { background: #B9B2A0; cursor: not-allowed; }
     .btn-ghost { background: none; border: 1px solid var(--line); color: var(--ink-soft); padding: 12px 18px; border-radius: 11px; font-size: 13px; cursor: pointer; }
@@ -581,7 +645,6 @@
 
     .hidden { display: none !important; }
     
-    /* 読み込み中プログレス表示の拡張スタイル */
     .loading-container {
       text-align: center;
       padding: 24px 16px;
@@ -673,6 +736,7 @@
     <div class="loading-container hidden" id="loadingContainer">
       <div class="loading-title" id="loadingTitle">freee APIと通信中です…</div>
       <div class="loading-status" id="loadingStatus"></div>
+      <button class="btn-cancel hidden" id="cancelProcessBtn" type="button">処理を中断してここまでの結果を表示</button>
     </div>
 
     <!-- アプリ本体: 取引先整理画面 -->
@@ -680,6 +744,26 @@
       <div class="app-header-bar">
         <button class="btn-nav" id="backToAppsBtn" type="button">← アプリ選択へ戻る</button>
         <span class="app-tag">使用中：取引先台帳クリーニング</span>
+      </div>
+
+      <!-- 照合期間の指定パネル -->
+      <div class="filter-panel">
+        <div class="filter-title">照合する取引期間（取引チェック対象）</div>
+        <div class="preset-btns">
+          <button class="preset-btn" id="presetAll" type="button">全期間 (デフォルト)</button>
+          <button class="preset-btn" id="preset1Y" type="button">直近1年</button>
+          <button class="preset-btn" id="preset3Y" type="button">直近3年</button>
+        </div>
+        <div class="date-range-grid">
+          <div class="date-field">
+            <label>開始日</label>
+            <input type="date" class="form-input" id="startDateInput" style="margin-bottom:0;">
+          </div>
+          <div class="date-field">
+            <label>終了日</label>
+            <input type="date" class="form-input" id="endDateInput" style="margin-bottom:0;">
+          </div>
+        </div>
       </div>
 
       <!-- 操作ボタンエリア -->
@@ -825,6 +909,7 @@
       let viewMode = 'dup';
       let searchTerm = '';
       let currentCompanyId = null;
+      let isCancelRequested = false;
 
       const COLS = {
         name: ['名前（通称）', '名前(通称)', '名前'],
@@ -1250,11 +1335,11 @@
         $('#errorBox').style.display = 'none';
       }
 
-      // 進捗表示対応ローディング関数
-      function showProgressLoading(show, title = 'freee APIと通信中です…', current = 0, total = 0) {
+      function showProgressLoading(show, title = 'freee APIと通信中です…', current = 0, total = 0, showCancel = false) {
         const container = $('#loadingContainer');
         const titleEl = $('#loadingTitle');
         const statusEl = $('#loadingStatus');
+        const cancelBtn = $('#cancelProcessBtn');
 
         if (show) {
           titleEl.textContent = title;
@@ -1266,9 +1351,11 @@
             statusEl.textContent = '';
           }
           container.classList.remove('hidden');
+          cancelBtn.classList.toggle('hidden', !showCancel);
         } else {
           container.classList.add('hidden');
           statusEl.textContent = '';
+          cancelBtn.classList.add('hidden');
         }
       }
 
@@ -1315,10 +1402,11 @@
         }
       }
 
-      // プログレス（〇〇件 / 〇〇件）表示付き：未取引データの検出
-      async function runUnusedCheck() {async function runUnusedCheck() {
+      // 未取引データの検出（キャンセル・期間フィルタ対応）
+      async function runUnusedCheck() {
         try {
           currentMode = 'unused';
+          isCancelRequested = false;
           clearError();
           showProgressLoading(true, '取引先一覧を取得中…');
 
@@ -1326,12 +1414,19 @@
           const partnersRes = await callFreeeApi('/partners', { company_id: currentCompanyId, limit: 3000 });
           records = buildRecordsFromApi(partnersRes.partners);
 
-          // 2. 最初に1件だけリクエストを送り、レスポンスヘッダーから総件数(X-Total-Count)を取得
-          showProgressLoading(true, '過去の取引データ総数を計算中…');
+          // 2. パラメータの準備（期間指定）
+          const startIssueDate = $('#startDateInput').value;
+          const endIssueDate = $('#endDateInput').value;
+
+          const queryParams = { company_id: currentCompanyId, limit: 1 };
+          if (startIssueDate) queryParams.start_issue_date = startIssueDate;
+          if (endIssueDate) queryParams.end_issue_date = endIssueDate;
+
+          // 3. 総件数(X-Total-Count)を取得
+          showProgressLoading(true, '対象期間の取引データ総数を計算中…');
           const token = getAccessToken();
           const firstUrl = new URL(CONFIG.apiBase + '/deals');
-          firstUrl.searchParams.append('company_id', currentCompanyId);
-          firstUrl.searchParams.append('limit', '1');
+          Object.keys(queryParams).forEach(k => firstUrl.searchParams.append(k, queryParams[k]));
 
           const firstRes = await fetch(firstUrl.toString(), {
             headers: {
@@ -1345,32 +1440,31 @@
           }
           if (!firstRes.ok) throw new Error(`API呼び出しエラー: ${firstRes.statusText}`);
 
-          // 総件数をヘッダーから取得（取得できない場合はデータ配列の長さでフォールバック）
           const totalHeader = firstRes.headers.get('X-Total-Count');
           const firstData = await firstRes.json();
           const totalDealsCount = totalHeader ? parseInt(totalHeader, 10) : (firstData.meta ? firstData.meta.total_count : 0);
 
-          // 3. 総件数を使って 100件ずつループ取得（プログレス表示）
+          // 4. 100件ずつ取得（キャンセルボタンあり）
           const usedPartnerIds = new Set();
           let offset = 0;
           const limit = 100;
           let hasMore = true;
 
-          while (hasMore) {
+          while (hasMore && !isCancelRequested) {
             const currentFetched = Math.min(offset + limit, totalDealsCount || (offset + limit));
-            showProgressLoading(true, '過去の取引データを照合中…', currentFetched, totalDealsCount);
+            showProgressLoading(true, '過去の取引データを照合中…', currentFetched, totalDealsCount, true);
 
-            const dealsRes = await callFreeeApi('/deals', { 
-              company_id: currentCompanyId, 
-              limit: limit,
-              offset: offset
-            });
+            const dealsParams = { company_id: currentCompanyId, limit: limit, offset: offset };
+            if (startIssueDate) dealsParams.start_issue_date = startIssueDate;
+            if (endIssueDate) dealsParams.end_issue_date = endIssueDate;
+
+            const dealsRes = await callFreeeApi('/deals', dealsParams);
 
             if (dealsRes.deals && dealsRes.deals.length > 0) {
               dealsRes.deals.forEach(deal => {
                 if (deal.partner_id) usedPartnerIds.add(deal.partner_id);
               });
-              
+
               if (dealsRes.deals.length < limit || (totalDealsCount > 0 && offset + limit >= totalDealsCount)) {
                 hasMore = false;
               } else {
@@ -1381,7 +1475,7 @@
             }
           }
 
-          // 4. 取引履歴に含まれない取引先を抽出
+          // 5. 結果を表示
           unusedPartners = records.filter(r => r.partnerId && !usedPartnerIds.has(r.partnerId));
 
           $('#uploadSection').classList.add('hidden');
@@ -1389,6 +1483,10 @@
           $('#viewDupBtn').style.display = 'none';
           $('#viewAllBtn').classList.add('active');
           render();
+
+          if (isCancelRequested) {
+            showError('処理を中断しました。読み込み完了分のデータのみ表示しています。');
+          }
         } catch (e) {
           showError('未取引データの取得に失敗しました: ' + e.message);
         } finally {
@@ -1413,6 +1511,35 @@
           showProgressLoading(false);
         }
       }
+
+      // 期間プリセット機能
+      function formatDate(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+      }
+
+      $('#presetAll').addEventListener('click', () => {
+        $('#startDateInput').value = '';
+        $('#endDateInput').value = '';
+      });
+
+      $('#preset1Y').addEventListener('click', () => {
+        const now = new Date();
+        const past = new Date();
+        past.setFullYear(now.getFullYear() - 1);
+        $('#startDateInput').value = formatDate(past);
+        $('#endDateInput').value = formatDate(now);
+      });
+
+      $('#preset3Y').addEventListener('click', () => {
+        const now = new Date();
+        const past = new Date();
+        past.setFullYear(now.getFullYear() - 3);
+        $('#startDateInput').value = formatDate(past);
+        $('#endDateInput').value = formatDate(now);
+      });
 
       // イベントバインド
       $('#loginBtn').addEventListener('click', redirectToAuth);
@@ -1444,6 +1571,10 @@
 
       $('#findDupBtn').addEventListener('click', runDedupeCheck);
       $('#findUnusedBtn').addEventListener('click', runUnusedCheck);
+
+      $('#cancelProcessBtn').addEventListener('click', () => {
+        isCancelRequested = true;
+      });
 
       const dropzone = $('#dropzone');
       const fileInput = $('#fileInput');
