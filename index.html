@@ -147,16 +147,24 @@
       }
     }
 
+    /* ヘッダーレイアウトの変更：タイトル領域と右上のロゴ配置 */
     header {
       display: flex;
-      align-items: center;
-      gap: 20px;
-      padding-bottom: 24px;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 20px;
       border-bottom: 2px solid var(--ink);
       margin-bottom: 28px;
     }
 
-    .stamp { flex: none; width: 64px; height: 64px; }
+    .header-logo {
+      flex: none;
+      height: 38px;
+      width: auto;
+      object-fit: contain;
+      margin-top: 2px;
+    }
 
     header h1 {
       font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
@@ -681,6 +689,7 @@
       .page { padding: 24px 14px 60px; }
       header { gap: 14px; }
       header h1 { font-size: 21px; }
+      .header-logo { height: 30px; }
       .summary { flex-direction: column; align-items: stretch; }
       input.search { width: 100%; }
     }
@@ -693,16 +702,11 @@
 
   <div class="page">
     <header>
-      <svg class="stamp" viewBox="0 0 64 64" aria-hidden="true">
-        <circle cx="32" cy="32" r="29" fill="none" stroke="#B23A2E" stroke-width="2.5" />
-        <circle cx="32" cy="32" r="23" fill="none" stroke="#B23A2E" stroke-width="1" />
-        <text x="32" y="27" text-anchor="middle" font-size="13" font-family="'Hiragino Mincho ProN','Yu Mincho',serif" fill="#B23A2E" font-weight="700">整理</text>
-        <text x="32" y="43" text-anchor="middle" font-size="10" font-family="'Hiragino Mincho ProN','Yu Mincho',serif" fill="#B23A2E">済</text>
-      </svg>
       <div>
         <h1 id="headerTitle">freee 拡張ポータル</h1>
         <p id="headerDesc">freee APIを活用して業務効率化ツールを利用・管理します。</p>
       </div>
+      <img src="360097.png" alt="D-Tax" class="header-logo">
     </header>
 
     <!-- Step 1: ログイン画面 -->
@@ -844,7 +848,7 @@
     </div>
   </div>
 
-  <!-- ★新設：未取引検索の設定モーダル -->
+  <!-- 未取引検索の設定モーダル -->
   <div class="modal-overlay hidden" id="unusedConfigModal">
     <div class="modal-card">
       <div class="modal-head">
@@ -1592,7 +1596,7 @@
       });
 
       $('#backToAppsBtn').addEventListener('click', () => {
-        $('#appDedupeSection').classList.add('hidden');
+        $('#appDedupeSection').classList.remove('hidden');
         $('#stepApps').classList.remove('hidden');
       });
 
