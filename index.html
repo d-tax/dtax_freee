@@ -498,7 +498,7 @@
     .empty-state { text-align: center; padding: 50px 20px; color: var(--ink-soft); }
     .empty-state .mark { font-size: 34px; margin-bottom: 10px; }
 
-    #dedupeScreen, #overdueScreen { animation: screenIn .25s ease; }
+    #dedupeScreen, #overdueScreen, #pochiResultSection { animation: screenIn .25s ease; }
     @keyframes screenIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
     .export-bar {
@@ -687,7 +687,7 @@
         <h1 id="headerTitle">freee 拡張ポータル</h1>
         <p id="headerDesc">freee APIを活用して業務効率化ツールを利用・管理します。</p>
       </div>
-      <img src="images/360097.png" alt="D-Tax" class="header-logo">
+      <img src="360097.png" alt="D-Tax" class="header-logo">
     </header>
 
     <!-- Step 1: ログイン画面 -->
@@ -716,7 +716,7 @@
       <div class="app-grid">
         <!-- アプリ1: 取引先クリーニング -->
         <div class="app-card" id="appDedupeCard">
-          <img src="images/icon-clean.png" alt="クリーニング" class="app-card-icon">
+          <img src="icon-clean.png" alt="クリーニング" class="app-card-icon">
           <div>
             <div class="app-card-title">取引先台帳クリーニング</div>
             <div class="app-card-desc">API経由で取引先を自動取得し、重複候補や未使用の取引先を整理します。</div>
@@ -725,10 +725,19 @@
 
         <!-- アプリ2: 期日超過の未決済売掛金チェッカー -->
         <div class="app-card" id="appOverdueCard">
-          <img src="images/icon-alert.png" alt="売掛金チェッカー" class="app-card-icon">
+          <img src="icon-alert.png" alt="売掛金チェッカー" class="app-card-icon">
           <div>
             <div class="app-card-title">期日超過の未決済売掛金チェッカー</div>
             <div class="app-card-desc">決済期日を過ぎた未回収の売掛取引（収入）をリストアップし、回収リスクを可視化します。</div>
+          </div>
+        </div>
+
+        <!-- アプリ3: ポチポチ取引発見器 -->
+        <div class="app-card" id="appManualPochiCard">
+          <img src="icon-pochipochi.png" alt="ポチポチ取引発見器" class="app-card-icon">
+          <div>
+            <div class="app-card-title">ポチポチ取引発見器（手入力自動化チェッカー）</div>
+            <div class="app-card-desc">何度も手入力している取引を炙り出し、自動登録ルールの作成候補を可視化します。</div>
           </div>
         </div>
       </div>
@@ -861,6 +870,61 @@
       </div>
     </div>
 
+    <!-- アプリ3本体: ポチポチ取引発見器画面 -->
+    <div id="appManualPochiSection" class="hidden">
+      <div class="app-header-bar">
+        <button class="btn-nav" id="backToAppsBtn3" type="button">← アプリ選択へ戻る</button>
+        <span class="app-tag">使用中：ポチポチ取引発見器</span>
+      </div>
+
+      <div class="step-box">
+        <div class="step-title">抽出条件の設定</div>
+        <div class="date-range-grid" style="margin-bottom: 12px;">
+          <div class="date-field">
+            <label>対象期間</label>
+            <select class="form-select" id="pochiMonthsSelect">
+              <option value="3">過去 3ヶ月</option>
+              <option value="6" selected>過去 6ヶ月</option>
+              <option value="12">過去 12ヶ月</option>
+            </select>
+          </div>
+          <div class="date-field">
+            <label>手入力回数の閾値（○回以上）</label>
+            <input type="number" class="form-input" id="pochiMinCount" value="5" min="2">
+          </div>
+        </div>
+        <button class="btn-primary" id="runPochiCheckBtn" type="button">ポチポチ取引を抽出する</button>
+      </div>
+
+      <div id="pochiResultSection" class="hidden">
+        <div class="summary">
+          <div class="summary-stats">
+            <div class="stat"><span class="num danger" id="statPochiTotalCount">0</span><span class="lbl">改善候補パターン数</span></div>
+            <div class="stat"><span class="num danger" id="statPochiManualRatio">0%</span><span class="lbl">全体の手入力比率</span></div>
+          </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table class="all-table">
+            <thead>
+              <tr>
+                <th>取引先</th>
+                <th>勘定科目</th>
+                <th>手入力回数</th>
+                <th>月平均推定量</th>
+                <th>改善インパクト</th>
+              </tr>
+            </thead>
+            <tbody id="pochiTableBody"></tbody>
+          </table>
+        </div>
+
+        <div class="export-bar">
+          <button class="btn-primary" id="exportPochiBtn" type="button">改善候補リストをExcelで書き出す</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- 判定基準モーダル -->
@@ -988,6 +1052,7 @@
       let groups = [];
       let unusedPartners = [];
       let overdueDeals = [];
+      let pochiResults = [];
       let currentMode = 'dup';
       let viewMode = 'dup';
       let searchTerm = '';
@@ -1441,6 +1506,19 @@
         return wb;
       }
 
+      function buildPochiWorkbook() {
+        const wb = XLSX.utils.book_new();
+        const headers = ['取引先名', '勘定科目名/ID', '手入力回数', '月平均推定回数', '状態'];
+        const rows = [headers];
+
+        pochiResults.forEach(p => {
+          rows.push([p.partnerName, p.accountItemName, p.count, p.perMonth, '手入力多頻度（自動化ルール作成推奨）']);
+        });
+
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'ポチポチ手入力改善候補');
+        return wb;
+      }
+
       function doExport() {
         if (!records.length) return;
         const today = new Date();
@@ -1454,6 +1532,13 @@
         const today = new Date();
         const ymd = today.getFullYear() + String(today.getMonth() + 1).padStart(2, '0') + String(today.getDate()).padStart(2, '0');
         XLSX.writeFile(buildOverdueWorkbook(), `期日超過未決済売掛金_${ymd}.xlsx`);
+      }
+
+      function doPochiExport() {
+        if (!pochiResults.length) return;
+        const today = new Date();
+        const ymd = today.getFullYear() + String(today.getMonth() + 1).padStart(2, '0') + String(today.getDate()).padStart(2, '0');
+        XLSX.writeFile(buildPochiWorkbook(), `手入力自動化改善リスト_${ymd}.xlsx`);
       }
 
       function showError(msg) {
@@ -1690,6 +1775,108 @@
         }
       }
 
+      async function runPochiCheck() {
+        try {
+          clearError();
+          const months = parseInt($('#pochiMonthsSelect').value, 10);
+          const minCount = parseInt($('#pochiMinCount').value, 10);
+
+          const now = new Date();
+          const startDate = new Date();
+          startDate.setMonth(now.getMonth() - months);
+          const startStr = formatDate(startDate);
+
+          showProgressLoading(true, '取引先・勘定科目マスタを取得中…');
+
+          const partnersRes = await callFreeeApi('/partners', { company_id: currentCompanyId, limit: 3000 });
+          const partnerMap = {};
+          partnersRes.partners.forEach(p => partnerMap[p.id] = p.name);
+
+          const itemsRes = await callFreeeApi('/account_items', { company_id: currentCompanyId });
+          const accountItemMap = {};
+          if (itemsRes.account_items) {
+            itemsRes.account_items.forEach(a => accountItemMap[a.id] = a.name);
+          }
+
+          let offset = 0;
+          const limit = 100;
+          let hasMore = true;
+          const dealGroups = {};
+          let totalDeals = 0;
+          let manualDeals = 0;
+
+          while (hasMore) {
+            showProgressLoading(true, '取引データを分析中…', offset, 0);
+            const dealsRes = await callFreeeApi('/deals', {
+              company_id: currentCompanyId,
+              start_issue_date: startStr,
+              limit: limit,
+              offset: offset
+            });
+
+            if (dealsRes.deals && dealsRes.deals.length > 0) {
+              dealsRes.deals.forEach(deal => {
+                totalDeals++;
+                const isManual = !deal.renkei_id; 
+                if (isManual) manualDeals++;
+
+                if (isManual && deal.partner_id) {
+                  const details = deal.details || [];
+                  details.forEach(dtl => {
+                    const key = `${deal.partner_id}_${dtl.account_item_id}`;
+                    if (!dealGroups[key]) {
+                      dealGroups[key] = {
+                        partnerName: partnerMap[deal.partner_id] || '未設定',
+                        accountItemName: accountItemMap[dtl.account_item_id] || `ID:${dtl.account_item_id}`,
+                        count: 0
+                      };
+                    }
+                    dealGroups[key].count++;
+                  });
+                }
+              });
+
+              if (dealsRes.deals.length < limit) hasMore = false;
+              else offset += limit;
+            } else {
+              hasMore = false;
+            }
+          }
+
+          pochiResults = Object.values(dealGroups)
+            .filter(item => item.count >= minCount)
+            .map(item => ({
+              ...item,
+              perMonth: (item.count / months).toFixed(1)
+            }))
+            .sort((a, b) => b.count - a.count);
+
+          const tbody = $('#pochiTableBody');
+          tbody.innerHTML = '';
+          pochiResults.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td><b>${escapeHtml(item.partnerName)}</b></td>
+              <td>${escapeHtml(item.accountItemName)}</td>
+              <td><span class="badge high">${item.count} 回</span></td>
+              <td>月 ${item.perMonth} 回</td>
+              <td><span class="keep-tag">自動化推奨</span></td>
+            `;
+            tbody.appendChild(tr);
+          });
+
+          const ratio = totalDeals > 0 ? ((manualDeals / totalDeals) * 100).toFixed(1) : 0;
+          $('#statPochiTotalCount').textContent = `${pochiResults.length} 件`;
+          $('#statPochiManualRatio').textContent = `${ratio}%`;
+          $('#pochiResultSection').classList.remove('hidden');
+
+        } catch (e) {
+          showError('ポチポチ取引の抽出に失敗しました: ' + e.message);
+        } finally {
+          showProgressLoading(false);
+        }
+      }
+
       async function handleFile(file) {
         currentMode = 'dup';
         clearError();
@@ -1736,12 +1923,21 @@
         $('#stepApps').classList.add('hidden');
         $('#appDedupeSection').classList.remove('hidden');
         $('#appOverdueSection').classList.add('hidden');
+        $('#appManualPochiSection').classList.add('hidden');
       });
 
       $('#appOverdueCard').addEventListener('click', () => {
         $('#stepApps').classList.add('hidden');
         $('#appOverdueSection').classList.remove('hidden');
         $('#appDedupeSection').classList.add('hidden');
+        $('#appManualPochiSection').classList.add('hidden');
+      });
+
+      $('#appManualPochiCard').addEventListener('click', () => {
+        $('#stepApps').classList.add('hidden');
+        $('#appManualPochiSection').classList.remove('hidden');
+        $('#appDedupeSection').classList.add('hidden');
+        $('#appOverdueSection').classList.add('hidden');
       });
 
       $('#backToAppsBtn').addEventListener('click', () => {
@@ -1754,8 +1950,14 @@
         $('#stepApps').classList.remove('hidden');
       });
 
+      $('#backToAppsBtn3').addEventListener('click', () => {
+        $('#appManualPochiSection').classList.add('hidden');
+        $('#stepApps').classList.remove('hidden');
+      });
+
       $('#findDupBtn').addEventListener('click', runDedupeCheck);
       $('#runOverdueCheckBtn').addEventListener('click', runOverdueCheck);
+      $('#runPochiCheckBtn').addEventListener('click', runPochiCheck);
 
       const unusedModal = $('#unusedConfigModal');
       $('#openUnusedModalBtn').addEventListener('click', () => {
@@ -1842,6 +2044,7 @@
 
       $('#exportBtn').addEventListener('click', doExport);
       $('#exportOverdueBtn').addEventListener('click', doOverdueExport);
+      $('#exportPochiBtn').addEventListener('click', doPochiExport);
 
       const criteriaModal = $('#criteriaModal');
       $('#criteriaBtn').addEventListener('click', () => criteriaModal.classList.remove('hidden'));
