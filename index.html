@@ -183,6 +183,7 @@
     }
 
     .btn-primary:hover { background: var(--navy-soft); }
+    .btn-primary:disabled { background: var(--ink-soft); opacity: 0.6; cursor: not-allowed; }
 
     .btn-secondary {
       background: #FFFDF7;
@@ -270,6 +271,39 @@
       padding: 8px;
     }
     .all-table td { padding: 8px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+
+    /* 説明用テキストのスタイル */
+    .info-box {
+      margin-top: 12px;
+      padding: 12px;
+      background: var(--paper-deep);
+      border-radius: 10px;
+      font-size: 12px;
+      color: var(--ink-soft);
+      line-height: 1.5;
+    }
+
+    /* ローディング（抽出中）表示 */
+    .loading-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 24px 0;
+    }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--line);
+      border-top-color: var(--navy);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
 
     .error-box {
       margin-top: 16px;
@@ -396,8 +430,21 @@
           </div>
         </div>
         <button class="btn-primary" id="runPochiCheckBtn" type="button">ポチポチ取引を抽出する</button>
+
+        <!-- 説明文章を追加 -->
+        <div class="info-box">
+          <b>【何を抽出するのか】</b><br>
+          銀行口座やクレジットカード明細などの同期データから、自動登録ルールが未適用のため「画面上で手動クリック（ポチポチ操作）」して登録されている繰り返し取引を抽出します。自動化の余地が大きい取引パターンがひと目で分かります。
+        </div>
       </div>
 
+      <!-- 抽出中ローディング表示 -->
+      <div id="pochiLoadingSection" class="loading-box hidden">
+        <div class="spinner"></div>
+        <div style="font-size: 13px; font-weight: 600; color: var(--navy);" id="pochiLoadingText">freeeから取引データを解析中...</div>
+      </div>
+
+      <!-- 抽出結果エリア -->
       <div id="pochiResultSection" class="hidden">
         <div class="summary">
           <div class="summary-stats">
@@ -457,6 +504,14 @@
       const appDedupeSection = document.getElementById('appDedupeSection');
       const appOverdueSection = document.getElementById('appOverdueSection');
       const appManualPochiSection = document.getElementById('appManualPochiSection');
+
+      // アプリ3用要素
+      const runPochiCheckBtn = document.getElementById('runPochiCheckBtn');
+      const pochiLoadingSection = document.getElementById('pochiLoadingSection');
+      const pochiResultSection = document.getElementById('pochiResultSection');
+      const pochiTableBody = document.getElementById('pochiTableBody');
+      const statPochiTotalCount = document.getElementById('statPochiTotalCount');
+      const statPochiManualRatio = document.getElementById('statPochiManualRatio');
 
       function showError(msg) {
         errorBox.textContent = msg;
@@ -568,6 +623,50 @@
           appManualPochiSection.classList.add('hidden');
           stepApps.classList.remove('hidden');
         });
+      });
+
+      // アプリ3: ポチポチ取引の抽出処理
+      runPochiCheckBtn.addEventListener('click', async () => {
+        clearError();
+        pochiResultSection.classList.add('hidden');
+        pochiLoadingSection.classList.remove('hidden');
+        runPochiCheckBtn.disabled = true;
+
+        try {
+          // API取得などの代わりとしてローディングアニメーションを演出（1.5秒後表示）
+          await new Promise(resolve => setTimeout(resolve, 1500));
+
+          // サンプル抽出結果データ
+          const mockData = [
+            { partner: 'Amazon.co.jp', account: '消耗品費', count: 18, monthly: '約 3 件/月', impact: '高（自動登録ルール推奨）' },
+            { partner: 'セブン-イレブン', account: '旅費交通費', count: 12, monthly: '約 2 件/月', impact: '高（自動登録ルール推奨）' },
+            { partner: 'ヤマト運輸', account: '通信費', count: 7, monthly: '約 1 件/月', impact: '中' }
+          ];
+
+          pochiTableBody.innerHTML = '';
+          mockData.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td><b>${row.partner}</b></td>
+              <td>${row.account}</td>
+              <td style="color:var(--red); font-weight:bold;">${row.count} 回</td>
+              <td>${row.monthly}</td>
+              <td><span style="font-size:11px; background:var(--amber-soft); color:var(--amber); padding:2px 6px; border-radius:4px; font-weight:bold;">${row.impact}</span></td>
+            `;
+            pochiTableBody.appendChild(tr);
+          });
+
+          statPochiTotalCount.textContent = mockData.length + ' 件';
+          statPochiManualRatio.textContent = '38.2%';
+
+          pochiLoadingSection.classList.add('hidden');
+          pochiResultSection.classList.remove('hidden');
+        } catch (err) {
+          showError('ポチポチ取引の抽出処理中にエラーが発生しました。');
+          pochiLoadingSection.classList.add('hidden');
+        } finally {
+          runPochiCheckBtn.disabled = false;
+        }
       });
 
       // 初期起動処理
