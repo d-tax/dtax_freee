@@ -210,6 +210,9 @@
     .app-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
 
     .app-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
       border: 1.5px solid var(--line);
       background: #FFFDF7;
       border-radius: 14px;
@@ -219,6 +222,7 @@
     }
 
     .app-card:hover { border-color: var(--navy); background: var(--paper-deep); transform: translateY(-2px); }
+    .app-card-icon { width: 48px; height: 48px; object-fit: contain; flex: none; }
     .app-card-title { font-weight: 700; font-size: 14.5px; color: var(--navy); margin-bottom: 4px; }
     .app-card-desc { font-size: 12px; color: var(--ink-soft); }
 
@@ -683,7 +687,7 @@
         <h1 id="headerTitle">freee 拡張ポータル</h1>
         <p id="headerDesc">freee APIを活用して業務効率化ツールを利用・管理します。</p>
       </div>
-      <img src="360097.png" alt="D-Tax" class="header-logo">
+      <img src="images/360097.png" alt="D-Tax" class="header-logo">
     </header>
 
     <!-- Step 1: ログイン画面 -->
@@ -712,14 +716,20 @@
       <div class="app-grid">
         <!-- アプリ1: 取引先クリーニング -->
         <div class="app-card" id="appDedupeCard">
-          <div class="app-card-title">取引先台帳クリーニング</div>
-          <div class="app-card-desc">API経由で取引先を自動取得し、重複候補や未使用の取引先を整理します。</div>
+          <img src="images/icon-clean.png" alt="クリーニング" class="app-card-icon">
+          <div>
+            <div class="app-card-title">取引先台帳クリーニング</div>
+            <div class="app-card-desc">API経由で取引先を自動取得し、重複候補や未使用の取引先を整理します。</div>
+          </div>
         </div>
 
         <!-- アプリ2: 期日超過の未決済売掛金チェッカー -->
         <div class="app-card" id="appOverdueCard">
-          <div class="app-card-title">期日超過の未決済売掛金チェッカー</div>
-          <div class="app-card-desc">決済期日を過ぎた未回収の売掛取引（収入）をリストアップし、回収リスクを可視化します。</div>
+          <img src="images/icon-alert.png" alt="売掛金チェッカー" class="app-card-icon">
+          <div>
+            <div class="app-card-title">期日超過の未決済売掛金チェッカー</div>
+            <div class="app-card-desc">決済期日を過ぎた未回収の売掛取引（収入）をリストアップし、回収リスクを可視化します。</div>
+          </div>
         </div>
       </div>
     </div>
@@ -1352,7 +1362,6 @@
         renderAllTable();
       }
 
-      /* 期日超過売掛金の描画 */
       function renderOverdueTable() {
         const tbody = $('#overdueTableBody');
         tbody.innerHTML = '';
@@ -1362,10 +1371,7 @@
           return d.partnerName.includes(searchOverdueTerm) || d.issueDate.includes(searchOverdueTerm);
         });
 
-        let totalAmount = 0;
-
         filtered.forEach(d => {
-          totalAmount += d.amount;
           const tr = document.createElement('tr');
           tr.className = 'overdue';
           tr.innerHTML = `
@@ -1627,20 +1633,17 @@
         }
       }
 
-      /* 新機能：期日超過の未決済売掛金を抽出 */
       async function runOverdueCheck() {
         try {
           clearError();
           showProgressLoading(true, '未決済取引のデータを読み込み中…');
 
-          // 取引先マッピング用辞書の取得
           const partnersRes = await callFreeeApi('/partners', { company_id: currentCompanyId, limit: 3000 });
           const partnerMap = {};
           partnersRes.partners.forEach(p => {
             partnerMap[p.id] = p.name;
           });
 
-          // 未決済の収入（売掛金）取引を取得
           const dealsRes = await callFreeeApi('/deals', {
             company_id: currentCompanyId,
             type: 'income',
@@ -1659,7 +1662,6 @@
                 const dueDate = new Date(deal.due_date);
                 dueDate.setHours(0, 0, 0, 0);
 
-                // 決済期日が今日より前（過ぎている）場合
                 if (dueDate < today) {
                   const diffTime = Math.abs(today - dueDate);
                   const overdueDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -1677,7 +1679,6 @@
             });
           }
 
-          // 超過日数が長い順（古い順）にソート
           overdueDeals.sort((a, b) => b.overdueDays - a.overdueDays);
 
           $('#overdueResultSection').classList.remove('hidden');
@@ -1714,7 +1715,6 @@
         return `${y}-${m}-${day}`;
       }
 
-      // イベントバインド
       $('#loginBtn').addEventListener('click', redirectToAuth);
 
       $('#selectCompanyBtn').addEventListener('click', () => {
@@ -1732,7 +1732,6 @@
         $('#stepCompany').classList.remove('hidden');
       });
 
-      // アプリ切替イベント
       $('#appDedupeCard').addEventListener('click', () => {
         $('#stepApps').classList.add('hidden');
         $('#appDedupeSection').classList.remove('hidden');
@@ -1758,7 +1757,6 @@
       $('#findDupBtn').addEventListener('click', runDedupeCheck);
       $('#runOverdueCheckBtn').addEventListener('click', runOverdueCheck);
 
-      // モーダル制御
       const unusedModal = $('#unusedConfigModal');
       $('#openUnusedModalBtn').addEventListener('click', () => {
         unusedModal.classList.remove('hidden');
