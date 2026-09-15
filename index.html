@@ -127,7 +127,7 @@
 
     .step-desc { font-size: 12.5px; color: var(--ink-soft); margin-bottom: 16px; }
 
-    .form-select {
+    .form-select, .form-input {
       width: 100%;
       padding: 10px;
       border-radius: 11px;
@@ -157,6 +157,15 @@
     .app-card-title { font-weight: 700; font-size: 14.5px; color: var(--navy); margin-bottom: 4px; }
     .app-card-desc { font-size: 12px; color: var(--ink-soft); }
 
+    .app-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
     .btn-primary {
       background: var(--navy);
       color: #fff;
@@ -172,6 +181,19 @@
 
     .btn-primary:hover { background: var(--navy-soft); }
 
+    .btn-secondary {
+      background: #FFFDF7;
+      color: var(--navy);
+      border: 1.5px solid var(--navy);
+      padding: 12px 22px;
+      border-radius: 11px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      text-align: center;
+    }
+
     .btn-nav {
       background: var(--paper-deep);
       border: 1px solid var(--line);
@@ -181,6 +203,70 @@
       border-radius: 8px;
       cursor: pointer;
     }
+
+    .app-tag {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--navy);
+      background: var(--paper-deep);
+      border: 1px solid var(--line);
+      padding: 3px 10px;
+      border-radius: 12px;
+    }
+
+    .date-range-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .date-field {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .date-field label {
+      font-size: 10.5px;
+      color: var(--ink-soft);
+    }
+
+    .action-btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      margin: 24px 0 22px;
+      padding: 16px;
+      background: var(--paper-deep);
+      border: 1px solid var(--line-soft);
+      border-radius: 18px;
+    }
+
+    .summary-stats { display: flex; gap: 16px; flex-wrap: wrap; }
+    .stat { display: flex; flex-direction: column; }
+    .stat .num { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .stat .num.danger { color: var(--red); }
+    .stat .lbl { font-size: 10.5px; color: var(--ink-soft); }
+
+    .all-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 6px; }
+    .all-table th {
+      text-align: left;
+      font-size: 11px;
+      color: var(--ink-soft);
+      font-weight: 600;
+      border-bottom: 1.5px solid var(--ink);
+      padding: 8px;
+    }
+    .all-table td { padding: 8px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
 
     .error-box {
       margin-top: 16px;
@@ -232,6 +318,7 @@
       <div class="step-desc">選択した事業所：<b id="selectedCompanyName" style="color:var(--ink);"></b></div>
       
       <div class="app-grid">
+        <!-- アプリ1: 取引先クリーニング -->
         <div class="app-card" id="appDedupeCard">
           <img src="images/icon-clean.png" alt="クリーニング" class="app-card-icon">
           <div>
@@ -240,12 +327,96 @@
           </div>
         </div>
 
+        <!-- アプリ2: 期日超過の未決済売掛金チェッカー -->
         <div class="app-card" id="appOverdueCard">
           <img src="images/icon-alert.png" alt="売掛金チェッカー" class="app-card-icon">
           <div>
             <div class="app-card-title">期日超過の未決済売掛金チェッカー</div>
             <div class="app-card-desc">決済期日を過ぎた未回収の売掛取引（収入）をリストアップし、回収リスクを可視化します。</div>
           </div>
+        </div>
+
+        <!-- アプリ3: ポチポチ取引発見器 -->
+        <div class="app-card" id="appManualPochiCard">
+          <!-- アイコン画像が存在しない場合は既存画像で代用 -->
+          <img src="images/icon-clean.png" alt="ポチポチ取引発見器" class="app-card-icon">
+          <div>
+            <div class="app-card-title">ポチポチ取引発見器（手入力自動化チェッカー）</div>
+            <div class="app-card-desc">何度も手入力している取引を炙り出し、自動登録ルールの作成候補を可視化します。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- アプリ1本体: 取引先整理画面 -->
+    <div id="appDedupeSection" class="hidden">
+      <div class="app-header-bar">
+        <button class="btn-nav" class="backToAppsBtn" type="button">← アプリ選択へ戻る</button>
+        <span class="app-tag">使用中：取引先台帳クリーニング</span>
+      </div>
+      <div class="action-btn-group">
+        <button class="btn-secondary" type="button">取引先の重複登録を探す</button>
+      </div>
+    </div>
+
+    <!-- アプリ2本体: 期日超過売掛金チェッカー画面 -->
+    <div id="appOverdueSection" class="hidden">
+      <div class="app-header-bar">
+        <button class="btn-nav" class="backToAppsBtn" type="button">← アプリ選択へ戻る</button>
+        <span class="app-tag">使用中：期日超過の未決済売掛金チェッカー</span>
+      </div>
+      <div class="action-btn-group">
+        <button class="btn-primary" type="button">期日超過の未決済取引を自動抽出する</button>
+      </div>
+    </div>
+
+    <!-- アプリ3本体: ポチポチ取引発見器画面 -->
+    <div id="appManualPochiSection" class="hidden">
+      <div class="app-header-bar">
+        <button class="btn-nav" class="backToAppsBtn" type="button">← アプリ選択へ戻る</button>
+        <span class="app-tag">使用中：ポチポチ取引発見器</span>
+      </div>
+
+      <div class="step-box">
+        <div class="step-title">抽出条件の設定</div>
+        <div class="date-range-grid" style="margin-bottom: 12px;">
+          <div class="date-field">
+            <label>対象期間</label>
+            <select class="form-select" id="pochiMonthsSelect">
+              <option value="3">過去 3ヶ月</option>
+              <option value="6" selected>過去 6ヶ月</option>
+              <option value="12">過去 12ヶ月</option>
+            </select>
+          </div>
+          <div class="date-field">
+            <label>手入力回数の閾値（○回以上）</label>
+            <input type="number" class="form-input" id="pochiMinCount" value="5" min="2">
+          </div>
+        </div>
+        <button class="btn-primary" id="runPochiCheckBtn" type="button">ポチポチ取引を抽出する</button>
+      </div>
+
+      <div id="pochiResultSection" class="hidden">
+        <div class="summary">
+          <div class="summary-stats">
+            <div class="stat"><span class="num danger" id="statPochiTotalCount">0</span><span class="lbl">改善候補パターン数</span></div>
+            <div class="stat"><span class="num danger" id="statPochiManualRatio">0%</span><span class="lbl">全体の手入力比率</span></div>
+          </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table class="all-table">
+            <thead>
+              <tr>
+                <th>取引先</th>
+                <th>勘定科目</th>
+                <th>手入力回数</th>
+                <th>月平均推定量</th>
+                <th>改善インパクト</th>
+              </tr>
+            </thead>
+            <tbody id="pochiTableBody"></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -259,13 +430,13 @@
       "use strict";
 
       const CONFIG = {
-        clientId: "803164151598495", // 必要に応じて正しいアプリのClient IDに変更してください
+        clientId: "803164151598495",
         redirectUri: window.location.origin + window.location.pathname,
         authEndpoint: "https://accounts.secure.freee.co.jp/public_api/authorize",
         apiBase: "https://api.freee.co.jp/api/1"
       };
 
-      // 画面要素の取得
+      // 要素取得
       const stepLogin = document.getElementById('stepLogin');
       const stepCompany = document.getElementById('stepCompany');
       const stepApps = document.getElementById('stepApps');
@@ -275,6 +446,15 @@
       const selectedCompanyName = document.getElementById('selectedCompanyName');
       const backToCompanyBtn = document.getElementById('backToCompanyBtn');
       const errorBox = document.getElementById('errorBox');
+
+      // アプリ切り替え用の画面要素
+      const appDedupeCard = document.getElementById('appDedupeCard');
+      const appOverdueCard = document.getElementById('appOverdueCard');
+      const appManualPochiCard = document.getElementById('appManualPochiCard');
+
+      const appDedupeSection = document.getElementById('appDedupeSection');
+      const appOverdueSection = document.getElementById('appOverdueSection');
+      const appManualPochiSection = document.getElementById('appManualPochiSection');
 
       function showError(msg) {
         errorBox.textContent = msg;
@@ -286,7 +466,6 @@
         errorBox.style.display = 'none';
       }
 
-      // freee認証ページへリダイレクト
       function redirectToAuth() {
         const params = new URLSearchParams({
           client_id: CONFIG.clientId,
@@ -300,7 +479,6 @@
         return sessionStorage.getItem('access_token');
       }
 
-      // API呼び出し共通関数
       async function callFreeeApi(endpoint) {
         const token = getAccessToken();
         if (!token) throw new Error('認証が切れています。ログインしてください。');
@@ -312,26 +490,21 @@
           }
         });
 
-        if (!res.ok) {
-          throw new Error(`APIエラー: ${res.status} ${res.statusText}`);
-        }
+        if (!res.ok) throw new Error(`APIエラー: ${res.status} ${res.statusText}`);
         return await res.json();
       }
 
-      // URLハッシュからアクセストークンを解析
       function handleOAuthCallback() {
         if (window.location.hash) {
           const params = new URLSearchParams(window.location.hash.substring(1));
           const token = params.get('access_token');
           if (token) {
             sessionStorage.setItem('access_token', token);
-            // URLからハッシュをクリア
             history.replaceState(null, null, window.location.pathname);
           }
         }
       }
 
-      // 事業所一覧を取得
       async function loadCompanies() {
         try {
           clearError();
@@ -351,17 +524,15 @@
         }
       }
 
-      // 初期化処理
+      // イベントリスナー設定
       loginBtn.addEventListener('click', redirectToAuth);
 
       selectCompanyBtn.addEventListener('click', () => {
-        const companyId = companySelect.value;
-        if (!companyId) {
+        if (!companySelect.value) {
           alert('事業所を選択してください');
           return;
         }
-        const selectedText = companySelect.options[companySelect.selectedIndex].text;
-        selectedCompanyName.textContent = selectedText;
+        selectedCompanyName.textContent = companySelect.options[companySelect.selectedIndex].text;
         stepCompany.classList.add('hidden');
         stepApps.classList.remove('hidden');
       });
@@ -371,7 +542,33 @@
         stepCompany.classList.remove('hidden');
       });
 
-      // ページ読み込み時の自動チェック
+      // アプリカードの選択イベント
+      appDedupeCard.addEventListener('click', () => {
+        stepApps.classList.add('hidden');
+        appDedupeSection.classList.remove('hidden');
+      });
+
+      appOverdueCard.addEventListener('click', () => {
+        stepApps.classList.add('hidden');
+        appOverdueSection.classList.remove('hidden');
+      });
+
+      appManualPochiCard.addEventListener('click', () => {
+        stepApps.classList.add('hidden');
+        appManualPochiSection.classList.remove('hidden');
+      });
+
+      // 各アプリから戻るボタンの設定
+      document.querySelectorAll('.backToAppsBtn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          appDedupeSection.classList.add('hidden');
+          appOverdueSection.classList.add('hidden');
+          appManualPochiSection.classList.add('hidden');
+          stepApps.classList.remove('hidden');
+        });
+      });
+
+      // 初期起動処理
       handleOAuthCallback();
       if (getAccessToken()) {
         loadCompanies();
