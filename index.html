@@ -197,6 +197,7 @@
       width: 100%;
       text-align: center;
     }
+    .btn-secondary:disabled { opacity: 0.6; cursor: not-allowed; }
 
     .btn-nav {
       background: var(--paper-deep);
@@ -235,13 +236,6 @@
       color: var(--ink-soft);
     }
 
-    .action-btn-group {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
     .summary {
       display: flex;
       flex-wrap: wrap;
@@ -272,7 +266,6 @@
     }
     .all-table td { padding: 8px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
 
-    /* 説明用テキストのスタイル */
     .info-box {
       margin-top: 12px;
       padding: 12px;
@@ -283,7 +276,6 @@
       line-height: 1.5;
     }
 
-    /* ローディング（抽出中）表示 */
     .loading-box {
       display: flex;
       flex-direction: column;
@@ -387,29 +379,91 @@
     <!-- アプリ1本体: 取引先整理画面 -->
     <div id="appDedupeSection" class="hidden">
       <div class="app-header-bar">
-        <button class="btn-nav" class="backToAppsBtn" type="button">← アプリ選択へ戻る</button>
+        <button class="btn-nav backToAppsBtn" type="button">← アプリ選択へ戻る</button>
         <span class="app-tag">使用中：取引先台帳クリーニング</span>
       </div>
-      <div class="action-btn-group">
-        <button class="btn-secondary" type="button">取引先の重複登録を探す</button>
+      <div class="step-box">
+        <div class="step-title">取引先台帳の重複チェック</div>
+        <button class="btn-secondary" id="runDedupeBtn" type="button">取引先の重複登録を探す</button>
+        <div class="info-box">
+          <b>【何を抽出するのか】</b><br>
+          「株式会社」の表記違い（(株)や全角半角など）や、名称が酷似している重複登録の取引先候補を自動解析して一覧化します。
+        </div>
+      </div>
+
+      <div id="dedupeLoadingSection" class="loading-box hidden">
+        <div class="spinner"></div>
+        <div style="font-size: 13px; font-weight: 600; color: var(--navy);">取引先データを分析中...</div>
+      </div>
+
+      <div id="dedupeResultSection" class="hidden">
+        <div class="summary">
+          <div class="summary-stats">
+            <div class="stat"><span class="num danger" id="statDedupeCount">0</span><span class="lbl">重複が疑われる取引先グループ</span></div>
+          </div>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="all-table">
+            <thead>
+              <tr>
+                <th>グループ</th>
+                <th>検出された取引先名</th>
+                <th>状態 / 判定</th>
+              </tr>
+            </thead>
+            <tbody id="dedupeTableBody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
     <!-- アプリ2本体: 期日超過売掛金チェッカー画面 -->
     <div id="appOverdueSection" class="hidden">
       <div class="app-header-bar">
-        <button class="btn-nav" class="backToAppsBtn" type="button">← アプリ選択へ戻る</button>
+        <button class="btn-nav backToAppsBtn" type="button">← アプリ選択へ戻る</button>
         <span class="app-tag">使用中：期日超過の未決済売掛金チェッカー</span>
       </div>
-      <div class="action-btn-group">
-        <button class="btn-primary" type="button">期日超過の未決済取引を自動抽出する</button>
+      <div class="step-box">
+        <div class="step-title">売掛金の滞納状況チェック</div>
+        <button class="btn-primary" id="runOverdueBtn" type="button">期日超過の未決済取引を自動抽出する</button>
+        <div class="info-box">
+          <b>【何を抽出するのか】</b><br>
+          freeeに登録されている未決済の売掛金（収入取引）の中から、決済期日（回収予定日）を過ぎているにもかかわらず入金処理が完了していない取引を抽出します。
+        </div>
+      </div>
+
+      <div id="overdueLoadingSection" class="loading-box hidden">
+        <div class="spinner"></div>
+        <div style="font-size: 13px; font-weight: 600; color: var(--navy);">売掛金データを照会中...</div>
+      </div>
+
+      <div id="overdueResultSection" class="hidden">
+        <div class="summary">
+          <div class="summary-stats">
+            <div class="stat"><span class="num danger" id="statOverdueCount">0</span><span class="lbl">期日超過件数</span></div>
+            <div class="stat"><span class="num danger" id="statOverdueAmount">¥0</span><span class="lbl">超過合計金額</span></div>
+          </div>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="all-table">
+            <thead>
+              <tr>
+                <th>取引先</th>
+                <th>期日</th>
+                <th>金額</th>
+                <th>超過日数</th>
+              </tr>
+            </thead>
+            <tbody id="overdueTableBody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
     <!-- アプリ3本体: ポチポチ手入力取引チェッカー画面 -->
     <div id="appManualPochiSection" class="hidden">
       <div class="app-header-bar">
-        <button class="btn-nav" class="backToAppsBtn" type="button">← アプリ選択へ戻る</button>
+        <button class="btn-nav backToAppsBtn" type="button">← アプリ選択へ戻る</button>
         <span class="app-tag">使用中：ポチポチ手入力取引チェッカー</span>
       </div>
 
@@ -431,20 +485,17 @@
         </div>
         <button class="btn-primary" id="runPochiCheckBtn" type="button">ポチポチ取引を抽出する</button>
 
-        <!-- 説明文章を追加 -->
         <div class="info-box">
           <b>【何を抽出するのか】</b><br>
           銀行口座やクレジットカード明細などの同期データから、自動登録ルールが未適用のため「画面上で手動クリック（ポチポチ操作）」して登録されている繰り返し取引を抽出します。自動化の余地が大きい取引パターンがひと目で分かります。
         </div>
       </div>
 
-      <!-- 抽出中ローディング表示 -->
       <div id="pochiLoadingSection" class="loading-box hidden">
         <div class="spinner"></div>
         <div style="font-size: 13px; font-weight: 600; color: var(--navy);" id="pochiLoadingText">freeeから取引データを解析中...</div>
       </div>
 
-      <!-- 抽出結果エリア -->
       <div id="pochiResultSection" class="hidden">
         <div class="summary">
           <div class="summary-stats">
@@ -504,6 +555,21 @@
       const appDedupeSection = document.getElementById('appDedupeSection');
       const appOverdueSection = document.getElementById('appOverdueSection');
       const appManualPochiSection = document.getElementById('appManualPochiSection');
+
+      // アプリ1用要素
+      const runDedupeBtn = document.getElementById('runDedupeBtn');
+      const dedupeLoadingSection = document.getElementById('dedupeLoadingSection');
+      const dedupeResultSection = document.getElementById('dedupeResultSection');
+      const dedupeTableBody = document.getElementById('dedupeTableBody');
+      const statDedupeCount = document.getElementById('statDedupeCount');
+
+      // アプリ2用要素
+      const runOverdueBtn = document.getElementById('runOverdueBtn');
+      const overdueLoadingSection = document.getElementById('overdueLoadingSection');
+      const overdueResultSection = document.getElementById('overdueResultSection');
+      const overdueTableBody = document.getElementById('overdueTableBody');
+      const statOverdueCount = document.getElementById('statOverdueCount');
+      const statOverdueAmount = document.getElementById('statOverdueAmount');
 
       // アプリ3用要素
       const runPochiCheckBtn = document.getElementById('runPochiCheckBtn');
@@ -615,7 +681,7 @@
         appManualPochiSection.classList.remove('hidden');
       });
 
-      // 各アプリから戻るボタンの設定
+      // 各アプリから「アプリ選択へ戻る」ボタン
       document.querySelectorAll('.backToAppsBtn').forEach(btn => {
         btn.addEventListener('click', () => {
           appDedupeSection.classList.add('hidden');
@@ -623,6 +689,82 @@
           appManualPochiSection.classList.add('hidden');
           stepApps.classList.remove('hidden');
         });
+      });
+
+      // アプリ1: 重複チェック実行処理
+      runDedupeBtn.addEventListener('click', async () => {
+        clearError();
+        dedupeResultSection.classList.add('hidden');
+        dedupeLoadingSection.classList.remove('hidden');
+        runDedupeBtn.disabled = true;
+
+        try {
+          await new Promise(resolve => setTimeout(resolve, 1200));
+
+          const mockDedupeData = [
+            { group: 'グループ1', names: '株式会社サンプル / (株)サンプル', status: '重複の可能性高' },
+            { group: 'グループ2', names: 'テスト商事 / テスト商事株式会社', status: '表記表記表記名違い' }
+          ];
+
+          dedupeTableBody.innerHTML = '';
+          mockDedupeData.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td><b>${row.group}</b></td>
+              <td>${row.names}</td>
+              <td><span style="font-size:11px; background:var(--red-soft); color:var(--red); padding:2px 6px; border-radius:4px; font-weight:bold;">${row.status}</span></td>
+            `;
+            dedupeTableBody.appendChild(tr);
+          });
+
+          statDedupeCount.textContent = mockDedupeData.length + ' 件';
+          dedupeLoadingSection.classList.add('hidden');
+          dedupeResultSection.classList.remove('hidden');
+        } catch (err) {
+          showError('重複取引先の解析中にエラーが発生しました。');
+          dedupeLoadingSection.classList.add('hidden');
+        } finally {
+          runDedupeBtn.disabled = false;
+        }
+      });
+
+      // アプリ2: 期日超過チェック実行処理
+      runOverdueBtn.addEventListener('click', async () => {
+        clearError();
+        overdueResultSection.classList.add('hidden');
+        overdueLoadingSection.classList.remove('hidden');
+        runOverdueBtn.disabled = true;
+
+        try {
+          await new Promise(resolve => setTimeout(resolve, 1200));
+
+          const mockOverdueData = [
+            { partner: 'アルファ商事', date: '2026-08-31', amount: '¥ 330,000', days: '15 日超過' },
+            { partner: 'ベータテクノロジー', date: '2026-07-31', amount: '¥ 154,000', days: '46 日超過' }
+          ];
+
+          overdueTableBody.innerHTML = '';
+          mockOverdueData.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td><b>${row.partner}</b></td>
+              <td>${row.date}</td>
+              <td style="font-weight:bold;">${row.amount}</td>
+              <td><span style="font-size:11px; background:var(--red-soft); color:var(--red); padding:2px 6px; border-radius:4px; font-weight:bold;">${row.days}</span></td>
+            `;
+            overdueTableBody.appendChild(tr);
+          });
+
+          statOverdueCount.textContent = mockOverdueData.length + ' 件';
+          statOverdueAmount.textContent = '¥ 484,000';
+          overdueLoadingSection.classList.add('hidden');
+          overdueResultSection.classList.remove('hidden');
+        } catch (err) {
+          showError('売掛金データの取得中にエラーが発生しました。');
+          overdueLoadingSection.classList.add('hidden');
+        } finally {
+          runOverdueBtn.disabled = false;
+        }
       });
 
       // アプリ3: ポチポチ取引の抽出処理
@@ -633,10 +775,8 @@
         runPochiCheckBtn.disabled = true;
 
         try {
-          // API取得などの代わりとしてローディングアニメーションを演出（1.5秒後表示）
           await new Promise(resolve => setTimeout(resolve, 1500));
 
-          // サンプル抽出結果データ
           const mockData = [
             { partner: 'Amazon.co.jp', account: '消耗品費', count: 18, monthly: '約 3 件/月', impact: '高（自動登録ルール推奨）' },
             { partner: 'セブン-イレブン', account: '旅費交通費', count: 12, monthly: '約 2 件/月', impact: '高（自動登録ルール推奨）' },
