@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>freee アプリポータル & 取引先クリーニング</title>
+  <title>freee アプリポータル & 業務効率化ツール</title>
   <link rel="icon" href="data:,">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
@@ -128,7 +128,7 @@
     .page {
       position: relative;
       z-index: 2;
-      max-width: 520px;
+      max-width: 560px;
       margin: 44px auto;
       padding: 36px 24px 56px;
       background: rgba(255, 253, 247, 0.65);
@@ -147,7 +147,6 @@
       }
     }
 
-    /* ヘッダーレイアウトの変更：タイトル領域と右上のロゴ配置 */
     header {
       display: flex;
       align-items: flex-start;
@@ -214,14 +213,14 @@
       border: 1.5px solid var(--line);
       background: #FFFDF7;
       border-radius: 14px;
-      padding: 14px;
+      padding: 16px;
       cursor: pointer;
       transition: all 0.2s ease;
     }
 
-    .app-card:hover { border-color: var(--navy); background: var(--paper-deep); }
-    .app-card-title { font-weight: 700; font-size: 14px; color: var(--navy); margin-bottom: 4px; }
-    .app-card-desc { font-size: 11.5px; color: var(--ink-soft); }
+    .app-card:hover { border-color: var(--navy); background: var(--paper-deep); transform: translateY(-2px); }
+    .app-card-title { font-weight: 700; font-size: 14.5px; color: var(--navy); margin-bottom: 4px; }
+    .app-card-desc { font-size: 12px; color: var(--ink-soft); }
 
     .app-header-bar {
       display: flex;
@@ -264,7 +263,6 @@
       margin-bottom: 20px;
     }
 
-    /* 期間設定モーダル内のスタイル */
     .radio-option-group {
       display: flex;
       flex-direction: column;
@@ -367,6 +365,7 @@
     .summary-stats { display: flex; gap: 16px; flex-wrap: wrap; }
     .stat { display: flex; flex-direction: column; }
     .stat .num { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .stat .num.danger { color: var(--red); }
     .stat .lbl { font-size: 10.5px; color: var(--ink-soft); }
     .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
@@ -479,15 +478,6 @@
 
     .member-meta span b { color: var(--ink); font-weight: 600; }
 
-    .group-dismissed-note {
-      padding: 10px 16px;
-      font-size: 12.5px;
-      color: var(--ink-soft);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
     .all-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 6px; }
 
     .all-table th {
@@ -496,15 +486,15 @@
       color: var(--ink-soft);
       font-weight: 600;
       border-bottom: 1.5px solid var(--ink);
-      padding: 6px 8px;
+      padding: 8px;
     }
 
-    .all-table td { padding: 7px 8px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
-    .all-table tr.is-dup td { background: var(--paper-deep); }
+    .all-table td { padding: 8px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+    .all-table tr.overdue td { background: var(--red-soft); }
     .empty-state { text-align: center; padding: 50px 20px; color: var(--ink-soft); }
     .empty-state .mark { font-size: 34px; margin-bottom: 10px; }
 
-    #dedupeScreen { animation: screenIn .25s ease; }
+    #dedupeScreen, #overdueScreen { animation: screenIn .25s ease; }
     @keyframes screenIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
     .export-bar {
@@ -562,7 +552,6 @@
 
     .btn-primary:hover { background: var(--navy-soft); }
     .btn-primary:disabled { background: #B9B2A0; cursor: not-allowed; }
-    .btn-ghost { background: none; border: 1px solid var(--line); color: var(--ink-soft); padding: 12px 18px; border-radius: 11px; font-size: 13px; cursor: pointer; }
 
     .help-link {
       display: inline-flex;
@@ -647,18 +636,6 @@
 
     .modal-close:hover { color: var(--ink); }
     .modal-body { padding: 18px 22px 30px; }
-    .crit-item { margin-bottom: 18px; }
-
-    .crit-title {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      font-weight: 700;
-      font-size: 13.5px;
-      margin-bottom: 6px;
-    }
-
-    .crit-item p { margin: 0; font-size: 12.5px; color: var(--ink-soft); }
 
     .hidden { display: none !important; }
 
@@ -729,16 +706,20 @@
     <!-- Step 3: アプリ選択画面 -->
     <div id="stepApps" class="step-box hidden">
       <button class="btn-nav" id="backToCompanyBtn" type="button">← 事業所選択へ戻る</button>
-      <div class="step-title">3. 利用するアプリを選択</div>
+      <div class="step-title" style="margin-top: 12px;">3. 利用するアプリを選択</div>
       <div class="step-desc">選択した事業所：<b id="selectedCompanyName" style="color:var(--ink);"></b></div>
+      
       <div class="app-grid">
+        <!-- アプリ1: 取引先クリーニング -->
         <div class="app-card" id="appDedupeCard">
           <div class="app-card-title">取引先台帳クリーニング</div>
           <div class="app-card-desc">API経由で取引先を自動取得し、重複候補や未使用の取引先を整理します。</div>
         </div>
-        <div class="app-card" style="opacity: 0.6; cursor: not-allowed;">
-          <div class="app-card-title">【開発予定】仕訳データチェック</div>
-          <div class="app-card-desc">今後拡張するアプリケーションのサンプルです。</div>
+
+        <!-- アプリ2: 期日超過の未決済売掛金チェッカー -->
+        <div class="app-card" id="appOverdueCard">
+          <div class="app-card-title">期日超過の未決済売掛金チェッカー</div>
+          <div class="app-card-desc">決済期日を過ぎた未回収の売掛取引（収入）をリストアップし、回収リスクを可視化します。</div>
         </div>
       </div>
     </div>
@@ -752,14 +733,13 @@
       <button class="btn-cancel hidden" id="cancelProcessBtn" type="button">処理を中断してここまでの結果を表示</button>
     </div>
 
-    <!-- アプリ本体: 取引先整理画面 -->
+    <!-- アプリ1本体: 取引先整理画面 -->
     <div id="appDedupeSection" class="hidden">
       <div class="app-header-bar">
         <button class="btn-nav" id="backToAppsBtn" type="button">← アプリ選択へ戻る</button>
         <span class="app-tag">使用中：取引先台帳クリーニング</span>
       </div>
 
-      <!-- 操作ボタンエリア -->
       <div class="action-btn-group">
         <button class="btn-secondary" id="findDupBtn" type="button">取引先の重複登録を探す</button>
         <button class="btn-secondary" id="openUnusedModalBtn" type="button">過去に取引がない取引先を探す</button>
@@ -822,6 +802,55 @@
         </div>
       </div>
     </div>
+
+    <!-- アプリ2本体: 期日超過売掛金チェッカー画面 -->
+    <div id="appOverdueSection" class="hidden">
+      <div class="app-header-bar">
+        <button class="btn-nav" id="backToAppsBtn2" type="button">← アプリ選択へ戻る</button>
+        <span class="app-tag">使用中：期日超過の未決済売掛金チェッカー</span>
+      </div>
+
+      <div class="action-btn-group">
+        <button class="btn-primary" id="runOverdueCheckBtn" type="button">期日超過の未決済取引を自動抽出する</button>
+      </div>
+
+      <div id="overdueResultSection" class="hidden">
+        <div class="summary">
+          <div class="summary-stats">
+            <div class="stat"><span class="num danger" id="statOverdueCount">0</span><span class="lbl">期日超過の件数</span></div>
+            <div class="stat"><span class="num danger" id="statOverdueAmount">¥0</span><span class="lbl">未回収合計金額</span></div>
+          </div>
+          <div class="controls">
+            <input class="search" id="searchOverdueBox" placeholder="取引先・発生日で検索">
+          </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table class="all-table">
+            <thead>
+              <tr>
+                <th>発生日</th>
+                <th>決済期日</th>
+                <th>超過日数</th>
+                <th>取引先</th>
+                <th>未決済金額</th>
+              </tr>
+            </thead>
+            <tbody id="overdueTableBody"></tbody>
+          </table>
+        </div>
+
+        <div class="empty-state hidden" id="emptyOverdueState">
+          <div class="mark">🎉</div>
+          <div>期日を過ぎた未決済取引はありません。</div>
+        </div>
+
+        <div class="export-bar">
+          <button class="btn-primary" id="exportOverdueBtn" type="button">未決済リストをExcelで書き出す</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- 判定基準モーダル -->
@@ -832,17 +861,23 @@
         <button class="modal-close" id="criteriaCloseBtn" type="button" aria-label="閉じる">×</button>
       </div>
       <div class="modal-body">
-        <div class="crit-item">
-          <div class="crit-title"><span class="badge high">確実</span>① 登録番号が一致</div>
-          <p>「適格請求書発行事業者の登録番号」が同じなら重複候補としてグループ化します。</p>
+        <div style="margin-bottom: 18px;">
+          <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13.5px; margin-bottom: 6px;">
+            <span class="badge high">確実</span>① 登録番号が一致
+          </div>
+          <p style="margin: 0; font-size: 12.5px; color: var(--ink-soft);">「適格請求書発行事業者の登録番号」が同じなら重複候補としてグループ化します。</p>
         </div>
-        <div class="crit-item">
-          <div class="crit-title"><span class="badge high">確実</span>② 名称・カナ名称の表記ゆれ</div>
-          <p>「株式会社」「㈱」「(株)」などの法人格やスペースを除去して比較します。</p>
+        <div style="margin-bottom: 18px;">
+          <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13.5px; margin-bottom: 6px;">
+            <span class="badge high">確実</span>② 名称・カナ名称の表記ゆれ
+          </div>
+          <p style="margin: 0; font-size: 12.5px; color: var(--ink-soft);">「株式会社」「㈱」「(株)」などの法人格やスペースを除去して比較します。</p>
         </div>
-        <div class="crit-item">
-          <div class="crit-title"><span class="badge medium">要確認</span>③ 名称が似ている（住所・電話番号も一致）</div>
-          <p>名前の類似度が高く(70%以上)、郵便番号か電話番号が一致する場合に提示します。</p>
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13.5px; margin-bottom: 6px;">
+            <span class="badge medium">要確認</span>③ 名称が似ている（住所・電話番号も一致）
+          </div>
+          <p style="margin: 0; font-size: 12.5px; color: var(--ink-soft);">名前の類似度が高く(70%以上)、郵便番号か電話番号が一致する場合に提示します。</p>
         </div>
       </div>
     </div>
@@ -931,7 +966,7 @@
         });
 
         if (res.status === 403) {
-          throw new Error('403 Forbidden: freeeアプリ管理画面で「取引（閲覧）」の権限（スコープ）を許可してください。');
+          throw new Error('403 Forbidden: freeeアプリ管理画面でスコープ（閲覧権限）を許可してください。');
         }
 
         if (!res.ok) throw new Error(`API呼び出しエラー: ${res.statusText}`);
@@ -942,9 +977,11 @@
       let records = [];
       let groups = [];
       let unusedPartners = [];
+      let overdueDeals = [];
       let currentMode = 'dup';
       let viewMode = 'dup';
       let searchTerm = '';
+      let searchOverdueTerm = '';
       let currentCompanyId = null;
       let isCancelRequested = false;
 
@@ -1238,7 +1275,7 @@
 
           if (g.dismissed) {
             const note = document.createElement('div');
-            note.className = 'group-dismissed-note';
+            note.style.cssText = 'padding: 10px 16px; font-size: 12.5px; color: var(--ink-soft);';
             note.textContent = 'このグループは別々の取引先として扱われます（全件とも書き出し対象に残ります）。';
             div.appendChild(note);
           } else {
@@ -1315,6 +1352,37 @@
         renderAllTable();
       }
 
+      /* 期日超過売掛金の描画 */
+      function renderOverdueTable() {
+        const tbody = $('#overdueTableBody');
+        tbody.innerHTML = '';
+
+        const filtered = overdueDeals.filter(d => {
+          if (!searchOverdueTerm) return true;
+          return d.partnerName.includes(searchOverdueTerm) || d.issueDate.includes(searchOverdueTerm);
+        });
+
+        let totalAmount = 0;
+
+        filtered.forEach(d => {
+          totalAmount += d.amount;
+          const tr = document.createElement('tr');
+          tr.className = 'overdue';
+          tr.innerHTML = `
+            <td>${escapeHtml(d.issueDate)}</td>
+            <td><b>${escapeHtml(d.dueDate)}</b></td>
+            <td><span class="badge high">${d.overdueDays}日超過</span></td>
+            <td><b>${escapeHtml(d.partnerName)}</b></td>
+            <td>¥${d.amount.toLocaleString()}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        $('#statOverdueCount').textContent = `${overdueDeals.length} 件`;
+        $('#statOverdueAmount').textContent = `¥${overdueDeals.reduce((sum, d) => sum + d.amount, 0).toLocaleString()}`;
+        $('#emptyOverdueState').classList.toggle('hidden', overdueDeals.length !== 0);
+      }
+
       function buildExportWorkbook() {
         const wb = XLSX.utils.book_new();
 
@@ -1354,12 +1422,32 @@
         return wb;
       }
 
+      function buildOverdueWorkbook() {
+        const wb = XLSX.utils.book_new();
+        const headers = ['発生日', '決済期日', '超過日数', '取引先名', '未決済金額(円)'];
+        const rows = [headers];
+
+        overdueDeals.forEach(d => {
+          rows.push([d.issueDate, d.dueDate, d.overdueDays, d.partnerName, d.amount]);
+        });
+
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '期日超過未決済取引');
+        return wb;
+      }
+
       function doExport() {
         if (!records.length) return;
         const today = new Date();
         const ymd = today.getFullYear() + String(today.getMonth() + 1).padStart(2, '0') + String(today.getDate()).padStart(2, '0');
         const filename = currentMode === 'unused' ? `未取引先リスト_${ymd}.xlsx` : `取引先整理_${ymd}.xlsx`;
         XLSX.writeFile(buildExportWorkbook(), filename);
+      }
+
+      function doOverdueExport() {
+        if (!overdueDeals.length) return;
+        const today = new Date();
+        const ymd = today.getFullYear() + String(today.getMonth() + 1).padStart(2, '0') + String(today.getDate()).padStart(2, '0');
+        XLSX.writeFile(buildOverdueWorkbook(), `期日超過未決済売掛金_${ymd}.xlsx`);
       }
 
       function showError(msg) {
@@ -1439,23 +1527,19 @@
         }
       }
 
-      // 未取引データの検出実行（ダイアログ後のメイン処理）
       async function runUnusedCheck() {
         try {
           currentMode = 'unused';
           isCancelRequested = false;
           clearError();
           
-          // モーダルを閉じる
           $('#unusedConfigModal').classList.add('hidden');
 
           showProgressLoading(true, '取引先一覧を取得中…');
 
-          // 1. 全取引先を取得
           const partnersRes = await callFreeeApi('/partners', { company_id: currentCompanyId, limit: 3000 });
           records = buildRecordsFromApi(partnersRes.partners);
 
-          // 2. 期間パラメータの判定
           const isRangeMode = $('#radioModeRange').checked;
           const startIssueDate = isRangeMode ? $('#startDateInput').value : '';
           const endIssueDate = isRangeMode ? $('#endDateInput').value : '';
@@ -1464,7 +1548,6 @@
           if (startIssueDate) queryParams.start_issue_date = startIssueDate;
           if (endIssueDate) queryParams.end_issue_date = endIssueDate;
 
-          // 3. 総件数(X-Total-Count)を取得
           showProgressLoading(true, '対象期間の取引データ件数を計算中…');
           const token = getAccessToken();
           const firstUrl = new URL(CONFIG.apiBase + '/deals');
@@ -1478,7 +1561,7 @@
           });
 
           if (firstRes.status === 403) {
-            throw new Error('403 Forbidden: freeeアプリ管理画面で「取引（閲覧）」の権限（スコープ）を許可してください。');
+            throw new Error('403 Forbidden: freeeアプリ管理画面でスコープ（閲覧権限）を許可してください。');
           }
           if (!firstRes.ok) throw new Error(`API呼び出しエラー: ${firstRes.statusText}`);
 
@@ -1488,7 +1571,6 @@
 
           showProgressLoading(false);
 
-          // 4. 確認ダイアログ（総件数の通知）
           let confirmMsg = `${totalDealsCount.toLocaleString()} 件の取引データが見つかりました。\n続けて過去に取引がない取引先を探しますか？`;
           if (totalDealsCount > 1000) {
             confirmMsg += `\n\n※件数が多いため、データ照合の完了まで少し時間がかかる場合があります。`;
@@ -1497,7 +1579,6 @@
           const userConfirmed = confirm(confirmMsg);
           if (!userConfirmed) return;
 
-          // 5. 100件ずつループで照合実行
           const usedPartnerIds = new Set();
           let offset = 0;
           const limit = 100;
@@ -1528,7 +1609,6 @@
             }
           }
 
-          // 6. 画面レンダリング
           unusedPartners = records.filter(r => r.partnerId && !usedPartnerIds.has(r.partnerId));
 
           $('#uploadSection').classList.add('hidden');
@@ -1542,6 +1622,68 @@
           }
         } catch (e) {
           showError('未取引データの取得に失敗しました: ' + e.message);
+        } finally {
+          showProgressLoading(false);
+        }
+      }
+
+      /* 新機能：期日超過の未決済売掛金を抽出 */
+      async function runOverdueCheck() {
+        try {
+          clearError();
+          showProgressLoading(true, '未決済取引のデータを読み込み中…');
+
+          // 取引先マッピング用辞書の取得
+          const partnersRes = await callFreeeApi('/partners', { company_id: currentCompanyId, limit: 3000 });
+          const partnerMap = {};
+          partnersRes.partners.forEach(p => {
+            partnerMap[p.id] = p.name;
+          });
+
+          // 未決済の収入（売掛金）取引を取得
+          const dealsRes = await callFreeeApi('/deals', {
+            company_id: currentCompanyId,
+            type: 'income',
+            status: 'unsettled',
+            limit: 100
+          });
+
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+
+          overdueDeals = [];
+
+          if (dealsRes.deals && dealsRes.deals.length > 0) {
+            dealsRes.deals.forEach(deal => {
+              if (deal.due_date) {
+                const dueDate = new Date(deal.due_date);
+                dueDate.setHours(0, 0, 0, 0);
+
+                // 決済期日が今日より前（過ぎている）場合
+                if (dueDate < today) {
+                  const diffTime = Math.abs(today - dueDate);
+                  const overdueDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                  const partnerName = deal.partner_id ? (partnerMap[deal.partner_id] || `ID:${deal.partner_id}`) : '(取引先未設定)';
+
+                  overdueDeals.push({
+                    issueDate: deal.issue_date,
+                    dueDate: deal.due_date,
+                    overdueDays: overdueDays,
+                    partnerName: partnerName,
+                    amount: deal.amount
+                  });
+                }
+              }
+            });
+          }
+
+          // 超過日数が長い順（古い順）にソート
+          overdueDeals.sort((a, b) => b.overdueDays - a.overdueDays);
+
+          $('#overdueResultSection').classList.remove('hidden');
+          renderOverdueTable();
+        } catch (e) {
+          showError('期日超過データの取得に失敗しました: ' + e.message);
         } finally {
           showProgressLoading(false);
         }
@@ -1590,19 +1732,33 @@
         $('#stepCompany').classList.remove('hidden');
       });
 
+      // アプリ切替イベント
       $('#appDedupeCard').addEventListener('click', () => {
         $('#stepApps').classList.add('hidden');
         $('#appDedupeSection').classList.remove('hidden');
+        $('#appOverdueSection').classList.add('hidden');
+      });
+
+      $('#appOverdueCard').addEventListener('click', () => {
+        $('#stepApps').classList.add('hidden');
+        $('#appOverdueSection').classList.remove('hidden');
+        $('#appDedupeSection').classList.add('hidden');
       });
 
       $('#backToAppsBtn').addEventListener('click', () => {
-        $('#appDedupeSection').classList.remove('hidden');
+        $('#appDedupeSection').classList.add('hidden');
+        $('#stepApps').classList.remove('hidden');
+      });
+
+      $('#backToAppsBtn2').addEventListener('click', () => {
+        $('#appOverdueSection').classList.add('hidden');
         $('#stepApps').classList.remove('hidden');
       });
 
       $('#findDupBtn').addEventListener('click', runDedupeCheck);
+      $('#runOverdueCheckBtn').addEventListener('click', runOverdueCheck);
 
-      // 未取引モードモーダルの制御
+      // モーダル制御
       const unusedModal = $('#unusedConfigModal');
       $('#openUnusedModalBtn').addEventListener('click', () => {
         unusedModal.classList.remove('hidden');
@@ -1611,7 +1767,6 @@
         unusedModal.classList.add('hidden');
       });
 
-      // ラジオボタンによる切り替え
       const radioAll = $('#radioModeAll');
       const radioRange = $('#radioModeRange');
       const dateBox = $('#dateRangeBox');
@@ -1623,7 +1778,6 @@
         if (radioRange.checked) dateBox.classList.remove('hidden');
       });
 
-      // プリセットボタン
       $('#preset1Y').addEventListener('click', () => {
         const now = new Date();
         const past = new Date();
@@ -1683,7 +1837,13 @@
         render();
       });
 
+      $('#searchOverdueBox').addEventListener('input', e => {
+        searchOverdueTerm = e.target.value.trim();
+        renderOverdueTable();
+      });
+
       $('#exportBtn').addEventListener('click', doExport);
+      $('#exportOverdueBtn').addEventListener('click', doOverdueExport);
 
       const criteriaModal = $('#criteriaModal');
       $('#criteriaBtn').addEventListener('click', () => criteriaModal.classList.remove('hidden'));
