@@ -242,11 +242,11 @@
       gap: 12px;
       align-items: center;
       justify-content: space-between;
-      margin: 24px 0 22px;
-      padding: 16px;
+      margin: 16px 0 12px;
+      padding: 12px 16px;
       background: var(--paper-deep);
       border: 1px solid var(--line-soft);
-      border-radius: 18px;
+      border-radius: 14px;
     }
 
     .summary-stats { display: flex; gap: 16px; flex-wrap: wrap; }
@@ -281,7 +281,7 @@
       flex-direction: column;
       align-items: center;
       gap: 10px;
-      padding: 24px 0;
+      padding: 20px 0;
     }
 
     .spinner {
@@ -352,7 +352,7 @@
           <img src="images/icon-clean.png" alt="クリーニング" class="app-card-icon">
           <div>
             <div class="app-card-title">取引先台帳クリーニング</div>
-            <div class="app-card-desc">API経由で取引先を自動取得し、重複候補や未使用の取引先を整理します。</div>
+            <div class="app-card-desc">重複登録の探知や、過去に取引のない未使用の取引先を整理抽出します。</div>
           </div>
         </div>
 
@@ -373,6 +373,15 @@
             <div class="app-card-desc">何度も手入力している取引を炙り出し、自動登録ルールの作成候補を可視化します。</div>
           </div>
         </div>
+
+        <!-- アプリ4: 取引の異常値・異常入力チェッカー -->
+        <div class="app-card" id="appAuditCard">
+          <img src="images/icon-ijouchi.png" alt="取引の異常値・異常入力チェッカー" class="app-card-icon">
+          <div>
+            <div class="app-card-title">取引の異常値・異常入力チェッカー</div>
+            <div class="app-card-desc">金額の桁間違いや税区分の矛盾など、過去パターンから逸脱した取引を検知する監査用ツール。</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -383,7 +392,7 @@
         <span class="app-tag">使用中：取引先台帳クリーニング</span>
       </div>
 
-      <!-- 機能1: 取引先の重複チェック -->
+      <!-- 機能1: 取引先台帳の重複チェック -->
       <div class="step-box">
         <div class="step-title">1. 取引先台帳の重複チェック</div>
         <button class="btn-secondary" id="runDedupeBtn" type="button">取引先の重複登録を探す</button>
@@ -391,9 +400,36 @@
           <b>【何を抽出するのか】</b><br>
           「株式会社」の表記違い（(株)や全角半角など）や、名称が酷似している重複登録の取引先候補を自動解析して一覧化します。
         </div>
+
+        <!-- 重複チェックのローディング (真下) -->
+        <div id="dedupeLoadingSection" class="loading-box hidden">
+          <div class="spinner"></div>
+          <div style="font-size: 13px; font-weight: 600; color: var(--navy);">重複取引先データを分析中...</div>
+        </div>
+
+        <!-- 重複チェックの結果表示 (エレメントの真下) -->
+        <div id="dedupeResultSection" class="hidden">
+          <div class="summary">
+            <div class="summary-stats">
+              <div class="stat"><span class="num danger" id="statDedupeCount">0</span><span class="lbl">重複が疑われる取引先グループ</span></div>
+            </div>
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="all-table">
+              <thead>
+                <tr>
+                  <th>グループ</th>
+                  <th>検出された取引先名</th>
+                  <th>状態 / 判定</th>
+                </tr>
+              </thead>
+              <tbody id="dedupeTableBody"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
-      <!-- 機能2: 未使用取引先の抽出（追加機能） -->
+      <!-- 機能2: 未使用取引先の抽出 -->
       <div class="step-box">
         <div class="step-title">2. 未使用取引先の抽出</div>
         <div class="date-range-grid" style="margin-bottom: 12px;">
@@ -411,33 +447,33 @@
           <b>【何を抽出するのか】</b><br>
           指定した期間内に一度も取引（収入・支出の仕訳）が発生していない取引先を抽出し、整理・削除候補として可視化します。
         </div>
-      </div>
 
-      <!-- ローディング＆リアルタイム進捗表示 -->
-      <div id="dedupeLoadingSection" class="loading-box hidden">
-        <div class="spinner"></div>
-        <div id="dedupeLoadingText" style="font-size: 13px; font-weight: 600; color: var(--navy);">取引先データを分析中...</div>
-        <div id="dedupeProgressText" style="font-size: 14px; font-weight: 700; color: var(--red);" class="hidden">過去の取引 0 件 / 0 件</div>
-      </div>
-
-      <!-- 結果表示セクション -->
-      <div id="dedupeResultSection" class="hidden">
-        <div class="summary">
-          <div class="summary-stats">
-            <div class="stat"><span class="num danger" id="statDedupeCount">0</span><span class="lbl" id="statDedupeLabel">検出数</span></div>
-          </div>
+        <!-- 未使用抽出のローディング (真下) -->
+        <div id="unusedLoadingSection" class="loading-box hidden">
+          <div class="spinner"></div>
+          <div style="font-size: 13px; font-weight: 600; color: var(--navy);">過去の取引データを解析中...</div>
+          <div id="unusedProgressText" style="font-size: 14px; font-weight: 700; color: var(--red);">過去の取引 0 件 / 0 件</div>
         </div>
-        <div style="overflow-x: auto;">
-          <table class="all-table">
-            <thead id="dedupeTableHeader">
-              <tr>
-                <th>グループ</th>
-                <th>検出された取引先名</th>
-                <th>状態 / 判定</th>
-              </tr>
-            </thead>
-            <tbody id="dedupeTableBody"></tbody>
-          </table>
+
+        <!-- 未使用抽出の結果表示 (エレメントの真下) -->
+        <div id="unusedResultSection" class="hidden">
+          <div class="summary">
+            <div class="summary-stats">
+              <div class="stat"><span class="num danger" id="statUnusedCount">0</span><span class="lbl">未使用の取引先数</span></div>
+            </div>
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="all-table">
+              <thead>
+                <tr>
+                  <th>取引先コード</th>
+                  <th>取引先名</th>
+                  <th>最終取引判定</th>
+                </tr>
+              </thead>
+              <tbody id="unusedTableBody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -512,13 +548,13 @@
 
         <div class="info-box">
           <b>【何を抽出するのか】</b><br>
-          銀行口座やクレジットカード明細などの同期データから、自動登録ルールが未適用のため「画面上で手動クリック（ポチポチ操作）」して登録されている繰り返し取引を抽出します。自動化の余地が大きい取引パターンがひと目で分かります。
+          銀行口座やクレジットカード明細などの同期データから、自動登録ルールが未適用のため「画面上で手動クリック（ポチポチ操作）」して登録されている繰り返し取引を抽出します。
         </div>
       </div>
 
       <div id="pochiLoadingSection" class="loading-box hidden">
         <div class="spinner"></div>
-        <div style="font-size: 13px; font-weight: 600; color: var(--navy);" id="pochiLoadingText">freeeから取引データを解析中...</div>
+        <div style="font-size: 13px; font-weight: 600; color: var(--navy);">freeeから取引データを解析中...</div>
       </div>
 
       <div id="pochiResultSection" class="hidden">
@@ -541,6 +577,70 @@
               </tr>
             </thead>
             <tbody id="pochiTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- アプリ4本体: 取引の異常値・異常入力チェッカー画面 -->
+    <div id="appAuditSection" class="hidden">
+      <div class="app-header-bar">
+        <button class="btn-nav backToAppsBtn" type="button">← アプリ選択へ戻る</button>
+        <span class="app-tag">使用中：取引の異常値・異常入力チェッカー</span>
+      </div>
+
+      <div class="step-box">
+        <div class="step-title">監査用チェックの実行</div>
+        <div class="date-range-grid" style="margin-bottom: 12px;">
+          <div class="date-field">
+            <label>対象期間</label>
+            <select class="form-select" id="auditMonthsSelect">
+              <option value="1">当月分のみ</option>
+              <option value="3" selected>過去 3ヶ月</option>
+              <option value="6">過去 6ヶ月</option>
+            </select>
+          </div>
+          <div class="date-field">
+            <label>金額乖離トリガー</label>
+            <select class="form-select" id="auditThresholdSelect">
+              <option value="3">平均の 3倍以上</option>
+              <option value="5" selected>平均の 5倍以上 (桁指定ミス等)</option>
+              <option value="10">平均の 10倍以上</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn-primary" id="runAuditCheckBtn" type="button">異常値・入力ミスを抽出する</button>
+
+        <div class="info-box">
+          <b>【何を抽出するのか】</b><br>
+          ・<b>金額の桁間違い</b>：普段10万円前後の支払先の相手に対し今月だけ100万円になっているなど、平均値から大きく乖離した取引。<br>
+          ・<b>税区分の矛盾</b>：いつもは「課税仕入」で登録されている取引先なのに「非課税/不課税」になっている等の矛盾取引。
+        </div>
+      </div>
+
+      <div id="auditLoadingSection" class="loading-box hidden">
+        <div class="spinner"></div>
+        <div style="font-size: 13px; font-weight: 600; color: var(--navy);">全仕訳・取引データを解析中...</div>
+      </div>
+
+      <div id="auditResultSection" class="hidden">
+        <div class="summary">
+          <div class="summary-stats">
+            <div class="stat"><span class="num danger" id="statAuditTotalCount">0</span><span class="lbl">要確認の異常取引数</span></div>
+          </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table class="all-table">
+            <thead>
+              <tr>
+                <th>発生日 / 取引先</th>
+                <th>科目 / 登録金額</th>
+                <th>検知された異常理由</th>
+                <th>リスク度</th>
+              </tr>
+            </thead>
+            <tbody id="auditTableBody"></tbody>
           </table>
         </div>
       </div>
@@ -576,24 +676,28 @@
       const appDedupeCard = document.getElementById('appDedupeCard');
       const appOverdueCard = document.getElementById('appOverdueCard');
       const appManualPochiCard = document.getElementById('appManualPochiCard');
+      const appAuditCard = document.getElementById('appAuditCard');
 
       const appDedupeSection = document.getElementById('appDedupeSection');
       const appOverdueSection = document.getElementById('appOverdueSection');
       const appManualPochiSection = document.getElementById('appManualPochiSection');
+      const appAuditSection = document.getElementById('appAuditSection');
 
       // アプリ1要素
       const runDedupeBtn = document.getElementById('runDedupeBtn');
+      const dedupeLoadingSection = document.getElementById('dedupeLoadingSection');
+      const dedupeResultSection = document.getElementById('dedupeResultSection');
+      const dedupeTableBody = document.getElementById('dedupeTableBody');
+      const statDedupeCount = document.getElementById('statDedupeCount');
+
       const runUnusedBtn = document.getElementById('runUnusedBtn');
       const unusedStartDate = document.getElementById('unusedStartDate');
       const unusedEndDate = document.getElementById('unusedEndDate');
-      const dedupeLoadingSection = document.getElementById('dedupeLoadingSection');
-      const dedupeLoadingText = document.getElementById('dedupeLoadingText');
-      const dedupeProgressText = document.getElementById('dedupeProgressText');
-      const dedupeResultSection = document.getElementById('dedupeResultSection');
-      const dedupeTableHeader = document.getElementById('dedupeTableHeader');
-      const dedupeTableBody = document.getElementById('dedupeTableBody');
-      const statDedupeCount = document.getElementById('statDedupeCount');
-      const statDedupeLabel = document.getElementById('statDedupeLabel');
+      const unusedLoadingSection = document.getElementById('unusedLoadingSection');
+      const unusedProgressText = document.getElementById('unusedProgressText');
+      const unusedResultSection = document.getElementById('unusedResultSection');
+      const unusedTableBody = document.getElementById('unusedTableBody');
+      const statUnusedCount = document.getElementById('statUnusedCount');
 
       // アプリ2要素
       const runOverdueBtn = document.getElementById('runOverdueBtn');
@@ -610,6 +714,13 @@
       const pochiTableBody = document.getElementById('pochiTableBody');
       const statPochiTotalCount = document.getElementById('statPochiTotalCount');
       const statPochiManualRatio = document.getElementById('statPochiManualRatio');
+
+      // アプリ4要素
+      const runAuditCheckBtn = document.getElementById('runAuditCheckBtn');
+      const auditLoadingSection = document.getElementById('auditLoadingSection');
+      const auditResultSection = document.getElementById('auditResultSection');
+      const auditTableBody = document.getElementById('auditTableBody');
+      const statAuditTotalCount = document.getElementById('statAuditTotalCount');
 
       // デフォルト日付の設定（過去1年間）
       const today = new Date();
@@ -704,6 +815,7 @@
         stepCompany.classList.remove('hidden');
       });
 
+      // アプリカードのクリック
       appDedupeCard.addEventListener('click', () => {
         stepApps.classList.add('hidden');
         appDedupeSection.classList.remove('hidden');
@@ -719,11 +831,17 @@
         appManualPochiSection.classList.remove('hidden');
       });
 
+      appAuditCard.addEventListener('click', () => {
+        stepApps.classList.add('hidden');
+        appAuditSection.classList.remove('hidden');
+      });
+
       document.querySelectorAll('.backToAppsBtn').forEach(btn => {
         btn.addEventListener('click', () => {
           appDedupeSection.classList.add('hidden');
           appOverdueSection.classList.add('hidden');
           appManualPochiSection.classList.add('hidden');
+          appAuditSection.classList.add('hidden');
           stepApps.classList.remove('hidden');
         });
       });
@@ -732,22 +850,11 @@
       runDedupeBtn.addEventListener('click', async () => {
         clearError();
         dedupeResultSection.classList.add('hidden');
-        dedupeProgressText.classList.add('hidden');
-        dedupeLoadingText.textContent = '取引先データを分析中...';
         dedupeLoadingSection.classList.remove('hidden');
         runDedupeBtn.disabled = true;
 
         try {
           await new Promise(resolve => setTimeout(resolve, 1200));
-
-          statDedupeLabel.textContent = '重複が疑われる取引先グループ';
-          dedupeTableHeader.innerHTML = `
-            <tr>
-              <th>グループ</th>
-              <th>検出された取引先名</th>
-              <th>状態 / 判定</th>
-            </tr>
-          `;
 
           const mockDedupeData = [
             { group: 'グループ1', names: '株式会社サンプル / (株)サンプル', status: '重複の可能性高' },
@@ -776,7 +883,7 @@
         }
       });
 
-      // アプリ1-2: 未使用取引先の抽出（追加機能）
+      // アプリ1-2: 未使用取引先の抽出
       runUnusedBtn.addEventListener('click', async () => {
         clearError();
         const start = unusedStartDate.value;
@@ -787,7 +894,6 @@
           return;
         }
 
-        // ダミーの総取引件数（実際のAPI実装時は取引件数を事前にGET取得）
         const totalTransactions = 2450;
         const confirmMsg = `${start} 〜 ${end} の期間に ${totalTransactions.toLocaleString()} 件の取引データが見つかりました。\n解析処理に時間がかかる可能性がありますが続けますか？`;
 
@@ -795,30 +901,19 @@
           return;
         }
 
-        dedupeResultSection.classList.add('hidden');
-        dedupeLoadingText.textContent = '過去の取引データを解析中...';
-        dedupeProgressText.classList.remove('hidden');
-        dedupeLoadingSection.classList.remove('hidden');
+        unusedResultSection.classList.add('hidden');
+        unusedProgressText.classList.remove('hidden');
+        unusedLoadingSection.classList.remove('hidden');
         runUnusedBtn.disabled = true;
 
         try {
-          // リアルタイムカウントアップのシミュレーション
           let currentProcessed = 0;
           const chunkSize = 245;
           while (currentProcessed < totalTransactions) {
             await new Promise(resolve => setTimeout(resolve, 200));
             currentProcessed = Math.min(currentProcessed + chunkSize, totalTransactions);
-            dedupeProgressText.textContent = `過去の取引 ${currentProcessed.toLocaleString()} 件 / ${totalTransactions.toLocaleString()} 件`;
+            unusedProgressText.textContent = `過去の取引 ${currentProcessed.toLocaleString()} 件 / ${totalTransactions.toLocaleString()} 件`;
           }
-
-          statDedupeLabel.textContent = '未使用の取引先数';
-          dedupeTableHeader.innerHTML = `
-            <tr>
-              <th>取引先コード</th>
-              <th>取引先名</th>
-              <th>最終取引判定</th>
-            </tr>
-          `;
 
           const mockUnusedData = [
             { code: 'TRD-0012', name: '旧・グローバルインク', status: '指定期間内 取引0件' },
@@ -826,7 +921,7 @@
             { code: 'TRD-0089', name: '合同会社ネクストステージ', status: '指定期間内 取引0件' }
           ];
 
-          dedupeTableBody.innerHTML = '';
+          unusedTableBody.innerHTML = '';
           mockUnusedData.forEach(row => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -834,15 +929,15 @@
               <td>${row.name}</td>
               <td><span style="font-size:11px; background:var(--amber-soft); color:var(--amber); padding:2px 6px; border-radius:4px; font-weight:bold;">${row.status}</span></td>
             `;
-            dedupeTableBody.appendChild(tr);
+            unusedTableBody.appendChild(tr);
           });
 
-          statDedupeCount.textContent = mockUnusedData.length + ' 件';
-          dedupeLoadingSection.classList.add('hidden');
-          dedupeResultSection.classList.remove('hidden');
+          statUnusedCount.textContent = mockUnusedData.length + ' 件';
+          unusedLoadingSection.classList.add('hidden');
+          unusedResultSection.classList.remove('hidden');
         } catch (err) {
           showError('未使用取引先の抽出処理中にエラーが発生しました。');
-          dedupeLoadingSection.classList.add('hidden');
+          unusedLoadingSection.classList.add('hidden');
         } finally {
           runUnusedBtn.disabled = false;
         }
@@ -926,6 +1021,45 @@
           pochiLoadingSection.classList.add('hidden');
         } finally {
           runPochiCheckBtn.disabled = false;
+        }
+      });
+
+      // アプリ4: 取引の異常値・異常入力チェック
+      runAuditCheckBtn.addEventListener('click', async () => {
+        clearError();
+        auditResultSection.classList.add('hidden');
+        auditLoadingSection.classList.remove('hidden');
+        runAuditCheckBtn.disabled = true;
+
+        try {
+          await new Promise(resolve => setTimeout(resolve, 1400));
+
+          const mockAuditData = [
+            { date: '2026-09-10', partner: 'オフィスサプライ社', account: '事務用品費', amount: '¥ 1,200,000', reason: '金額の桁間違い疑い（過去平均: ¥120,000）', risk: '高（要確認）' },
+            { date: '2026-09-05', partner: '東京ビル管理', account: '支払手数料', amount: '¥ 88,000', reason: '税区分不一致（過去は課税仕入 → 今回は非課税）', risk: '高（税務リスク）' },
+            { date: '2026-08-28', partner: 'クラウドワークス', account: '外注工賃', amount: '¥ 450,000', reason: '通常と大きく異なる金額乖離（平均の3.8倍）', risk: '中' }
+          ];
+
+          auditTableBody.innerHTML = '';
+          mockAuditData.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${row.date}<br><b>${row.partner}</b></td>
+              <td>${row.account}<br><b style="color:var(--ink);">${row.amount}</b></td>
+              <td style="color:var(--red); font-weight:600; font-size:11.5px;">${row.reason}</td>
+              <td><span style="font-size:11px; background:var(--red-soft); color:var(--red); padding:2px 6px; border-radius:4px; font-weight:bold;">${row.risk}</span></td>
+            `;
+            auditTableBody.appendChild(tr);
+          });
+
+          statAuditTotalCount.textContent = mockAuditData.length + ' 件';
+          auditLoadingSection.classList.add('hidden');
+          auditResultSection.classList.remove('hidden');
+        } catch (err) {
+          showError('異常値・入力ミスの解析中にエラーが発生しました。');
+          auditLoadingSection.classList.add('hidden');
+        } finally {
+          runAuditCheckBtn.disabled = false;
         }
       });
 
