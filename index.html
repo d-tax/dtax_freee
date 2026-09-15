@@ -56,75 +56,6 @@
       100% { background-position: 0% 50%; }
     }
 
-    .cursor-dot {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 24px;
-      height: 24px;
-      border: 2px solid #333;
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 9999;
-      transform: translate(-50%, -50%);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-
-    .cursor-dot::after {
-      content: "";
-      width: 6px;
-      height: 6px;
-      background-color: #333;
-      border-radius: 50%;
-    }
-
-    .cursor-glow {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 150px;
-      height: 150px;
-      background: radial-gradient(circle, rgba(255, 105, 180, 0.6), rgba(135, 206, 250, 0.6), transparent 70%);
-      border-radius: 50%;
-      filter: blur(30px);
-      pointer-events: none;
-      z-index: 2;
-      transform: translate(-50%, -50%);
-      opacity: 0;
-      transition: left 0.5s ease-out, top 0.5s ease-out, width 0.3s, height 0.3s, opacity 0.3s;
-    }
-
-    .ripple-wave {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 150px;
-      height: 150px;
-      background: radial-gradient(
-        circle,
-        rgba(255, 182, 193, 0.65) 0%,
-        rgba(251, 194, 235, 0.6) 25%,
-        rgba(161, 140, 209, 0.55) 50%,
-        rgba(143, 211, 244, 0.55) 70%,
-        transparent 85%
-      );
-      border-radius: 50%;
-      filter: blur(25px);
-      pointer-events: none;
-      z-index: 3;
-      transform: translate(-50%, -50%);
-      animation: waveAnimation 0.8s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
-    }
-
-    @keyframes waveAnimation {
-      0% { width: 50px; height: 50px; opacity: 0.95; }
-      100% { width: 350px; height: 350px; opacity: 0; }
-    }
-
     .page {
       position: relative;
       z-index: 2;
@@ -196,7 +127,7 @@
 
     .step-desc { font-size: 12.5px; color: var(--ink-soft); margin-bottom: 16px; }
 
-    .form-select, .form-input {
+    .form-select {
       width: 100%;
       padding: 10px;
       border-radius: 11px;
@@ -226,293 +157,6 @@
     .app-card-title { font-weight: 700; font-size: 14.5px; color: var(--navy); margin-bottom: 4px; }
     .app-card-desc { font-size: 12px; color: var(--ink-soft); }
 
-    .app-header-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .btn-nav {
-      background: var(--paper-deep);
-      border: 1px solid var(--line);
-      color: var(--ink-soft);
-      font-size: 11.5px;
-      padding: 4px 10px;
-      border-radius: 8px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .btn-nav:hover { color: var(--ink); border-color: var(--ink-soft); }
-
-    .app-tag {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--navy);
-      background: var(--paper-deep);
-      border: 1px solid var(--line);
-      padding: 3px 10px;
-      border-radius: 12px;
-    }
-
-    .action-btn-group {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
-    .radio-option-group {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin: 16px 0;
-    }
-
-    .radio-option {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13.5px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .preset-btns {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
-    }
-
-    .preset-btn {
-      font-size: 11px;
-      padding: 3px 8px;
-      border-radius: 6px;
-      border: 1px solid var(--line);
-      background: #fff;
-      cursor: pointer;
-      color: var(--ink-soft);
-    }
-    .preset-btn:hover { border-color: var(--navy); color: var(--navy); }
-
-    .date-range-box {
-      background: var(--paper-deep);
-      border: 1px solid var(--line-soft);
-      border-radius: 12px;
-      padding: 12px;
-      margin-top: 8px;
-    }
-
-    .date-range-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    .date-field {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .date-field label {
-      font-size: 10.5px;
-      color: var(--ink-soft);
-    }
-
-    .dropzone {
-      border: 1.5px dashed var(--line);
-      background: #FFFDF7;
-      border-radius: 18px;
-      padding: 24px 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color .15s ease, background .15s ease;
-    }
-
-    .dropzone.drag { border-color: var(--navy); background: var(--paper-deep); }
-    .dropzone .big { font-size: 13.5px; font-weight: 600; margin-bottom: 4px; }
-    .dropzone .small { font-size: 11.5px; color: var(--ink-soft); }
-    .dropzone input { display: none; }
-    .privacy-note { margin-top: 10px; font-size: 11.5px; color: var(--ink-soft); text-align: center; }
-
-    .error-box {
-      margin-top: 16px;
-      border: 1px solid var(--red);
-      background: var(--red-soft);
-      color: var(--red);
-      padding: 12px 16px;
-      border-radius: 11px;
-      font-size: 13px;
-      display: none;
-    }
-
-    .summary {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
-      justify-content: space-between;
-      margin: 24px 0 22px;
-      padding: 16px;
-      background: var(--paper-deep);
-      border: 1px solid var(--line-soft);
-      border-radius: 18px;
-    }
-
-    .summary-stats { display: flex; gap: 16px; flex-wrap: wrap; }
-    .stat { display: flex; flex-direction: column; }
-    .stat .num { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
-    .stat .num.danger { color: var(--red); }
-    .stat .lbl { font-size: 10.5px; color: var(--ink-soft); }
-    .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-
-    .toggle-btn {
-      border: 1px solid var(--line);
-      background: #fff;
-      padding: 6px 11px;
-      font-size: 12px;
-      border-radius: 11px;
-      cursor: pointer;
-      color: var(--ink);
-    }
-
-    .toggle-btn.active { background: var(--navy); border-color: var(--navy); color: #fff; }
-
-    input.search {
-      border: 1px solid var(--line);
-      border-radius: 11px;
-      padding: 6px 10px;
-      font-size: 12px;
-      width: 140px;
-      background: #fff;
-      color: var(--ink);
-    }
-
-    input.search:focus, .toggle-btn:focus, button:focus, input[type=radio]:focus {
-      outline: 2px solid var(--navy-soft);
-      outline-offset: 1px;
-    }
-
-    .group {
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      margin-bottom: 18px;
-      box-shadow: 0 2px 10px rgba(32, 48, 59, 0.05);
-      background: #FFFDF7;
-      overflow: hidden;
-    }
-
-    .group-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 13px 18px;
-      background: var(--paper-deep);
-      border-bottom: 1px solid var(--line-soft);
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .group-head-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .group-num { font-size: 12px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
-    .badge { font-size: 11px; padding: 2px 9px; border-radius: 20px; font-weight: 600; white-space: nowrap; }
-    .badge.high { background: var(--red-soft); color: var(--red); }
-    .badge.medium { background: var(--amber-soft); color: var(--amber); }
-    .reason { font-size: 12px; color: var(--ink-soft); }
-
-    .dismiss-btn {
-      font-size: 11.5px;
-      color: var(--ink-soft);
-      background: none;
-      border: 1px solid var(--line);
-      border-radius: 11px;
-      padding: 4px 10px;
-      cursor: pointer;
-    }
-
-    .dismiss-btn:hover { border-color: var(--ink-soft); color: var(--ink); }
-
-    .member {
-      display: flex;
-      align-items: flex-start;
-      gap: 14px;
-      padding: 14px 18px;
-      border-bottom: 1px solid var(--line-soft);
-    }
-
-    .member:last-child { border-bottom: none; }
-    .member.keep { background: var(--green-soft); }
-
-    .member input[type=radio] {
-      margin-top: 4px;
-      flex: none;
-      accent-color: var(--green);
-      width: 15px;
-      height: 15px;
-    }
-
-    .member-body { flex: 1; min-width: 0; }
-    .member-name-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-    .member-name { font-weight: 700; font-size: 14.5px; }
-
-    .keep-tag {
-      font-size: 10.5px;
-      color: var(--green);
-      font-weight: 700;
-      border: 1px solid var(--green);
-      border-radius: 20px;
-      padding: 0px 7px;
-    }
-
-    .member-meta {
-      margin-top: 3px;
-      font-size: 12px;
-      color: var(--ink-soft);
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px 14px;
-    }
-
-    .member-meta span b { color: var(--ink); font-weight: 600; }
-
-    .all-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 6px; }
-
-    .all-table th {
-      text-align: left;
-      font-size: 11px;
-      color: var(--ink-soft);
-      font-weight: 600;
-      border-bottom: 1.5px solid var(--ink);
-      padding: 8px;
-    }
-
-    .all-table td { padding: 8px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
-    .all-table tr.overdue td { background: var(--red-soft); }
-    .empty-state { text-align: center; padding: 50px 20px; color: var(--ink-soft); }
-    .empty-state .mark { font-size: 34px; margin-bottom: 10px; }
-
-    #dedupeScreen, #overdueScreen, #pochiResultSection { animation: screenIn .25s ease; }
-    @keyframes screenIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-
-    .export-bar {
-      position: sticky;
-      bottom: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      padding: 16px 0 4px;
-      margin-top: 24px;
-      background: linear-gradient(to top, rgba(250, 247, 239, 0.85) 60%, transparent);
-    }
-
     .btn-primary {
       background: var(--navy);
       color: #fff;
@@ -526,160 +170,34 @@
       text-align: center;
     }
 
-    .btn-secondary {
-      background: #FFFDF7;
-      color: var(--navy);
-      border: 1.5px solid var(--navy);
-      padding: 12px 22px;
-      border-radius: 11px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      width: 100%;
-      text-align: center;
-      transition: all 0.2s ease;
-    }
-    .btn-secondary:hover { background: var(--paper-deep); }
+    .btn-primary:hover { background: var(--navy-soft); }
 
-    .btn-cancel {
+    .btn-nav {
+      background: var(--paper-deep);
+      border: 1px solid var(--line);
+      color: var(--ink-soft);
+      font-size: 11.5px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .error-box {
+      margin-top: 16px;
+      border: 1px solid var(--red);
       background: var(--red-soft);
       color: var(--red);
-      border: 1px solid var(--red);
-      padding: 8px 16px;
-      border-radius: 10px;
-      font-size: 12.5px;
-      font-weight: 700;
-      cursor: pointer;
-      margin-top: 10px;
+      padding: 12px 16px;
+      border-radius: 11px;
+      font-size: 13px;
+      display: none;
     }
-    .btn-cancel:hover { background: #f8d0cb; }
-
-    .btn-primary:hover { background: var(--navy-soft); }
-    .btn-primary:disabled { background: #B9B2A0; cursor: not-allowed; }
-
-    .help-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: none;
-      border: none;
-      color: var(--ink-soft);
-      font-size: 12px;
-      cursor: pointer;
-      padding: 4px 2px;
-    }
-
-    .help-link:hover { color: var(--ink); }
-
-    .help-fab-sm {
-      flex: none;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      border: 1.5px solid var(--navy);
-      color: var(--navy);
-      font-size: 11px;
-      font-weight: 700;
-      font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(32, 48, 59, 0.45);
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      z-index: 50;
-    }
-
-    .modal-card {
-      width: 100%;
-      max-width: 460px;
-      max-height: 82vh;
-      overflow-y: auto;
-      background: var(--paper);
-      border-radius: 26px 26px 0 0;
-      box-shadow: 0 -10px 40px rgba(32, 48, 59, 0.3);
-      animation: sheetUp .22s ease;
-    }
-
-    @keyframes sheetUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-    .modal-head {
-      position: sticky;
-      top: 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 18px 22px 14px;
-      background: var(--paper);
-      border-bottom: 1px solid var(--line-soft);
-    }
-
-    .modal-head h3 {
-      margin: 0;
-      font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
-      font-size: 16.5px;
-    }
-
-    .modal-close {
-      flex: none;
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      border: none;
-      background: var(--paper-deep);
-      color: var(--ink-soft);
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    .modal-close:hover { color: var(--ink); }
-    .modal-body { padding: 18px 22px 30px; }
 
     .hidden { display: none !important; }
-
-    .loading-container {
-      text-align: center;
-      padding: 24px 16px;
-      background: var(--paper-deep);
-      border: 1px solid var(--line-soft);
-      border-radius: 18px;
-      margin-top: 16px;
-    }
-
-    .loading-title {
-      font-size: 13.5px;
-      font-weight: 700;
-      color: var(--navy);
-      margin-bottom: 6px;
-    }
-
-    .loading-status {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--ink);
-      font-variant-numeric: tabular-nums;
-    }
-
-    @media (max-width: 560px) {
-      .page { padding: 24px 14px 60px; }
-      header { gap: 14px; }
-      header h1 { font-size: 21px; }
-      .header-logo { height: 30px; }
-      .summary { flex-direction: column; align-items: stretch; }
-      input.search { width: 100%; }
-    }
   </style>
 </head>
 <body>
   <div class="bg-gradient"></div>
-  <div class="cursor-glow" id="cursorGlow"></div>
-  <div class="cursor-dot" id="cursorDot"></div>
 
   <div class="page">
     <header>
@@ -687,7 +205,6 @@
         <h1 id="headerTitle">freee 拡張ポータル</h1>
         <p id="headerDesc">freee APIを活用して業務効率化ツールを利用・管理します。</p>
       </div>
-      <!-- 画像パスを images/ に変更 -->
       <img src="images/360097.png" alt="D-Tax" class="header-logo">
     </header>
 
@@ -715,9 +232,7 @@
       <div class="step-desc">選択した事業所：<b id="selectedCompanyName" style="color:var(--ink);"></b></div>
       
       <div class="app-grid">
-        <!-- アプリ1: 取引先クリーニング -->
         <div class="app-card" id="appDedupeCard">
-          <!-- 画像パスを images/ に変更 -->
           <img src="images/icon-clean.png" alt="クリーニング" class="app-card-icon">
           <div>
             <div class="app-card-title">取引先台帳クリーニング</div>
@@ -725,283 +240,18 @@
           </div>
         </div>
 
-        <!-- アプリ2: 期日超過の未決済売掛金チェッカー -->
         <div class="app-card" id="appOverdueCard">
-          <!-- 画像パスを images/ に変更 -->
           <img src="images/icon-alert.png" alt="売掛金チェッカー" class="app-card-icon">
           <div>
             <div class="app-card-title">期日超過の未決済売掛金チェッカー</div>
             <div class="app-card-desc">決済期日を過ぎた未回収の売掛取引（収入）をリストアップし、回収リスクを可視化します。</div>
           </div>
         </div>
-
-        <!-- アプリ3: ポチポチ取引発見器 -->
-        <div class="app-card" id="appManualPochiCard">
-          <!-- 画像パスを images/ に変更 -->
-          <img src="images/icon-pochipochi.png" alt="ポチポチ取引発見器" class="app-card-icon">
-          <div>
-            <div class="app-card-title">ポチポチ取引発見器（手入力自動化チェッカー）</div>
-            <div class="app-card-desc">何度も手入力している取引を炙り出し、自動登録ルールの作成候補を可視化します。</div>
-          </div>
-        </div>
       </div>
     </div>
 
-    <!-- 共通エラー・ローディング表示 -->
+    <!-- 共通エラー表示 -->
     <div class="error-box" id="errorBox"></div>
-
-    <div class="loading-container hidden" id="loadingContainer">
-      <div class="loading-title" id="loadingTitle">freee APIと通信中です…</div>
-      <div class="loading-status" id="loadingStatus"></div>
-      <button class="btn-cancel hidden" id="cancelProcessBtn" type="button">処理を中断してここまでの結果を表示</button>
-    </div>
-
-    <!-- アプリ1本体: 取引先整理画面 -->
-    <div id="appDedupeSection" class="hidden">
-      <div class="app-header-bar">
-        <button class="btn-nav" id="backToAppsBtn" type="button">← アプリ選択へ戻る</button>
-        <span class="app-tag">使用中：取引先台帳クリーニング</span>
-      </div>
-
-      <div class="action-btn-group">
-        <button class="btn-secondary" id="findDupBtn" type="button">取引先の重複登録を探す</button>
-        <button class="btn-secondary" id="openUnusedModalBtn" type="button">過去に取引がない取引先を探す</button>
-      </div>
-
-      <div id="uploadSection">
-        <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択してアップロード">
-          <div class="big">または、ファイル（CSV/Excel）から読み込む</div>
-          <div class="small">クリックまたはドラッグ&ドロップで指定</div>
-          <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
-        </div>
-        <div class="privacy-note">ファイルはこの画面内だけで処理されます。外部のサーバーには送信されません。</div>
-      </div>
-
-      <div id="resultSection" class="hidden">
-        <div id="dedupeScreen">
-          <div class="summary">
-            <div class="summary-stats">
-              <div class="stat"><span class="num" id="statTotal">0</span><span class="lbl">全取引先</span></div>
-              <div class="stat" id="statGroupWrap"><span class="num" id="statGroups">0</span><span class="lbl" id="statGroupsLbl">重複の疑いグループ</span></div>
-              <div class="stat"><span class="num" id="statMembers">0</span><span class="lbl" id="statMembersLbl">重複候補の件数</span></div>
-            </div>
-            <div class="controls">
-              <input class="search" id="searchBox" placeholder="名前で検索">
-              <button class="toggle-btn active" id="viewDupBtn" type="button">候補のみ</button>
-              <button class="toggle-btn" id="viewAllBtn" type="button">全件表示</button>
-            </div>
-          </div>
-
-          <div id="groupsContainer"></div>
-
-          <div id="allTableWrap" class="hidden">
-            <table class="all-table">
-              <thead>
-                <tr>
-                  <th>名前（通称）</th>
-                  <th>正式名称</th>
-                  <th>カナ名称</th>
-                  <th>登録番号</th>
-                  <th>住所</th>
-                  <th>電話番号</th>
-                  <th>状態</th>
-                </tr>
-              </thead>
-              <tbody id="allTableBody"></tbody>
-            </table>
-          </div>
-
-          <div class="empty-state hidden" id="emptyState">
-            <div class="mark">◎</div>
-            <div id="emptyText">対象の取引先は見つかりませんでした。</div>
-          </div>
-        </div>
-
-        <div class="export-bar">
-          <button class="help-link" id="criteriaBtn" type="button">
-            <span class="help-fab-sm" aria-hidden="true">？</span>重複はどう判定していますか？
-          </button>
-          <button class="btn-primary" id="exportBtn" type="button">整理結果をExcelで書き出す</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- アプリ2本体: 期日超過売掛金チェッカー画面 -->
-    <div id="appOverdueSection" class="hidden">
-      <div class="app-header-bar">
-        <button class="btn-nav" id="backToAppsBtn2" type="button">← アプリ選択へ戻る</button>
-        <span class="app-tag">使用中：期日超過の未決済売掛金チェッカー</span>
-      </div>
-
-      <div class="action-btn-group">
-        <button class="btn-primary" id="runOverdueCheckBtn" type="button">期日超過の未決済取引を自動抽出する</button>
-      </div>
-
-      <div id="overdueResultSection" class="hidden">
-        <div class="summary">
-          <div class="summary-stats">
-            <div class="stat"><span class="num danger" id="statOverdueCount">0</span><span class="lbl">期日超過の件数</span></div>
-            <div class="stat"><span class="num danger" id="statOverdueAmount">¥0</span><span class="lbl">未回収合計金額</span></div>
-          </div>
-          <div class="controls">
-            <input class="search" id="searchOverdueBox" placeholder="取引先・発生日で検索">
-          </div>
-        </div>
-
-        <div style="overflow-x: auto;">
-          <table class="all-table">
-            <thead>
-              <tr>
-                <th>発生日</th>
-                <th>決済期日</th>
-                <th>超過日数</th>
-                <th>取引先</th>
-                <th>未決済金額</th>
-              </tr>
-            </thead>
-            <tbody id="overdueTableBody"></tbody>
-          </table>
-        </div>
-
-        <div class="empty-state hidden" id="emptyOverdueState">
-          <div class="mark">🎉</div>
-          <div>期日を過ぎた未決済取引はありません。</div>
-        </div>
-
-        <div class="export-bar">
-          <button class="btn-primary" id="exportOverdueBtn" type="button">未決済リストをExcelで書き出す</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- アプリ3本体: ポチポチ取引発見器画面 -->
-    <div id="appManualPochiSection" class="hidden">
-      <div class="app-header-bar">
-        <button class="btn-nav" id="backToAppsBtn3" type="button">← アプリ選択へ戻る</button>
-        <span class="app-tag">使用中：ポチポチ取引発見器</span>
-      </div>
-
-      <div class="step-box">
-        <div class="step-title">抽出条件の設定</div>
-        <div class="date-range-grid" style="margin-bottom: 12px;">
-          <div class="date-field">
-            <label>対象期間</label>
-            <select class="form-select" id="pochiMonthsSelect">
-              <option value="3">過去 3ヶ月</option>
-              <option value="6" selected>過去 6ヶ月</option>
-              <option value="12">過去 12ヶ月</option>
-            </select>
-          </div>
-          <div class="date-field">
-            <label>手入力回数の閾値（○回以上）</label>
-            <input type="number" class="form-input" id="pochiMinCount" value="5" min="2">
-          </div>
-        </div>
-        <button class="btn-primary" id="runPochiCheckBtn" type="button">ポチポチ取引を抽出する</button>
-      </div>
-
-      <div id="pochiResultSection" class="hidden">
-        <div class="summary">
-          <div class="summary-stats">
-            <div class="stat"><span class="num danger" id="statPochiTotalCount">0</span><span class="lbl">改善候補パターン数</span></div>
-            <div class="stat"><span class="num danger" id="statPochiManualRatio">0%</span><span class="lbl">全体の手入力比率</span></div>
-          </div>
-        </div>
-
-        <div style="overflow-x: auto;">
-          <table class="all-table">
-            <thead>
-              <tr>
-                <th>取引先</th>
-                <th>勘定科目</th>
-                <th>手入力回数</th>
-                <th>月平均推定量</th>
-                <th>改善インパクト</th>
-              </tr>
-            </thead>
-            <tbody id="pochiTableBody"></tbody>
-          </table>
-        </div>
-
-        <div class="export-bar">
-          <button class="btn-primary" id="exportPochiBtn" type="button">改善候補リストをExcelで書き出す</button>
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- 判定基準モーダル -->
-  <div class="modal-overlay hidden" id="criteriaModal">
-    <div class="modal-card">
-      <div class="modal-head">
-        <h3>重複はどう判定していますか？</h3>
-        <button class="modal-close" id="criteriaCloseBtn" type="button" aria-label="閉じる">×</button>
-      </div>
-      <div class="modal-body">
-        <div style="margin-bottom: 18px;">
-          <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13.5px; margin-bottom: 6px;">
-            <span class="badge high">確実</span>① 登録番号が一致
-          </div>
-          <p style="margin: 0; font-size: 12.5px; color: var(--ink-soft);">「適格請求書発行事業者の登録番号」が同じなら重複候補としてグループ化します。</p>
-        </div>
-        <div style="margin-bottom: 18px;">
-          <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13.5px; margin-bottom: 6px;">
-            <span class="badge high">確実</span>② 名称・カナ名称の表記ゆれ
-          </div>
-          <p style="margin: 0; font-size: 12.5px; color: var(--ink-soft);">「株式会社」「㈱」「(株)」などの法人格やスペースを除去して比較します。</p>
-        </div>
-        <div>
-          <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13.5px; margin-bottom: 6px;">
-            <span class="badge medium">要確認</span>③ 名称が似ている（住所・電話番号も一致）
-          </div>
-          <p style="margin: 0; font-size: 12.5px; color: var(--ink-soft);">名前の類似度が高く(70%以上)、郵便番号か電話番号が一致する場合に提示します。</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 未取引検索の設定モーダル -->
-  <div class="modal-overlay hidden" id="unusedConfigModal">
-    <div class="modal-card">
-      <div class="modal-head">
-        <h3>照合する取引期間の選択</h3>
-        <button class="modal-close" id="unusedConfigCloseBtn" type="button" aria-label="閉じる">×</button>
-      </div>
-      <div class="modal-body">
-        <p style="font-size:12.5px; color:var(--ink-soft); margin-top:0;">チェック対象とする過去取引の期間を選択してください。</p>
-        
-        <div class="radio-option-group">
-          <label class="radio-option">
-            <input type="radio" name="dateMode" value="all" checked id="radioModeAll">
-            全期間で照合する
-          </label>
-          <label class="radio-option">
-            <input type="radio" name="dateMode" value="range" id="radioModeRange">
-            期間を指定して照合する
-          </label>
-        </div>
-
-        <div class="date-range-box hidden" id="dateRangeBox">
-          <div class="preset-btns">
-            <button class="preset-btn" id="preset1Y" type="button">直近1年</button>
-            <button class="preset-btn" id="preset3Y" type="button">直近3年</button>
-          </div>
-          <div class="date-range-grid">
-            <div class="date-field">
-              <label>開始日</label>
-              <input type="date" class="form-input" id="startDateInput" style="margin-bottom:0;">
-            </div>
-            <div class="date-field">
-              <label>終了日</label>
-              <input type="date" class="form-input" id="endDateInput" style="margin-bottom:0;">
-            </div>
-          </div>
-        </div>
-
-        <button class="btn-primary" id="startUnusedSearchBtn" type="button" style="margin-top:20px;">検索を開始する</button>
-      </div>
-    </div>
   </div>
 
   <script>
@@ -1009,18 +259,39 @@
       "use strict";
 
       const CONFIG = {
-        clientId: "803164151598495",
+        clientId: "803164151598495", // 必要に応じて正しいアプリのClient IDに変更してください
         redirectUri: window.location.origin + window.location.pathname,
         authEndpoint: "https://accounts.secure.freee.co.jp/public_api/authorize",
         apiBase: "https://api.freee.co.jp/api/1"
       };
 
+      // 画面要素の取得
+      const stepLogin = document.getElementById('stepLogin');
+      const stepCompany = document.getElementById('stepCompany');
+      const stepApps = document.getElementById('stepApps');
+      const loginBtn = document.getElementById('loginBtn');
+      const companySelect = document.getElementById('companySelect');
+      const selectCompanyBtn = document.getElementById('selectCompanyBtn');
+      const selectedCompanyName = document.getElementById('selectedCompanyName');
+      const backToCompanyBtn = document.getElementById('backToCompanyBtn');
+      const errorBox = document.getElementById('errorBox');
+
+      function showError(msg) {
+        errorBox.textContent = msg;
+        errorBox.style.display = 'block';
+      }
+
+      function clearError() {
+        errorBox.textContent = '';
+        errorBox.style.display = 'none';
+      }
+
+      // freee認証ページへリダイレクト
       function redirectToAuth() {
         const params = new URLSearchParams({
           client_id: CONFIG.clientId,
           redirect_uri: CONFIG.redirectUri,
-          response_type: 'token',
-          scope: 'read write'
+          response_type: 'token'
         });
         window.location.href = `${CONFIG.authEndpoint}?${params.toString()}`;
       }
@@ -1029,40 +300,82 @@
         return sessionStorage.getItem('access_token');
       }
 
-      async function callFreeeApi(endpoint, params = {}) {
+      // API呼び出し共通関数
+      async function callFreeeApi(endpoint) {
         const token = getAccessToken();
-        if (!token) throw new Error('認証が切れています。再度ログインしてください。');
+        if (!token) throw new Error('認証が切れています。ログインしてください。');
 
-        const url = new URL(CONFIG.apiBase + endpoint);
-        Object.keys(params).forEach(k => url.searchParams.append(k, params[k]));
-
-        const res = await fetch(url.toString(), {
+        const res = await fetch(CONFIG.apiBase + endpoint, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'accept': 'application/json'
           }
         });
 
-        if (res.status === 403) {
-          throw new Error('403 Forbidden: freeeアプリ管理画面でスコープ（閲覧権限）を許可してください。');
+        if (!res.ok) {
+          throw new Error(`APIエラー: ${res.status} ${res.statusText}`);
         }
-
-        if (!res.ok) throw new Error(`API呼び出しエラー: ${res.statusText}`);
         return await res.json();
       }
 
-      let headers = [];
-      let records = [];
-      let groups = [];
-      let unusedPartners = [];
-      let overdueDeals = [];
-      let pochiResults = [];
-      let currentMode = 'dup';
-      let viewMode = 'dup';
-      let searchTerm = '';
-      let searchOverdueTerm = '';
-      let currentCompanyId = null;
-      let isCancelRequest = false;
+      // URLハッシュからアクセストークンを解析
+      function handleOAuthCallback() {
+        if (window.location.hash) {
+          const params = new URLSearchParams(window.location.hash.substring(1));
+          const token = params.get('access_token');
+          if (token) {
+            sessionStorage.setItem('access_token', token);
+            // URLからハッシュをクリア
+            history.replaceState(null, null, window.location.pathname);
+          }
+        }
+      }
+
+      // 事業所一覧を取得
+      async function loadCompanies() {
+        try {
+          clearError();
+          const data = await callFreeeApi('/companies');
+          companySelect.innerHTML = '<option value="">選択してください</option>';
+          data.companies.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = c.display_name || c.name;
+            companySelect.appendChild(opt);
+          });
+
+          stepLogin.classList.add('hidden');
+          stepCompany.classList.remove('hidden');
+        } catch (err) {
+          showError(err.message);
+        }
+      }
+
+      // 初期化処理
+      loginBtn.addEventListener('click', redirectToAuth);
+
+      selectCompanyBtn.addEventListener('click', () => {
+        const companyId = companySelect.value;
+        if (!companyId) {
+          alert('事業所を選択してください');
+          return;
+        }
+        const selectedText = companySelect.options[companySelect.selectedIndex].text;
+        selectedCompanyName.textContent = selectedText;
+        stepCompany.classList.add('hidden');
+        stepApps.classList.remove('hidden');
+      });
+
+      backToCompanyBtn.addEventListener('click', () => {
+        stepApps.classList.add('hidden');
+        stepCompany.classList.remove('hidden');
+      });
+
+      // ページ読み込み時の自動チェック
+      handleOAuthCallback();
+      if (getAccessToken()) {
+        loadCompanies();
+      }
     })();
   </script>
 </body>
