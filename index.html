@@ -382,8 +382,10 @@
         <button class="btn-nav backToAppsBtn" type="button">← アプリ選択へ戻る</button>
         <span class="app-tag">使用中：取引先台帳クリーニング</span>
       </div>
+
+      <!-- 機能1: 取引先の重複チェック -->
       <div class="step-box">
-        <div class="step-title">取引先台帳の重複チェック</div>
+        <div class="step-title">1. 取引先台帳の重複チェック</div>
         <button class="btn-secondary" id="runDedupeBtn" type="button">取引先の重複登録を探す</button>
         <div class="info-box">
           <b>【何を抽出するのか】</b><br>
@@ -391,20 +393,43 @@
         </div>
       </div>
 
-      <div id="dedupeLoadingSection" class="loading-box hidden">
-        <div class="spinner"></div>
-        <div style="font-size: 13px; font-weight: 600; color: var(--navy);">取引先データを分析中...</div>
+      <!-- 機能2: 未使用取引先の抽出（追加機能） -->
+      <div class="step-box">
+        <div class="step-title">2. 未使用取引先の抽出</div>
+        <div class="date-range-grid" style="margin-bottom: 12px;">
+          <div class="date-field">
+            <label>対象期間（開始）</label>
+            <input type="date" class="form-input" id="unusedStartDate" style="margin-bottom:0;">
+          </div>
+          <div class="date-field">
+            <label>対象期間（終了）</label>
+            <input type="date" class="form-input" id="unusedEndDate" style="margin-bottom:0;">
+          </div>
+        </div>
+        <button class="btn-secondary" id="runUnusedBtn" type="button">過去に取引のない取引先を探す</button>
+        <div class="info-box">
+          <b>【何を抽出するのか】</b><br>
+          指定した期間内に一度も取引（収入・支出の仕訳）が発生していない取引先を抽出し、整理・削除候補として可視化します。
+        </div>
       </div>
 
+      <!-- ローディング＆リアルタイム進捗表示 -->
+      <div id="dedupeLoadingSection" class="loading-box hidden">
+        <div class="spinner"></div>
+        <div id="dedupeLoadingText" style="font-size: 13px; font-weight: 600; color: var(--navy);">取引先データを分析中...</div>
+        <div id="dedupeProgressText" style="font-size: 14px; font-weight: 700; color: var(--red);" class="hidden">過去の取引 0 件 / 0 件</div>
+      </div>
+
+      <!-- 結果表示セクション -->
       <div id="dedupeResultSection" class="hidden">
         <div class="summary">
           <div class="summary-stats">
-            <div class="stat"><span class="num danger" id="statDedupeCount">0</span><span class="lbl">重複が疑われる取引先グループ</span></div>
+            <div class="stat"><span class="num danger" id="statDedupeCount">0</span><span class="lbl" id="statDedupeLabel">検出数</span></div>
           </div>
         </div>
         <div style="overflow-x: auto;">
           <table class="all-table">
-            <thead>
+            <thead id="dedupeTableHeader">
               <tr>
                 <th>グループ</th>
                 <th>検出された取引先名</th>
@@ -547,7 +572,7 @@
       const backToCompanyBtn = document.getElementById('backToCompanyBtn');
       const errorBox = document.getElementById('errorBox');
 
-      // アプリ切り替え用の画面要素
+      // アプリ切り替え
       const appDedupeCard = document.getElementById('appDedupeCard');
       const appOverdueCard = document.getElementById('appOverdueCard');
       const appManualPochiCard = document.getElementById('appManualPochiCard');
@@ -556,14 +581,21 @@
       const appOverdueSection = document.getElementById('appOverdueSection');
       const appManualPochiSection = document.getElementById('appManualPochiSection');
 
-      // アプリ1用要素
+      // アプリ1要素
       const runDedupeBtn = document.getElementById('runDedupeBtn');
+      const runUnusedBtn = document.getElementById('runUnusedBtn');
+      const unusedStartDate = document.getElementById('unusedStartDate');
+      const unusedEndDate = document.getElementById('unusedEndDate');
       const dedupeLoadingSection = document.getElementById('dedupeLoadingSection');
+      const dedupeLoadingText = document.getElementById('dedupeLoadingText');
+      const dedupeProgressText = document.getElementById('dedupeProgressText');
       const dedupeResultSection = document.getElementById('dedupeResultSection');
+      const dedupeTableHeader = document.getElementById('dedupeTableHeader');
       const dedupeTableBody = document.getElementById('dedupeTableBody');
       const statDedupeCount = document.getElementById('statDedupeCount');
+      const statDedupeLabel = document.getElementById('statDedupeLabel');
 
-      // アプリ2用要素
+      // アプリ2要素
       const runOverdueBtn = document.getElementById('runOverdueBtn');
       const overdueLoadingSection = document.getElementById('overdueLoadingSection');
       const overdueResultSection = document.getElementById('overdueResultSection');
@@ -571,13 +603,20 @@
       const statOverdueCount = document.getElementById('statOverdueCount');
       const statOverdueAmount = document.getElementById('statOverdueAmount');
 
-      // アプリ3用要素
+      // アプリ3要素
       const runPochiCheckBtn = document.getElementById('runPochiCheckBtn');
       const pochiLoadingSection = document.getElementById('pochiLoadingSection');
       const pochiResultSection = document.getElementById('pochiResultSection');
       const pochiTableBody = document.getElementById('pochiTableBody');
       const statPochiTotalCount = document.getElementById('statPochiTotalCount');
       const statPochiManualRatio = document.getElementById('statPochiManualRatio');
+
+      // デフォルト日付の設定（過去1年間）
+      const today = new Date();
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(today.getFullYear() - 1);
+      unusedEndDate.value = today.toISOString().split('T')[0];
+      unusedStartDate.value = oneYearAgo.toISOString().split('T')[0];
 
       function showError(msg) {
         errorBox.textContent = msg;
@@ -647,7 +686,7 @@
         }
       }
 
-      // イベントリスナー設定
+      // イベントリスナー
       loginBtn.addEventListener('click', redirectToAuth);
 
       selectCompanyBtn.addEventListener('click', () => {
@@ -665,7 +704,6 @@
         stepCompany.classList.remove('hidden');
       });
 
-      // アプリカードの選択イベント
       appDedupeCard.addEventListener('click', () => {
         stepApps.classList.add('hidden');
         appDedupeSection.classList.remove('hidden');
@@ -681,7 +719,6 @@
         appManualPochiSection.classList.remove('hidden');
       });
 
-      // 各アプリから「アプリ選択へ戻る」ボタン
       document.querySelectorAll('.backToAppsBtn').forEach(btn => {
         btn.addEventListener('click', () => {
           appDedupeSection.classList.add('hidden');
@@ -691,15 +728,26 @@
         });
       });
 
-      // アプリ1: 重複チェック実行処理
+      // アプリ1-1: 重複チェック実行
       runDedupeBtn.addEventListener('click', async () => {
         clearError();
         dedupeResultSection.classList.add('hidden');
+        dedupeProgressText.classList.add('hidden');
+        dedupeLoadingText.textContent = '取引先データを分析中...';
         dedupeLoadingSection.classList.remove('hidden');
         runDedupeBtn.disabled = true;
 
         try {
           await new Promise(resolve => setTimeout(resolve, 1200));
+
+          statDedupeLabel.textContent = '重複が疑われる取引先グループ';
+          dedupeTableHeader.innerHTML = `
+            <tr>
+              <th>グループ</th>
+              <th>検出された取引先名</th>
+              <th>状態 / 判定</th>
+            </tr>
+          `;
 
           const mockDedupeData = [
             { group: 'グループ1', names: '株式会社サンプル / (株)サンプル', status: '重複の可能性高' },
@@ -728,7 +776,79 @@
         }
       });
 
-      // アプリ2: 期日超過チェック実行処理
+      // アプリ1-2: 未使用取引先の抽出（追加機能）
+      runUnusedBtn.addEventListener('click', async () => {
+        clearError();
+        const start = unusedStartDate.value;
+        const end = unusedEndDate.value;
+
+        if (!start || !end) {
+          alert('対象期間の開始日と終了日を指定してください。');
+          return;
+        }
+
+        // ダミーの総取引件数（実際のAPI実装時は取引件数を事前にGET取得）
+        const totalTransactions = 2450;
+        const confirmMsg = `${start} 〜 ${end} の期間に ${totalTransactions.toLocaleString()} 件の取引データが見つかりました。\n解析処理に時間がかかる可能性がありますが続けますか？`;
+
+        if (!confirm(confirmMsg)) {
+          return;
+        }
+
+        dedupeResultSection.classList.add('hidden');
+        dedupeLoadingText.textContent = '過去の取引データを解析中...';
+        dedupeProgressText.classList.remove('hidden');
+        dedupeLoadingSection.classList.remove('hidden');
+        runUnusedBtn.disabled = true;
+
+        try {
+          // リアルタイムカウントアップのシミュレーション
+          let currentProcessed = 0;
+          const chunkSize = 245;
+          while (currentProcessed < totalTransactions) {
+            await new Promise(resolve => setTimeout(resolve, 200));
+            currentProcessed = Math.min(currentProcessed + chunkSize, totalTransactions);
+            dedupeProgressText.textContent = `過去の取引 ${currentProcessed.toLocaleString()} 件 / ${totalTransactions.toLocaleString()} 件`;
+          }
+
+          statDedupeLabel.textContent = '未使用の取引先数';
+          dedupeTableHeader.innerHTML = `
+            <tr>
+              <th>取引先コード</th>
+              <th>取引先名</th>
+              <th>最終取引判定</th>
+            </tr>
+          `;
+
+          const mockUnusedData = [
+            { code: 'TRD-0012', name: '旧・グローバルインク', status: '指定期間内 取引0件' },
+            { code: 'TRD-0045', name: 'ダミーサプライヤ', status: '指定期間内 取引0件' },
+            { code: 'TRD-0089', name: '合同会社ネクストステージ', status: '指定期間内 取引0件' }
+          ];
+
+          dedupeTableBody.innerHTML = '';
+          mockUnusedData.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td><b>${row.code}</b></td>
+              <td>${row.name}</td>
+              <td><span style="font-size:11px; background:var(--amber-soft); color:var(--amber); padding:2px 6px; border-radius:4px; font-weight:bold;">${row.status}</span></td>
+            `;
+            dedupeTableBody.appendChild(tr);
+          });
+
+          statDedupeCount.textContent = mockUnusedData.length + ' 件';
+          dedupeLoadingSection.classList.add('hidden');
+          dedupeResultSection.classList.remove('hidden');
+        } catch (err) {
+          showError('未使用取引先の抽出処理中にエラーが発生しました。');
+          dedupeLoadingSection.classList.add('hidden');
+        } finally {
+          runUnusedBtn.disabled = false;
+        }
+      });
+
+      // アプリ2: 期日超過チェック
       runOverdueBtn.addEventListener('click', async () => {
         clearError();
         overdueResultSection.classList.add('hidden');
@@ -767,7 +887,7 @@
         }
       });
 
-      // アプリ3: ポチポチ取引の抽出処理
+      // アプリ3: ポチポチ取引チェック
       runPochiCheckBtn.addEventListener('click', async () => {
         clearError();
         pochiResultSection.classList.add('hidden');
