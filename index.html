@@ -1441,9 +1441,10 @@
         runOverdueBtn.disabled = true;
 
         try {
+          // type を 'issue' から 'income' へ変更
           const deals = await fetchAllPages('/deals', {
             company_id: currentCompanyId,
-            type: 'issue',
+            type: 'income', // ← こちらに修正
             status: 'unsettled'
           }, 'deals');
 
