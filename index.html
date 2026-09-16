@@ -281,22 +281,38 @@
     }
     .all-table td { padding: 8px; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
 
-    /* 重複統合カードUI */
+    /* 重複統合カードUI改修 */
     .dedupe-group-card {
       background: #fff;
       border: 1px solid var(--line);
       border-radius: 12px;
       padding: 14px 16px;
       margin-bottom: 12px;
+      transition: all 0.2s ease;
+    }
+    .dedupe-group-card.disabled {
+      opacity: 0.55;
+      background: var(--paper-deep);
     }
     .dedupe-group-title {
       font-weight: 700;
-      font-size: 13px;
+      font-size: 13.5px;
       color: var(--navy);
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed var(--line);
+    }
+    .dedupe-group-title label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+    .dedupe-option-list {
+      padding-left: 24px;
     }
     .dedupe-option {
       display: flex;
@@ -526,7 +542,8 @@
         <button class="btn-secondary" id="runDedupeBtn" type="button">取引先の重複登録を探す</button>
         <div class="info-box">
           <b>【名寄せ統合機能】</b><br>
-          重複と思われる取引先の中から「残す取引先（正）」をラジオボタンで選択してください。選択されなかったほうの取引を自動検索し、残す取引先へ置き換えて名寄せ統合します。
+          1. 統合したいペアの<b>チェックボックスをオン</b>にします（別会社等で両方残す場合はチェックを外してください）。<br>
+          2. 「残す取引先（正）」をラジオボタンで選択してください。非選択側の取引が自動で「残す側」へ置き換わり統合されます。
         </div>
 
         <div id="dedupeLoadingSection" class="loading-box hidden">
@@ -537,7 +554,12 @@
         <div id="dedupeResultSection" class="hidden">
           <div class="summary">
             <div class="summary-stats">
-              <div class="stat"><span class="num danger" id="statDedupeCount">0</span><span class="lbl">重複が疑われるグループ数</span></div>
+              <div class="stat"><span class="num danger" id="statDedupeCount">0</span><span class="lbl">検出された重複疑いグループ数</span></div>
+            </div>
+            <div style="font-size: 12px;">
+              <label style="cursor: pointer; font-weight: 600; color: var(--navy);">
+                <input type="checkbox" id="selectAllDedupeGroups" checked> すべて選択/解除
+              </label>
             </div>
           </div>
 
@@ -545,7 +567,7 @@
           <div id="dedupeCardsContainer"></div>
 
           <button class="btn-primary" id="executeMergeBtn" type="button" style="margin-top: 12px;">
-            選択した取引先に統合（取引を置き換える）
+            選択したグループを統合（取引を置き換える）
           </button>
         </div>
       </div>
@@ -895,6 +917,7 @@
       const dedupeLoadingSection = document.getElementById('dedupeLoadingSection');
       const dedupeResultSection = document.getElementById('dedupeResultSection');
       const dedupeCardsContainer = document.getElementById('dedupeCardsContainer');
+      const selectAllDedupeGroups = document.getElementById('selectAllDedupeGroups');
       const executeMergeBtn = document.getElementById('executeMergeBtn');
       const statDedupeCount = document.getElementById('statDedupeCount');
 
@@ -1088,6 +1111,17 @@
         }
       ];
 
+      function updateMergeBtnState() {
+        const checkedCount = document.querySelectorAll('.dedupe-group-chk:checked').length;
+        if (checkedCount > 0) {
+          executeMergeBtn.disabled = false;
+          executeMergeBtn.textContent = `選択した ${checkedCount} 件のグループを統合（取引を置き換える）`;
+        } else {
+          executeMergeBtn.disabled = true;
+          executeMergeBtn.textContent = '統合対象が選択されていません';
+        }
+      }
+
       // アプリ1-1: 重複チェック実行
       runDedupeBtn.addEventListener('click', async () => {
         clearError();
@@ -1102,7 +1136,8 @@
           mockDedupeGroups.forEach(grp => {
             const card = document.createElement('div');
             card.className = 'dedupe-group-card';
-            
+            card.id = `card_${grp.groupId}`;
+
             let optionsHtml = '';
             grp.partners.forEach(p => {
               optionsHtml += `
@@ -1118,17 +1153,36 @@
 
             card.innerHTML = `
               <div class="dedupe-group-title">
-                <span>${grp.groupName}</span>
+                <label>
+                  <input type="checkbox" class="dedupe-group-chk" value="${grp.groupId}" checked>
+                  <span>${grp.groupName}</span>
+                </label>
                 <span style="font-size:11px; background:var(--red-soft); color:var(--red); padding:2px 6px; border-radius:4px;">重複疑い</span>
               </div>
-              ${optionsHtml}
+              <div class="dedupe-option-list">
+                ${optionsHtml}
+              </div>
             `;
+
+            // カード内のグループ選択ON/OFFリスナー
+            const groupChk = card.querySelector('.dedupe-group-chk');
+            groupChk.addEventListener('change', (e) => {
+              if (e.target.checked) {
+                card.classList.remove('disabled');
+              } else {
+                card.classList.add('disabled');
+              }
+              updateMergeBtnState();
+            });
+
             dedupeCardsContainer.appendChild(card);
           });
 
+          selectAllDedupeGroups.checked = true;
           statDedupeCount.textContent = mockDedupeGroups.length + ' 件';
           dedupeLoadingSection.classList.add('hidden');
           dedupeResultSection.classList.remove('hidden');
+          updateMergeBtnState();
         } catch (err) {
           showError('重複取引先の解析中にエラーが発生しました。');
           dedupeLoadingSection.classList.add('hidden');
@@ -1137,9 +1191,26 @@
         }
       });
 
+      // 重複グループ全選択 / 解除
+      selectAllDedupeGroups.addEventListener('change', () => {
+        const chks = document.querySelectorAll('.dedupe-group-chk');
+        chks.forEach(chk => {
+          chk.checked = selectAllDedupeGroups.checked;
+          const card = document.getElementById(`card_${chk.value}`);
+          if (card) {
+            if (chk.checked) card.classList.remove('disabled');
+            else card.classList.add('disabled');
+          }
+        });
+        updateMergeBtnState();
+      });
+
       // 重複名寄せ・取引置き換え実行
       executeMergeBtn.addEventListener('click', async () => {
-        const confirmMsg = "【確認】\n本当に選択された取引先に統合（名寄せ）しますか？\n\n選択されなかった取引先の過去データが、選択した正規の取引先へ置き換わります。この操作は取り消せません。";
+        const checkedGroups = document.querySelectorAll('.dedupe-group-chk:checked');
+        if (checkedGroups.length === 0) return;
+
+        const confirmMsg = `【確認】\n選択された ${checkedGroups.length} 件のグループに対して、本当に統合（名寄せ）を実行しますか？\n\n選択されなかった側の取引先データが「残す取引先」へと置き換わります。この操作は取り消せません。`;
         
         if (!confirm(confirmMsg)) {
           return;
@@ -1150,13 +1221,25 @@
 
         try {
           await new Promise(resolve => setTimeout(resolve, 1500));
-          alert("名寄せ・取引の置き換え処理が正常に完了しました！");
-          dedupeResultSection.classList.add('hidden');
+          alert(`${checkedGroups.length} 件のグループの統合・取引置換処理が正常に完了しました！`);
+          
+          // 処理が完了したカードを削除
+          checkedGroups.forEach(chk => {
+            const card = document.getElementById(`card_${chk.value}`);
+            if (card) card.remove();
+          });
+
+          const remainingCount = document.querySelectorAll('.dedupe-group-chk').length;
+          statDedupeCount.textContent = remainingCount + ' 件';
+
+          if (remainingCount === 0) {
+            dedupeResultSection.classList.add('hidden');
+          } else {
+            updateMergeBtnState();
+          }
         } catch (err) {
           alert("統合処理中にエラーが発生しました。");
-        } finally {
-          executeMergeBtn.disabled = false;
-          executeMergeBtn.textContent = '選択した取引先に統合（取引を置き換える）';
+          updateMergeBtnState();
         }
       });
 
