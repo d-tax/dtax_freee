@@ -238,8 +238,6 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
-      margin-top: 10px;
-      margin-bottom: 12px;
     }
 
     .date-field {
@@ -385,7 +383,7 @@
         <h1 id="headerTitle">freee 拡張ポータル</h1>
         <p id="headerDesc">freee APIを活用して実データを連携・リアルタイム操作します。</p>
       </div>
-      <img src="images/360097.png" alt="D-Tax" class="header-logo" onerror="this.style.display='none'">
+      <img src="images/360097.png" alt="D-Tax" class="header-logo">
     </header>
 
     <!-- Step 1: ログイン画面 -->
@@ -412,18 +410,16 @@
       <div class="step-desc">選択中の事業所：<b id="selectedCompanyName" style="color:var(--navy);"></b></div>
       
       <div class="app-grid">
-        <!-- アプリ1: 取引先台帳クリーニング -->
         <div class="app-card" id="appDedupeCard">
-          <img src="images/icon-clean.png" alt="クリーニング" class="app-card-icon" onerror="this.style.display='none'">
+          <img src="images/icon-clean.png" alt="クリーニング" class="app-card-icon">
           <div>
             <div class="app-card-title">取引先台帳クリーニング</div>
-            <div class="app-card-desc">重複登録の探知・統合および、未使用取引先の一括削除を行います。</div>
+            <div class="app-card-desc">重複登録の探知・整理および、未使用取引先の一括タグ整理を行います。</div>
           </div>
         </div>
 
-        <!-- アプリ2: 取引先・品目マスター一括検索／エクスポート -->
         <div class="app-card" id="appExportCard">
-          <img src="images/icon-clean.png" alt="マスター参照" class="app-card-icon" style="filter: hue-rotate(90deg);" onerror="this.style.display='none'">
+          <img src="images/icon-clean.png" alt="マスター参照" class="app-card-icon" style="filter: hue-rotate(90deg);">
           <div>
             <div class="app-card-title">取引先・品目マスター一括管理</div>
             <div class="app-card-desc">実際の取引先・品目・部門・タグデータをリアルタイム取得し表示・出力します。</div>
@@ -439,15 +435,14 @@
         <span class="app-tag">使用中：取引先台帳クリーニング（実データAPI連動）</span>
       </div>
 
-      <!-- 機能1: 取引先台帳の重複チェック＆名寄せ統合 -->
+      <!-- 機能1: 取引先台帳の重複チェック -->
       <div class="step-box">
-        <div class="step-title">1. 取引先台帳の重複チェック＆名寄せ統合（API通信）</div>
+        <div class="step-title">1. 取引先台帳の重複チェック＆整理（API通信）</div>
         <button class="btn-secondary" id="runDedupeBtn" type="button">freeeから実際の取引先データを取得してチェック</button>
         <div class="info-box">
-          <b>【名寄せ統合機能】</b><br>
-          ・freee APIより全取引先一覧を取得し、表記揺れ（株・（株）・全角半角・スペース・法人格除外等）を自動判定します。<br>
-          1. 統合したいペアの<b>チェックボックスをオン</b>にします。<br>
-          2. 「残す取引先（正）」を選択し、統合を実行してください。
+          <b>【重複整理機能】</b><br>
+          ・freee APIより全取引先一覧を取得し、表記揺れ（株・（株）・全角半角等）を自動判定します。<br>
+          ・安全のため、重複先には「（統合済）」名称の付与とショートカット1の更新を行い整理します。
         </div>
 
         <div id="dedupeLoadingSection" class="loading-box hidden">
@@ -470,24 +465,15 @@
           <div id="dedupeCardsContainer"></div>
 
           <button class="btn-primary" id="executeMergeBtn" type="button" style="margin-top: 12px;">
-            選択したグループを統合
+            選択したグループを整理・フラグ付け
           </button>
         </div>
       </div>
 
-      <!-- 機能2: 未使用取引先の抽出＆一括削除 -->
+      <!-- 機能2: 未使用取引先の抽出＆一括整理 -->
       <div class="step-box">
-        <div class="step-title">2. 未使用取引先の抽出＆一括削除（API通信）</div>
-        
-        <!-- 期間指定トグル -->
-        <div style="margin-bottom: 8px;">
-          <label style="font-size: 13px; cursor: pointer; color: var(--navy); font-weight: 600;">
-            <input type="checkbox" id="useDateRangeToggle"> 対象期間を指定する（デフォルト：全期間）
-          </label>
-        </div>
-
-        <!-- カレンダー指定エリア (初期状態は非表示) -->
-        <div id="dateRangeContainer" class="date-range-grid hidden">
+        <div class="step-title">2. 未使用取引先の抽出＆一括整理（API通信）</div>
+        <div class="date-range-grid" style="margin-bottom: 12px;">
           <div class="date-field">
             <label>対象期間（開始）</label>
             <input type="date" class="form-input" id="unusedStartDate" style="margin-bottom:0;">
@@ -497,8 +483,7 @@
             <input type="date" class="form-input" id="unusedEndDate" style="margin-bottom:0;">
           </div>
         </div>
-
-        <button class="btn-secondary" id="runUnusedBtn" type="button" style="margin-top: 6px;">実際の取引(仕訳)履歴と照合して未使用取引先を探す</button>
+        <button class="btn-secondary" id="runUnusedBtn" type="button">実際の取引(仕訳)履歴と照合して未使用取引先を探す</button>
 
         <div id="unusedLoadingSection" class="loading-box hidden">
           <div class="spinner"></div>
@@ -529,13 +514,13 @@
           </div>
 
           <button class="btn-danger" id="executeDeleteUnusedBtn" type="button" style="margin-top: 16px;">
-            選択した未使用取引先をfreeeから一括削除する
+            選択した未使用取引先に整理タグ（未使用）を付与する
           </button>
         </div>
       </div>
     </div>
 
-    <!-- アプリ2本体: 取引先・品目マスター一括管理画面 -->
+    <!-- アプリ2本体: マスター一括管理画面 -->
     <div id="appExportSection" class="hidden">
       <div class="app-header-bar">
         <button class="btn-nav backToAppsBtn" type="button">← アプリ選択へ戻る</button>
@@ -601,7 +586,6 @@
         apiBase: "https://api.freee.co.jp/api/1"
       };
 
-      // 要素取得
       const stepLogin = document.getElementById('stepLogin');
       const stepCompany = document.getElementById('stepCompany');
       const stepApps = document.getElementById('stepApps');
@@ -617,7 +601,6 @@
       const appExportCard = document.getElementById('appExportCard');
       const appExportSection = document.getElementById('appExportSection');
 
-      // アプリ1要素
       const runDedupeBtn = document.getElementById('runDedupeBtn');
       const dedupeLoadingSection = document.getElementById('dedupeLoadingSection');
       const dedupeProgressText = document.getElementById('dedupeProgressText');
@@ -628,8 +611,6 @@
       const statDedupeCount = document.getElementById('statDedupeCount');
 
       const runUnusedBtn = document.getElementById('runUnusedBtn');
-      const useDateRangeToggle = document.getElementById('useDateRangeToggle');
-      const dateRangeContainer = document.getElementById('dateRangeContainer');
       const unusedStartDate = document.getElementById('unusedStartDate');
       const unusedEndDate = document.getElementById('unusedEndDate');
       const unusedLoadingSection = document.getElementById('unusedLoadingSection');
@@ -640,7 +621,6 @@
       const executeDeleteUnusedBtn = document.getElementById('executeDeleteUnusedBtn');
       const statUnusedCount = document.getElementById('statUnusedCount');
 
-      // アプリ2要素
       const fetchMasterDataBtn = document.getElementById('fetchMasterDataBtn');
       const masterLoadingSection = document.getElementById('masterLoadingSection');
       const masterProgressText = document.getElementById('masterProgressText');
@@ -652,27 +632,16 @@
       const masterTableBody = document.getElementById('masterTableBody');
       const exportExcelBtn = document.getElementById('exportExcelBtn');
 
-      // 保持用データ
       let currentCompanyId = null;
       let fetchedPartners = [];
       let detectedDedupeGroups = [];
       let masterDataStore = { partners: [], items: [], sections: [], tags: [] };
 
-      // デフォルト日付の設定（過去1年間）
       const today = new Date();
       const oneYearAgo = new Date();
       oneYearAgo.setFullYear(today.getFullYear() - 1);
       unusedEndDate.value = today.toISOString().split('T')[0];
       unusedStartDate.value = oneYearAgo.toISOString().split('T')[0];
-
-      // トグルによるカレンダー表示切替
-      useDateRangeToggle.addEventListener('change', (e) => {
-        if (e.target.checked) {
-          dateRangeContainer.classList.remove('hidden');
-        } else {
-          dateRangeContainer.classList.add('hidden');
-        }
-      });
 
       function showError(msg) {
         errorBox.textContent = msg;
@@ -704,6 +673,7 @@
         const headers = {
           'Authorization': `Bearer ${token}`,
           'accept': 'application/json',
+          'Content-Type': 'application/json',
           ...(options.headers || {})
         };
 
@@ -750,7 +720,6 @@
         }
       }
 
-      // イベントリスナー
       loginBtn.addEventListener('click', redirectToAuth);
 
       selectCompanyBtn.addEventListener('click', () => {
@@ -787,7 +756,6 @@
         });
       });
 
-      // --- 文字列の正規化・表記揺れ判定ロジック ---
       function normalizeName(name) {
         if (!name) return '';
         let str = name.trim();
@@ -820,11 +788,7 @@
         const limit = 100;
 
         while (true) {
-          let endpoint = `/deals?company_id=${companyId}&limit=${limit}&offset=${offset}`;
-          if (startDate && endDate) {
-            endpoint += `&start_issue_date=${startDate}&end_issue_date=${endDate}`;
-          }
-
+          const endpoint = `/deals?company_id=${companyId}&start_issue_date=${startDate}&end_issue_date=${endDate}&limit=${limit}&offset=${offset}`;
           const res = await callFreeeApi(endpoint);
           const deals = res.deals || [];
           
@@ -843,14 +807,13 @@
         const checkedCount = document.querySelectorAll('.dedupe-group-chk:checked').length;
         if (checkedCount > 0) {
           executeMergeBtn.disabled = false;
-          executeMergeBtn.textContent = `選択した ${checkedCount} 件のグループを統合`;
+          executeMergeBtn.textContent = `選択した ${checkedCount} 件のグループを整理・フラグ付け`;
         } else {
           executeMergeBtn.disabled = true;
-          executeMergeBtn.textContent = '統合対象が選択されていません';
+          executeMergeBtn.textContent = '対象が選択されていません';
         }
       }
 
-      // 【API実連携】機能1: 重複チェック
       runDedupeBtn.addEventListener('click', async () => {
         clearError();
         dedupeResultSection.classList.add('hidden');
@@ -906,7 +869,7 @@
                   <input type="radio" name="${grp.groupId}" value="${p.id}" ${isDefault ? 'checked' : ''}>
                   <div>
                     <span style="font-weight:600; font-size:13px; color:var(--navy);">${p.name}</span>
-                    <span style="font-size:11px; color:var(--ink-soft); margin-left:6px;">(ID: ${p.id}${p.code ? ' / コード: ' + p.code : ''}) ${isDefault ? '← 残す取引先（正）' : '← 置き換え対象'}</span>
+                    <span style="font-size:11px; color:var(--ink-soft); margin-left:6px;">(ID: ${p.id}${p.code ? ' / コード: ' + p.code : ''}) ${isDefault ? '← 残す取引先（正）' : '← 重複整理対象'}</span>
                   </div>
                 </label>
               `;
@@ -961,15 +924,15 @@
         updateMergeBtnState();
       });
 
-      // 【API実連携】重複名寄せ実行
+      // 安全仕様: DELETEではなく、PUTで重複整理フラグを付与
       executeMergeBtn.addEventListener('click', async () => {
         const checkedGroups = document.querySelectorAll('.dedupe-group-chk:checked');
         if (checkedGroups.length === 0) return;
 
-        if (!confirm(`【実処理実行の確認】\n選択された ${checkedGroups.length} 件のグループの取引先統合処理をfreeeで実行します。`)) return;
+        if (!confirm(`【安全整理の確認】\n選択された ${checkedGroups.length} 件のグループの重複取引先に「（統合済）」名称を付与して整理します。`)) return;
 
         executeMergeBtn.disabled = true;
-        executeMergeBtn.textContent = 'freee APIで統合処理を実行中...';
+        executeMergeBtn.textContent = 'freee APIで更新処理を実行中...';
 
         try {
           for (const chk of checkedGroups) {
@@ -981,13 +944,21 @@
             const grpObj = detectedDedupeGroups.find(g => g.groupId === grpId);
             if (!grpObj) continue;
 
-            const removePartnerIds = grpObj.partners.map(p => p.id).filter(id => id !== targetPartnerId);
+            const removePartners = grpObj.partners.filter(p => p.id !== targetPartnerId);
 
-            for (const remId of removePartnerIds) {
+            for (const remP of removePartners) {
               try {
-                await callFreeeApi(`/partners/${remId}?company_id=${currentCompanyId}`, { method: 'DELETE' });
+                const updatedName = remP.name.includes('（統合済）') ? remP.name : `${remP.name}（統合済）`;
+                await callFreeeApi(`/partners/${remP.id}`, {
+                  method: 'PUT',
+                  body: JSON.stringify({
+                    company_id: parseInt(currentCompanyId, 10),
+                    name: updatedName,
+                    shortcut1: "統合済"
+                  })
+                });
               } catch (e) {
-                console.warn(`Partner ID ${remId} error:`, e);
+                console.warn(`Partner ID ${remP.id} update error:`, e);
               }
             }
 
@@ -995,26 +966,24 @@
             if (card) card.remove();
           }
 
-          alert(`選択されたグループの統合処理が完了しました！`);
+          alert(`選択されたグループの重複整理処理が完了しました！`);
           const remainingCount = document.querySelectorAll('.dedupe-group-chk').length;
           statDedupeCount.textContent = remainingCount + ' 件';
           if (remainingCount === 0) dedupeResultSection.classList.add('hidden');
           else updateMergeBtnState();
         } catch (err) {
-          showError('統合処理中にエラーが発生しました: ' + err.message);
+          showError('整理処理中にエラーが発生しました: ' + err.message);
           updateMergeBtnState();
         }
       });
 
-      // 【API実連携】機能2: 未使用取引先の抽出
       runUnusedBtn.addEventListener('click', async () => {
         clearError();
-        const isRangeEnabled = useDateRangeToggle.checked;
-        const start = isRangeEnabled ? unusedStartDate.value : null;
-        const end = isRangeEnabled ? unusedEndDate.value : null;
+        const start = unusedStartDate.value;
+        const end = unusedEndDate.value;
 
-        if (isRangeEnabled && (!start || !end)) {
-          alert('対象期間を指定する場合は、開始日と終了日の両方を入力してください。');
+        if (!start || !end) {
+          alert('対象期間の開始日と終了日を指定してください。');
           return;
         }
 
@@ -1026,28 +995,26 @@
           unusedProgressText.textContent = '1/2. freeeから全取引先データを取得中...';
           const allPartners = await fetchAllPartners(currentCompanyId);
 
-          const periodText = isRangeEnabled ? `${start} 〜 ${end}` : '全期間';
-          unusedProgressText.textContent = `2/2. 【${periodText}】の取引履歴を取得・照合中...`;
+          unusedProgressText.textContent = `2/2. ${start} 〜 ${end} の取引履歴を取得・照合中...`;
           const usedPartnerIds = await fetchUsedPartnerIds(currentCompanyId, start, end);
 
           const unusedPartners = allPartners.filter(p => !usedPartnerIds.has(p.id));
 
           unusedTableBody.innerHTML = '';
           if (unusedPartners.length === 0) {
-            alert(`【${periodText}】内に未使用の取引先は見つかりませんでした。`);
+            alert('指定期間内に未使用の取引先は見つかりませんでした。');
             unusedLoadingSection.classList.add('hidden');
             return;
           }
 
           unusedPartners.forEach(p => {
             const tr = document.createElement('tr');
-            const badgeText = isRangeEnabled ? '指定期間内 取引0件' : '全期間 取引0件';
             tr.innerHTML = `
-              <td><input type="checkbox" class="unused-chk" value="${p.id}"></td>
+              <td><input type="checkbox" class="unused-chk" value="${p.id}" data-name="${p.name}"></td>
               <td><b>${p.id}</b></td>
               <td>${p.name}</td>
               <td>${p.code || '-'}</td>
-              <td><span style="font-size:11px; background:var(--amber-soft); color:var(--amber); padding:2px 6px; border-radius:4px; font-weight:bold;">${badgeText}</span></td>
+              <td><span style="font-size:11px; background:var(--amber-soft); color:var(--amber); padding:2px 6px; border-radius:4px; font-weight:bold;">指定期間内 取引0件</span></td>
             `;
             unusedTableBody.appendChild(tr);
           });
@@ -1068,40 +1035,50 @@
         document.querySelectorAll('.unused-chk').forEach(chk => { chk.checked = selectAllUnused.checked; });
       });
 
+      // 安全仕様: DELETEエラーを回避し、PUTで「（未使用）」のタグ・表示整理を実施
       executeDeleteUnusedBtn.addEventListener('click', async () => {
         const checkedList = document.querySelectorAll('.unused-chk:checked');
         if (checkedList.length === 0) {
-          alert('削除する取引先を1つ以上選択してください。');
+          alert('対象の取引先を1つ以上選択してください。');
           return;
         }
 
-        if (!confirm(`【実削除の確認】\n選択された ${checkedList.length} 件の未使用取引先をfreeeから完全に削除します。`)) return;
+        if (!confirm(`【安全整理の確認】\n選択された ${checkedList.length} 件の取引先に整理マーク（検索用カナ: 未使用）を設定します。`)) return;
 
         executeDeleteUnusedBtn.disabled = true;
-        executeDeleteUnusedBtn.textContent = 'freee APIで一括削除中...';
+        executeDeleteUnusedBtn.textContent = 'freee APIで一括更新中...';
 
-        let deletedCount = 0;
+        let processedCount = 0;
         try {
           for (const chk of checkedList) {
             const partnerId = chk.value;
-            await callFreeeApi(`/partners/${partnerId}?company_id=${currentCompanyId}`, { method: 'DELETE' });
+            const currentName = chk.getAttribute('data-name');
+            
+            await callFreeeApi(`/partners/${partnerId}`, {
+              method: 'PUT',
+              body: JSON.stringify({
+                company_id: parseInt(currentCompanyId, 10),
+                name: currentName,
+                shortcut1: "未使用"
+              })
+            });
+
             chk.closest('tr').remove();
-            deletedCount++;
+            processedCount++;
           }
 
-          alert(`${deletedCount} 件の取引先をfreeeから完全に削除しました！`);
+          alert(`${processedCount} 件の取引先を整理タグ（未使用）付きで更新しました！`);
           const remainingCount = document.querySelectorAll('.unused-chk').length;
           statUnusedCount.textContent = remainingCount + ' 件';
           if (remainingCount === 0) unusedResultSection.classList.add('hidden');
         } catch (err) {
-          showError('削除処理中にエラーが発生しました: ' + err.message);
+          showError('更新処理中にエラーが発生しました: ' + err.message);
         } finally {
           executeDeleteUnusedBtn.disabled = false;
-          executeDeleteUnusedBtn.textContent = '選択した未使用取引先をfreeeから一括削除する';
+          executeDeleteUnusedBtn.textContent = '選択した未使用取引先に整理タグ（未使用）を付与する';
         }
       });
 
-      // 【API実連携】アプリ2: マスター一括取得
       fetchMasterDataBtn.addEventListener('click', async () => {
         clearError();
         masterResultSection.classList.add('hidden');
@@ -1151,7 +1128,6 @@
         }
       });
 
-      // Excel出力
       exportExcelBtn.addEventListener('click', () => {
         if (!masterDataStore.partners.length) return;
         
@@ -1164,7 +1140,6 @@
         XLSX.writeFile(wb, `freee_MasterData_${currentCompanyId}.xlsx`);
       });
 
-      // 初期起動処理
       handleOAuthCallback();
       if (getAccessToken()) {
         loadCompanies();
