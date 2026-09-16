@@ -1513,33 +1513,40 @@
         pochiResultSection.classList.add('hidden');
         pochiLoadingSection.classList.remove('hidden');
         runPochiCheckBtn.disabled = true;
-
+      
         try {
           const months = Number(document.getElementById('pochiMonthsSelect').value);
           const minCount = Number(document.getElementById('pochiMinCount').value);
-
+      
           const startDate = new Date();
           startDate.setMonth(startDate.getMonth() - months);
           const startDateStr = startDate.toISOString().split('T')[0];
-
+      
+          // 取引先マスタを取得（未取得の場合）
+          if (cachedPartners.length === 0) {
+            cachedPartners = await fetchAllPages('/partners', { company_id: currentCompanyId }, 'partners');
+          }
+          const partnerMap = new Map(cachedPartners.map(p => [p.id, p.name]));
+      
           const deals = await fetchAllPages('/deals', {
             company_id: currentCompanyId,
             start_issue_date: startDateStr
           }, 'deals');
-
+      
           let manualTotal = 0;
           const patternMap = new Map();
-
+      
           deals.forEach(deal => {
             const isManual = !deal.details?.some(d => d.rule_id);
             if (isManual) manualTotal++;
-
+      
             if (isManual && deal.details) {
               deal.details.forEach(detail => {
-                const partnerName = deal.partner_id ? (accountItemMap.get(deal.partner_id) || `取引先ID:${deal.partner_id}`) : '（取引先未設定）';
-                const accountName = accountItemMap.get(detail.account_item_id) || `科目ID:${detail.account_item_id}`;
+                // IDではなく partnerMap から正しい取引先名を取得
+                const partnerName = deal.partner_id ? (partnerMap.get(deal.partner_id) || `取引先ID: ${deal.partner_id}`) : '（取引先未設定）';
+                const accountName = accountItemMap.get(detail.account_item_id) || `科目ID: ${detail.account_item_id}`;
                 const key = `${partnerName}__${accountName}`;
-
+      
                 if (!patternMap.has(key)) {
                   patternMap.set(key, { partner: partnerName, account: accountName, count: 0 });
                 }
@@ -1547,11 +1554,11 @@
               });
             }
           });
-
+      
           const candidates = Array.from(patternMap.values())
             .filter(item => item.count >= minCount)
             .sort((a, b) => b.count - a.count);
-
+      
           pochiTableBody.innerHTML = '';
           if (candidates.length === 0) {
             pochiTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:16px;">条件に該当するポチポチ手入力取引は見つかりませんでした。</td></tr>';
@@ -1570,11 +1577,11 @@
               pochiTableBody.appendChild(tr);
             });
           }
-
+      
           const ratio = deals.length > 0 ? ((manualTotal / deals.length) * 100).toFixed(1) : '0';
           statPochiTotalCount.textContent = candidates.length + ' 件';
           statPochiManualRatio.textContent = `${ratio}%`;
-
+      
           pochiLoadingSection.classList.add('hidden');
           pochiResultSection.classList.remove('hidden');
         } catch (err) {
@@ -1584,7 +1591,6 @@
           runPochiCheckBtn.disabled = false;
         }
       });
-
       // アプリ4: 取引の異常値・異常入力チェック (実データ)
       runAuditCheckBtn.addEventListener('click', async () => {
         clearError();
