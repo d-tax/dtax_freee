@@ -4,10 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>freee×D-tax 拡張ポータル</title>
-  <meta property="og:title" content="freee×D-tax 拡張ポータル">
-  <meta property="og:description" content="freee APIを活用して業務効率化ツールを利用・管理します。">
-  <meta property="og:type" content="website">
-  <link rel="icon" href="data:,">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     :root {
@@ -62,23 +58,18 @@
     .page {
       position: relative;
       z-index: 2;
-      max-width: 620px;
+      max-width: 680px;
       margin: 44px auto;
       padding: 36px 24px 56px;
-      background: rgba(255, 253, 247, 0.65);
+      background: rgba(255, 253, 247, 0.85);
       backdrop-filter: blur(22px);
       -webkit-backdrop-filter: blur(22px);
       border-radius: 34px;
       box-shadow: 0 30px 80px rgba(32, 48, 59, 0.22), 0 4px 16px rgba(32, 48, 59, 0.08);
     }
 
-    @media (max-width: 620px) {
-      .page {
-        margin: 0;
-        border-radius: 0;
-        min-height: 100vh;
-        box-shadow: none;
-      }
+    @media (max-width: 560px) {
+      .page { margin: 0; border-radius: 0; min-height: 100vh; box-shadow: none; }
     }
 
     header {
@@ -91,22 +82,8 @@
       margin-bottom: 28px;
     }
 
-    .header-logo {
-      flex: none;
-      height: 38px;
-      width: auto;
-      object-fit: contain;
-      margin-top: 2px;
-    }
-
-    header h1 {
-      font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
-      font-size: 24px;
-      font-weight: 600;
-      margin: 0 0 4px;
-      letter-spacing: .02em;
-    }
-
+    .header-logo { flex: none; height: 38px; width: auto; object-fit: contain; margin-top: 2px; }
+    header h1 { font-size: 24px; font-weight: 600; margin: 0 0 4px; }
     header p { margin: 0; color: var(--ink-soft); font-size: 13px; }
 
     .step-box {
@@ -118,16 +95,7 @@
       box-shadow: 0 4px 12px rgba(32, 48, 59, 0.04);
     }
 
-    .step-title {
-      font-weight: 700;
-      font-size: 15px;
-      margin-bottom: 8px;
-      color: var(--navy);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
+    .step-title { font-weight: 700; font-size: 15px; margin-bottom: 8px; color: var(--navy); display: flex; align-items: center; gap: 8px; }
     .step-desc { font-size: 12.5px; color: var(--ink-soft); margin-bottom: 16px; }
 
     .form-select, .form-input {
@@ -156,18 +124,10 @@
     }
 
     .app-card:hover { border-color: var(--navy); background: var(--paper-deep); transform: translateY(-2px); }
-    .app-card-icon { width: 48px; height: 48px; object-fit: contain; flex: none; }
     .app-card-title { font-weight: 700; font-size: 14.5px; color: var(--navy); margin-bottom: 4px; }
     .app-card-desc { font-size: 12px; color: var(--ink-soft); }
 
-    .app-header-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
+    .app-header-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
 
     .btn-primary {
       background: var(--navy);
@@ -181,38 +141,18 @@
       width: 100%;
       text-align: center;
     }
-
     .btn-primary:hover { background: var(--navy-soft); }
-    .btn-primary:disabled { background: var(--ink-soft); opacity: 0.6; cursor: not-allowed; }
 
     .btn-danger {
       background: var(--red);
       color: #fff;
       border: none;
-      padding: 12px 22px;
-      border-radius: 11px;
-      font-size: 14px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 12px;
       font-weight: 600;
       cursor: pointer;
-      width: 100%;
-      text-align: center;
     }
-    .btn-danger:hover { background: #962f25; }
-    .btn-danger:disabled { opacity: 0.6; cursor: not-allowed; }
-
-    .btn-secondary {
-      background: #FFFDF7;
-      color: var(--navy);
-      border: 1.5px solid var(--navy);
-      padding: 12px 22px;
-      border-radius: 11px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      width: 100%;
-      text-align: center;
-    }
-    .btn-secondary:disabled { opacity: 0.6; cursor: not-allowed; }
 
     .btn-nav {
       background: var(--paper-deep);
@@ -224,32 +164,11 @@
       cursor: pointer;
     }
 
-    .app-tag {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--navy);
-      background: var(--paper-deep);
-      border: 1px solid var(--line);
-      padding: 3px 10px;
-      border-radius: 12px;
-    }
+    .app-tag { font-size: 11px; font-weight: 700; color: var(--navy); background: var(--paper-deep); border: 1px solid var(--line); padding: 3px 10px; border-radius: 12px; }
 
-    .date-range-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    .date-field {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .date-field label {
-      font-size: 10.5px;
-      color: var(--ink-soft);
-    }
+    .date-range-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+    .date-field { display: flex; flex-direction: column; gap: 2px; }
+    .date-field label { font-size: 10.5px; color: var(--ink-soft); }
 
     .summary {
       display: flex;
@@ -257,192 +176,25 @@
       gap: 12px;
       align-items: center;
       justify-content: space-between;
-      margin: 16px 0 12px;
-      padding: 12px 16px;
+      margin: 16px 0;
+      padding: 16px;
       background: var(--paper-deep);
       border: 1px solid var(--line-soft);
       border-radius: 14px;
     }
 
-    .summary-stats { display: flex; gap: 16px; flex-wrap: wrap; }
     .stat { display: flex; flex-direction: column; }
-    .stat .num { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .stat .num { font-size: 18px; font-weight: 700; }
     .stat .num.danger { color: var(--red); }
+    .stat .num.amber { color: var(--amber); }
     .stat .lbl { font-size: 10.5px; color: var(--ink-soft); }
 
     .all-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 6px; }
-    .all-table th {
-      text-align: left;
-      font-size: 11px;
-      color: var(--ink-soft);
-      font-weight: 600;
-      border-bottom: 1.5px solid var(--ink);
-      padding: 8px;
-    }
+    .all-table th { text-align: left; font-size: 11px; color: var(--ink-soft); font-weight: 600; border-bottom: 1.5px solid var(--ink); padding: 8px; }
     .all-table td { padding: 8px; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
 
-    /* 重複統合カードUI改修 */
-    .dedupe-group-card {
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 14px 16px;
-      margin-bottom: 12px;
-      transition: all 0.2s ease;
-    }
-    .dedupe-group-card.disabled {
-      opacity: 0.55;
-      background: var(--paper-deep);
-    }
-    .dedupe-group-title {
-      font-weight: 700;
-      font-size: 13.5px;
-      color: var(--navy);
-      margin-bottom: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-bottom: 8px;
-      border-bottom: 1px dashed var(--line);
-    }
-    .dedupe-group-title label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-    }
-    .dedupe-option-list {
-      padding-left: 24px;
-    }
-    .dedupe-option {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 6px 8px;
-      border-radius: 6px;
-      margin-bottom: 4px;
-      cursor: pointer;
-    }
-    .dedupe-option:hover {
-      background: var(--paper-deep);
-    }
-    .dedupe-option input[type="radio"] {
-      accent-color: var(--navy);
-    }
-
-    /* ワンタップスキャン用専用デザイン */
-    .upload-area {
-      border: 2px dashed var(--line);
-      border-radius: 14px;
-      padding: 24px;
-      text-align: center;
-      background: #FFFDF7;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      margin-bottom: 16px;
-    }
-    .upload-area:hover {
-      border-color: var(--navy);
-      background: var(--paper-deep);
-    }
-    .upload-icon {
-      font-size: 28px;
-      margin-bottom: 8px;
-      color: var(--navy);
-    }
-
-    .scan-item-card {
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 12px 16px;
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-    .scan-item-info { flex: 1; }
-    .scan-item-label {
-      font-size: 10.5px;
-      color: var(--ink-soft);
-      margin-bottom: 2px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .scan-item-value {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--navy);
-      word-break: break-all;
-    }
-    .scan-item-hint { font-size: 11px; color: var(--amber); margin-top: 2px; }
-
-    .btn-copy {
-      background: var(--paper-deep);
-      border: 1px solid var(--line);
-      color: var(--navy);
-      font-size: 12px;
-      font-weight: 600;
-      padding: 8px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      flex: none;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .btn-copy:hover { background: var(--line-soft); }
-    .btn-copy.copied {
-      background: var(--green-soft);
-      border-color: var(--green);
-      color: var(--green);
-    }
-
-    .info-box {
-      margin-top: 12px;
-      padding: 12px;
-      background: var(--paper-deep);
-      border-radius: 10px;
-      font-size: 12px;
-      color: var(--ink-soft);
-      line-height: 1.5;
-    }
-
-    .loading-box {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      padding: 20px 0;
-    }
-
-    .spinner {
-      width: 32px;
-      height: 32px;
-      border: 3px solid var(--line);
-      border-top-color: var(--navy);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    .error-box {
-      margin-top: 16px;
-      border: 1px solid var(--red);
-      background: var(--red-soft);
-      color: var(--red);
-      padding: 12px 16px;
-      border-radius: 11px;
-      font-size: 13px;
-      display: none;
-    }
-
+    .error-box { margin-top: 16px; border: 1px solid var(--red); background: var(--red-soft); color: var(--red); padding: 12px 16px; border-radius: 11px; font-size: 13px; display: none; }
+    .loading-text { font-size: 13px; color: var(--amber); font-weight: 600; display: none; margin-bottom: 10px; }
     .hidden { display: none !important; }
   </style>
 </head>
@@ -455,17 +207,17 @@
         <h1 id="headerTitle">freee 拡張ポータル</h1>
         <p id="headerDesc">freee APIを活用して業務効率化ツールを利用・管理します。</p>
       </div>
-      <img src="images/360097.png" alt="D-Tax" class="header-logo">
+      <img src="images/360097.png" alt="D-Tax" class="header-logo" onerror="this.style.display='none'">
     </header>
 
-    <!-- Step 1: ログイン画面 -->
+    <!-- Step 1: ログイン -->
     <div id="stepLogin" class="step-box">
       <div class="step-title">1. freee連携ログイン</div>
-      <div class="step-desc">freeeアカウントで認証を行い、安全にAPIデータと連携します。</div>
+      <div class="step-desc">freeeアカウントで認証を行い、実APIデータと安全に連携します。</div>
       <button class="btn-primary" id="loginBtn" type="button">freeeアカウントでログイン</button>
     </div>
 
-    <!-- Step 2: 事務所（事業所）選択画面 -->
+    <!-- Step 2: 事業所選択 -->
     <div id="stepCompany" class="step-box hidden">
       <div class="step-title">2. 事業所を選択</div>
       <div class="step-desc">処理を行う対象の事業所を選択してください。</div>
@@ -475,192 +227,100 @@
       <button class="btn-primary" id="selectCompanyBtn" type="button">この事業所で進む</button>
     </div>
 
-    <!-- Step 3: アプリ選択画面 -->
+    <!-- Step 3: アプリ選択 -->
     <div id="stepApps" class="step-box hidden">
       <button class="btn-nav" id="backToCompanyBtn" type="button">← 事業所選択へ戻る</button>
       <div class="step-title" style="margin-top: 12px;">3. 利用するアプリを選択</div>
       <div class="step-desc">選択した事業所：<b id="selectedCompanyName" style="color:var(--ink);"></b></div>
       
       <div class="app-grid">
-        <!-- アプリ1: 取引先クリーニング -->
         <div class="app-card" id="appDedupeCard">
-          <img src="images/icon-clean.png" alt="クリーニング" class="app-card-icon">
           <div>
             <div class="app-card-title">取引先台帳クリーニング</div>
-            <div class="app-card-desc">重複登録の探知・取引置換統合や、未使用取引先の一括削除を行います。</div>
+            <div class="app-card-desc">重複登録の探知や、未使用取引先の一括削除を行います。</div>
           </div>
         </div>
-
-        <!-- アプリ2: 期日超過の未決済売掛金チェッカー -->
         <div class="app-card" id="appOverdueCard">
-          <img src="images/icon-alert.png" alt="売掛金チェッカー" class="app-card-icon">
           <div>
             <div class="app-card-title">期日超過の未決済売掛金チェッカー</div>
-            <div class="app-card-desc">決済期日を過ぎた未回収の売掛取引（収入）をリストアップし、回収リスクを可視化します。</div>
+            <div class="app-card-desc">期日を過ぎた未回収の売掛取引（収入）を可視化します。</div>
           </div>
         </div>
-
-        <!-- アプリ3: ポチポチ手入力取引チェッカー -->
         <div class="app-card" id="appManualPochiCard">
-          <img src="images/icon-pochipochi.png" alt="ポチポチ手入力取引チェッカー" class="app-card-icon">
           <div>
             <div class="app-card-title">ポチポチ手入力取引チェッカー</div>
-            <div class="app-card-desc">何度も手入力している取引を炙り出し、自動登録ルールの作成候補を可視化します。</div>
+            <div class="app-card-desc">繰り返し手入力されている取引を抽出し、自動化候補を提案します。</div>
           </div>
         </div>
-
-        <!-- アプリ4: 取引の異常値・異常入力チェッカー -->
-        <div class="app-card" id="appAuditCard">
-          <img src="images/icon-ijouchi.png" alt="取引の異常値・異常入力チェッカー" class="app-card-icon">
+        <div class="app-card" id="appAnomalyCard">
           <div>
             <div class="app-card-title">取引の異常値・異常入力チェッカー</div>
-            <div class="app-card-desc">金額の桁間違いや税区分の矛盾など、過去パターンから逸脱した取引を検知する監査用ツール。</div>
+            <div class="app-card-desc">金額の桁間違いや税区分の矛盾など、過去パターンからの逸脱を検知します。</div>
           </div>
         </div>
-
-        <!-- アプリ5: 固定資産ワンタップスキャン -->
         <div class="app-card" id="appAssetScanCard">
-          <img src="images/icon-onescan.png" alt="固定資産ワンタップスキャン" class="app-card-icon" onerror="this.src='images/icon-clean.png'">
           <div>
             <div class="app-card-title">固定資産ワンタップスキャン</div>
-            <div class="app-card-desc">請求書や領収書から固定資産登録用の項目（会社名・型番・金額等）を自動抽出し1タップ保存。</div>
+            <div class="app-card-desc">請求書項目から固定資産台帳へ1タップでAPI登録します。</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- アプリ1本体: 取引先整理画面 -->
+    <div id="loadingStatus" class="loading-text">freee APIから実データを取得・解析中...</div>
+
+    <!-- アプリ1: 取引先台帳クリーニング -->
     <div id="appDedupeSection" class="hidden">
       <div class="app-header-bar">
         <button class="btn-nav backToAppsBtn" type="button">← アプリ選択へ戻る</button>
-        <span class="app-tag">使用中：取引先台帳クリーニング</span>
+        <span class="app-tag">取引先台帳クリーニング</span>
       </div>
 
-      <!-- 機能1: 取引先台帳の重複チェック＆名寄せ統合 -->
       <div class="step-box">
-        <div class="step-title">1. 取引先台帳の重複チェック＆名寄せ統合</div>
-        <button class="btn-secondary" id="runDedupeBtn" type="button">取引先の重複登録を探す</button>
-        <div class="info-box">
-          <b>【名寄せ統合機能】</b><br>
-          1. 統合したいペアの<b>チェックボックスをオン</b>にします（別会社等で両方残す場合はチェックを外してください）。<br>
-          2. 「残す取引先（正）」をラジオボタンで選択してください。非選択側の取引が自動で「残す側」へ置き換わり統合されます。
+        <div class="step-title">1. 未使用取引先の抽出</div>
+        <label style="font-size: 12.5px; cursor: pointer;">
+          <input type="checkbox" id="useDateRangeToggle"> 特定の期間を指定して未使用判定を行う（デフォルト: 全期間）
+        </label>
+        <div id="dateRangeContainer" class="date-range-grid hidden">
+          <div class="date-field"><label>開始日</label><input type="date" class="form-input" id="startDateInput"></div>
+          <div class="date-field"><label>終了日</label><input type="date" class="form-input" id="endDateInput"></div>
         </div>
-
-        <div id="dedupeLoadingSection" class="loading-box hidden">
-          <div class="spinner"></div>
-          <div style="font-size: 13px; font-weight: 600; color: var(--navy);">重複取引先データを分析中...</div>
-        </div>
-
-        <div id="dedupeResultSection" class="hidden">
-          <div class="summary">
-            <div class="summary-stats">
-              <div class="stat"><span class="num danger" id="statDedupeCount">0</span><span class="lbl">検出された重複疑いグループ数</span></div>
-            </div>
-            <div style="font-size: 12px;">
-              <label style="cursor: pointer; font-weight: 600; color: var(--navy);">
-                <input type="checkbox" id="selectAllDedupeGroups" checked> すべて選択/解除
-              </label>
-            </div>
-          </div>
-
-          <!-- 名寄せ統合グループ選択カード表示エリア -->
-          <div id="dedupeCardsContainer"></div>
-
-          <button class="btn-primary" id="executeMergeBtn" type="button" style="margin-top: 12px;">
-            選択したグループを統合（取引を置き換える）
-          </button>
-        </div>
+        <button class="btn-primary" id="runUnusedCheckBtn" type="button" style="margin-top:10px;">未使用取引先をスキャン</button>
       </div>
 
-      <!-- 機能2: 未使用取引先の抽出＆一括削除 -->
-      <div class="step-box">
-        <div class="step-title">2. 未使用取引先の抽出＆一括削除</div>
-        <div class="date-range-grid" style="margin-bottom: 12px;">
-          <div class="date-field">
-            <label>対象期間（開始）</label>
-            <input type="date" class="form-input" id="unusedStartDate" style="margin-bottom:0;">
-          </div>
-          <div class="date-field">
-            <label>対象期間（終了）</label>
-            <input type="date" class="form-input" id="unusedEndDate" style="margin-bottom:0;">
-          </div>
-        </div>
-        <button class="btn-secondary" id="runUnusedBtn" type="button">過去に取引のない取引先を探す</button>
-        <div class="info-box">
-          <b>【一括削除機能】</b><br>
-          指定期間内に取引（仕訳）が発生していない取引先を抽出し、チェックを入れた項目を一括で削除（整理）します。
-        </div>
-
-        <div id="unusedLoadingSection" class="loading-box hidden">
-          <div class="spinner"></div>
-          <div style="font-size: 13px; font-weight: 600; color: var(--navy);">過去の取引データを解析中...</div>
-          <div id="unusedProgressText" style="font-size: 14px; font-weight: 700; color: var(--red);">過去の取引 0 件 / 0 件</div>
-        </div>
-
-        <div id="unusedResultSection" class="hidden">
-          <div class="summary">
-            <div class="summary-stats">
-              <div class="stat"><span class="num danger" id="statUnusedCount">0</span><span class="lbl">未使用の取引先数</span></div>
-            </div>
-          </div>
-
-          <div style="overflow-x: auto;">
-            <table class="all-table">
-              <thead>
-                <tr>
-                  <th style="width: 32px;"><input type="checkbox" id="selectAllUnused"></th>
-                  <th>取引先コード</th>
-                  <th>取引先名</th>
-                  <th>判定</th>
-                </tr>
-              </thead>
-              <tbody id="unusedTableBody"></tbody>
-            </table>
-          </div>
-
-          <button class="btn-danger" id="executeDeleteUnusedBtn" type="button" style="margin-top: 16px;">
-            選択した未使用取引先を一括削除する
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- アプリ2本体: 期日超過売掛金チェッカー画面 -->
-    <div id="appOverdueSection" class="hidden">
-      <div class="app-header-bar">
-        <button class="btn-nav backToAppsBtn" type="button">← アプリ選択へ戻る</button>
-        <span class="app-tag">使用中：期日超過の未決済売掛金チェッカー</span>
-      </div>
-      <div class="step-box">
-        <div class="step-title">売掛金の滞納状況チェック</div>
-        <button class="btn-primary" id="runOverdueBtn" type="button">期日超過の未決済取引を自動抽出する</button>
-        <div class="info-box">
-          <b>【何を抽出するのか】</b><br>
-          freeeに登録されている未決済の売掛金（収入取引）の中から、決済期日（回収予定日）を過ぎているにもかかわらず入金処理が完了していない取引を抽出します。
-        </div>
-      </div>
-
-      <div id="overdueLoadingSection" class="loading-box hidden">
-        <div class="spinner"></div>
-        <div style="font-size: 13px; font-weight: 600; color: var(--navy);">売掛金データを照会中...</div>
-      </div>
-
-      <div id="overdueResultSection" class="hidden">
+      <div id="unusedResultSection" class="hidden">
         <div class="summary">
-          <div class="summary-stats">
-            <div class="stat"><span class="num danger" id="statOverdueCount">0</span><span class="lbl">期日超過件数</span></div>
-            <div class="stat"><span class="num danger" id="statOverdueAmount">¥0</span><span class="lbl">超過合計金額</span></div>
-          </div>
+          <div class="stat"><span class="num danger" id="statUnusedCount">0</span><span class="lbl">未使用取引先数</span></div>
+          <button class="btn-danger" id="deleteSelectedBtn" type="button">選択した取引先を一括削除</button>
         </div>
         <div style="overflow-x: auto;">
           <table class="all-table">
             <thead>
-              <tr>
-                <th>取引先</th>
-                <th>期日</th>
-                <th>金額</th>
-                <th>超過日数</th>
-              </tr>
+              <tr><th><input type="checkbox" id="selectAllCheckbox"></th><th>取引先名</th><th>コード</th><th>ID</th></tr>
+            </thead>
+            <tbody id="unusedTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- アプリ2: 期日超過の未決済売掛金チェッカー -->
+    <div id="appOverdueSection" class="hidden">
+      <div class="app-header-bar">
+        <button class="btn-nav backToAppsBtn" type="button">← アプリ選択へ戻る</button>
+        <span class="app-tag">期日超過売掛金チェッカー</span>
+      </div>
+      <button class="btn-primary" id="runOverdueCheckBtn" type="button">超過売掛金を自動取得する</button>
+      
+      <div id="overdueResultSection" class="hidden">
+        <div class="summary">
+          <div class="stat"><span class="num danger" id="statOverdueCount">0</span><span class="lbl">期日超過件数</span></div>
+          <div class="stat"><span class="num danger" id="statOverdueAmount">¥0</span><span class="lbl">未回収合計額</span></div>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="all-table">
+            <thead>
+              <tr><th>発生日</th><th>決済期日</th><th>取引先</th><th>金額</th><th>超過日数</th></tr>
             </thead>
             <tbody id="overdueTableBody"></tbody>
           </table>
@@ -668,60 +328,22 @@
       </div>
     </div>
 
-    <!-- アプリ3本体: ポチポチ手入力取引チェッカー画面 -->
+    <!-- アプリ3: ポチポチ手入力取引チェッカー -->
     <div id="appManualPochiSection" class="hidden">
       <div class="app-header-bar">
         <button class="btn-nav backToAppsBtn" type="button">← アプリ選択へ戻る</button>
-        <span class="app-tag">使用中：ポチポチ手入力取引チェッカー</span>
+        <span class="app-tag">ポチポチ手入力取引チェッカー</span>
       </div>
-
-      <div class="step-box">
-        <div class="step-title">抽出条件の設定</div>
-        <div class="date-range-grid" style="margin-bottom: 12px;">
-          <div class="date-field">
-            <label>対象期間</label>
-            <select class="form-select" id="pochiMonthsSelect">
-              <option value="3">過去 3ヶ月</option>
-              <option value="6" selected>過去 6ヶ月</option>
-              <option value="12">過去 12ヶ月</option>
-            </select>
-          </div>
-          <div class="date-field">
-            <label>手入力回数の閾値（○回以上）</label>
-            <input type="number" class="form-input" id="pochiMinCount" value="5" min="2">
-          </div>
-        </div>
-        <button class="btn-primary" id="runPochiCheckBtn" type="button">ポチポチ取引を抽出する</button>
-
-        <div class="info-box">
-          <b>【何を抽出するのか】</b><br>
-          銀行口座やクレジットカード明細などの同期データから、自動登録ルールが未適用のため「画面上で手動クリック（ポチポチ操作）」して登録されている繰り返し取引を抽出します。
-        </div>
-      </div>
-
-      <div id="pochiLoadingSection" class="loading-box hidden">
-        <div class="spinner"></div>
-        <div style="font-size: 13px; font-weight: 600; color: var(--navy);">freeeから取引データを解析中...</div>
-      </div>
-
+      <button class="btn-primary" id="runPochiCheckBtn" type="button">手入力パターンを抽出</button>
+      
       <div id="pochiResultSection" class="hidden">
         <div class="summary">
-          <div class="summary-stats">
-            <div class="stat"><span class="num danger" id="statPochiTotalCount">0</span><span class="lbl">改善候補パターン数</span></div>
-            <div class="stat"><span class="num danger" id="statPochiManualRatio">0%</span><span class="lbl">全体の手入力比率</span></div>
-          </div>
+          <div class="stat"><span class="num amber" id="statPochiCount">0</span><span class="lbl">自動化推奨パターン数</span></div>
         </div>
-
         <div style="overflow-x: auto;">
           <table class="all-table">
             <thead>
-              <tr>
-                <th>取引先</th>
-                <th>勘定科目</th>
-                <th>手入力回数</th>
-                <th>月平均推定量</th>
-                <th>改善インパクト</th>
-              </tr>
+              <tr><th>発生理由 / 摘要</th><th>勘定科目</th><th>手入力回数</th></tr>
             </thead>
             <tbody id="pochiTableBody"></tbody>
           </table>
@@ -729,151 +351,44 @@
       </div>
     </div>
 
-    <!-- アプリ4本体: 取引の異常値・異常入力チェッカー画面 -->
-    <div id="appAuditSection" class="hidden">
+    <!-- アプリ4: 取引の異常値・異常入力チェッカー -->
+    <div id="appAnomalySection" class="hidden">
       <div class="app-header-bar">
         <button class="btn-nav backToAppsBtn" type="button">← アプリ選択へ戻る</button>
-        <span class="app-tag">使用中：取引の異常値・異常入力チェッカー</span>
+        <span class="app-tag">異常値・異常入力チェッカー</span>
       </div>
+      <button class="btn-primary" id="runAnomalyCheckBtn" type="button">異常値をスキャン</button>
 
-      <div class="step-box">
-        <div class="step-title">監査用チェックの実行</div>
-        <div class="date-range-grid" style="margin-bottom: 12px;">
-          <div class="date-field">
-            <label>対象期間</label>
-            <select class="form-select" id="auditMonthsSelect">
-              <option value="1">当月分のみ</option>
-              <option value="3" selected>過去 3ヶ月</option>
-              <option value="6">過去 6ヶ月</option>
-            </select>
-          </div>
-          <div class="date-field">
-            <label>金額乖離トリガー</label>
-            <select class="form-select" id="auditThresholdSelect">
-              <option value="3">平均の 3倍以上</option>
-              <option value="5" selected>平均の 5倍以上 (桁指定ミス等)</option>
-              <option value="10">平均の 10倍以上</option>
-            </select>
-          </div>
-        </div>
-        <button class="btn-primary" id="runAuditCheckBtn" type="button">異常値・入力ミスを抽出する</button>
-
-        <div class="info-box">
-          <b>【何を抽出するのか】</b><br>
-          ・<b>金額の桁間違い</b>：普段10万円前後の支払先の相手に対し今月だけ100万円になっているなど、平均値から大きく乖離した取引。<br>
-          ・<b>税区分の矛盾</b>：いつもは「課税仕入」で登録されている取引先なのに「非課税/不課税」になっている等の矛盾取引。
-        </div>
-      </div>
-
-      <div id="auditLoadingSection" class="loading-box hidden">
-        <div class="spinner"></div>
-        <div style="font-size: 13px; font-weight: 600; color: var(--navy);">全仕訳・取引データを解析中...</div>
-      </div>
-
-      <div id="auditResultSection" class="hidden">
+      <div id="anomalyResultSection" class="hidden">
         <div class="summary">
-          <div class="summary-stats">
-            <div class="stat"><span class="num danger" id="statAuditTotalCount">0</span><span class="lbl">要確認の異常取引数</span></div>
-          </div>
+          <div class="stat"><span class="num danger" id="statAnomalyCount">0</span><span class="lbl">異常検知件数</span></div>
         </div>
-
         <div style="overflow-x: auto;">
           <table class="all-table">
             <thead>
-              <tr>
-                <th>発生日 / 取引先</th>
-                <th>科目 / 登録金額</th>
-                <th>検知された異常理由</th>
-                <th>リスク度</th>
-              </tr>
+              <tr><th>発生日</th><th>取引先</th><th>金額</th><th>検知理由</th></tr>
             </thead>
-            <tbody id="auditTableBody"></tbody>
+            <tbody id="anomalyTableBody"></tbody>
           </table>
         </div>
       </div>
     </div>
 
-    <!-- アプリ5本体: 固定資産ワンタップスキャン -->
+    <!-- アプリ5: 固定資産ワンタップスキャン -->
     <div id="appAssetScanSection" class="hidden">
       <div class="app-header-bar">
         <button class="btn-nav backToAppsBtn" type="button">← アプリ選択へ戻る</button>
-        <span class="app-tag">使用中：固定資産ワンタップスキャン</span>
+        <span class="app-tag">固定資産ワンタップスキャン</span>
       </div>
-
       <div class="step-box">
-        <div class="step-title">請求書・領収書の読み取り</div>
-        <div class="upload-area" id="assetUploadArea">
-          <div class="upload-icon">📄</div>
-          <div style="font-size: 13.5px; font-weight: 700; color: var(--navy);">クリックしてファイルを選択 または ドラッグ＆ドロップ</div>
-          <div style="font-size: 11.5px; color: var(--ink-soft); margin-top: 4px;">PDF, PNG, JPG (請求書・領収書など)</div>
-          <input type="file" id="assetFileInput" style="display: none;" accept="image/*,application/pdf">
-        </div>
-
-        <div class="info-box">
-          <b>【使い方】</b><br>
-          請求書を読み込み、抽出された項目を各コピーボタンでクリップボードへ保存します。<br>
-          freeeの「固定資産の登録」画面を開き、各項目（取得元・資産名・取得価額等）へそのままペーストしてください。
-        </div>
-      </div>
-
-      <div id="assetScanLoadingSection" class="loading-box hidden">
-        <div class="spinner"></div>
-        <div style="font-size: 13px; font-weight: 600; color: var(--navy);">画像から項目を抽出中...</div>
-      </div>
-
-      <div id="assetScanResultSection" class="hidden">
-        <div style="margin-bottom: 12px; font-weight: 700; font-size: 14px; color: var(--navy);">▼ 読み取り・推測結果</div>
-
-        <div class="scan-item-card">
-          <div class="scan-item-info">
-            <div class="scan-item-label">会社名（請求元） → freee「取得元」へ</div>
-            <div class="scan-item-value" id="valCompanyName">ヨドバシカメラ</div>
-          </div>
-          <button class="btn-copy" data-target="valCompanyName" type="button">会社名をコピー</button>
-        </div>
-
-        <div class="scan-item-card">
-          <div class="scan-item-info">
-            <div class="scan-item-label">商品名（型番・品名） → freee「資産名」へ</div>
-            <div class="scan-item-value" id="valProductName">EOS R6 Mark II ボディ</div>
-          </div>
-          <button class="btn-copy" data-target="valProductName" type="button">商品名をコピー</button>
-        </div>
-
-        <div class="scan-item-card">
-          <div class="scan-item-info">
-            <div class="scan-item-label">金額（税込合計） → freee「取得価額」へ</div>
-            <div class="scan-item-value" id="valAmount">358,000</div>
-          </div>
-          <button class="btn-copy" data-target="valAmount" type="button">金額をコピー</button>
-        </div>
-
-        <div class="scan-item-card">
-          <div class="scan-item-info">
-            <div class="scan-item-label">種類・品目（耐用年数・科目のヒント）</div>
-            <div class="scan-item-value" id="valCategory">カメラ・光学機器（工具器具備品 / 耐用年数: 5年）</div>
-            <div class="scan-item-hint">💡 freee入力ヒント: 「工具器具備品」科目を選択してください</div>
-          </div>
-          <button class="btn-copy" data-target="valCategory" type="button">種類をコピー</button>
-        </div>
-
-        <div class="scan-item-card">
-          <div class="scan-item-info">
-            <div class="scan-item-label">取得日（請求日） → freee「取得年月」へ</div>
-            <div class="scan-item-value" id="valAcquisitionDate">2026/09/15</div>
-          </div>
-          <button class="btn-copy" data-target="valAcquisitionDate" type="button">取得日をコピー</button>
-        </div>
-
-        <div style="margin-top: 16px;">
-          <button class="btn-primary" type="button" style="opacity: 0.6; cursor: not-allowed;" title="フェーズ2で実装予定">
-            freee固定資産台帳へダイレクト自動登録（フェーズ2 準備中）
-          </button>
-        </div>
+        <div class="step-title">固定資産の登録</div>
+        <input type="text" class="form-input" id="assetNameInput" placeholder="資産名（例: MacBook Pro）">
+        <input type="number" class="form-input" id="assetAmountInput" placeholder="取得価額（例: 350000）">
+        <input type="date" class="form-input" id="assetDateInput">
+        <button class="btn-primary" id="saveAssetBtn" type="button">1タップでfreee固定資産へ登録</button>
       </div>
     </div>
 
-    <!-- 共通エラー表示 -->
     <div class="error-box" id="errorBox"></div>
   </div>
 
@@ -888,668 +403,226 @@
         apiBase: "https://api.freee.co.jp/api/1"
       };
 
-      // 要素取得
-      const stepLogin = document.getElementById('stepLogin');
-      const stepCompany = document.getElementById('stepCompany');
-      const stepApps = document.getElementById('stepApps');
-      const loginBtn = document.getElementById('loginBtn');
-      const companySelect = document.getElementById('companySelect');
-      const selectCompanyBtn = document.getElementById('selectCompanyBtn');
-      const selectedCompanyName = document.getElementById('selectedCompanyName');
-      const backToCompanyBtn = document.getElementById('backToCompanyBtn');
+      let selectedCompanyId = null;
+
+      // エレメント取得
       const errorBox = document.getElementById('errorBox');
+      const loadingStatus = document.getElementById('loadingStatus');
 
-      // アプリ切り替え
-      const appDedupeCard = document.getElementById('appDedupeCard');
-      const appOverdueCard = document.getElementById('appOverdueCard');
-      const appManualPochiCard = document.getElementById('appManualPochiCard');
-      const appAuditCard = document.getElementById('appAuditCard');
-      const appAssetScanCard = document.getElementById('appAssetScanCard');
+      function showError(msg) { errorBox.textContent = msg; errorBox.style.display = 'block'; }
+      function clearError() { errorBox.textContent = ''; errorBox.style.display = 'none'; }
+      function showLoading(show) { loadingStatus.style.display = show ? 'block' : 'none'; }
 
-      const appDedupeSection = document.getElementById('appDedupeSection');
-      const appOverdueSection = document.getElementById('appOverdueSection');
-      const appManualPochiSection = document.getElementById('appManualPochiSection');
-      const appAuditSection = document.getElementById('appAuditSection');
-      const appAssetScanSection = document.getElementById('appAssetScanSection');
+      function getAccessToken() { return sessionStorage.getItem('access_token'); }
 
-      // アプリ1要素
-      const runDedupeBtn = document.getElementById('runDedupeBtn');
-      const dedupeLoadingSection = document.getElementById('dedupeLoadingSection');
-      const dedupeResultSection = document.getElementById('dedupeResultSection');
-      const dedupeCardsContainer = document.getElementById('dedupeCardsContainer');
-      const selectAllDedupeGroups = document.getElementById('selectAllDedupeGroups');
-      const executeMergeBtn = document.getElementById('executeMergeBtn');
-      const statDedupeCount = document.getElementById('statDedupeCount');
+      async function callFreeeApi(endpoint, options = {}) {
+        const token = getAccessToken();
+        if (!token) throw new Error('認証が切れています。ログインし直してください。');
 
-      const runUnusedBtn = document.getElementById('runUnusedBtn');
-      const unusedStartDate = document.getElementById('unusedStartDate');
-      const unusedEndDate = document.getElementById('unusedEndDate');
-      const unusedLoadingSection = document.getElementById('unusedLoadingSection');
-      const unusedProgressText = document.getElementById('unusedProgressText');
-      const unusedResultSection = document.getElementById('unusedResultSection');
-      const unusedTableBody = document.getElementById('unusedTableBody');
-      const selectAllUnused = document.getElementById('selectAllUnused');
-      const executeDeleteUnusedBtn = document.getElementById('executeDeleteUnusedBtn');
-      const statUnusedCount = document.getElementById('statUnusedCount');
+        const headers = {
+          'Authorization': `Bearer ${token}`,
+          'accept': 'application/json',
+          'Content-Type': 'application/json',
+          ...(options.headers || {})
+        };
 
-      // アプリ2要素
-      const runOverdueBtn = document.getElementById('runOverdueBtn');
-      const overdueLoadingSection = document.getElementById('overdueLoadingSection');
-      const overdueResultSection = document.getElementById('overdueResultSection');
-      const overdueTableBody = document.getElementById('overdueTableBody');
-      const statOverdueCount = document.getElementById('statOverdueCount');
-      const statOverdueAmount = document.getElementById('statOverdueAmount');
-
-      // アプリ3要素
-      const runPochiCheckBtn = document.getElementById('runPochiCheckBtn');
-      const pochiLoadingSection = document.getElementById('pochiLoadingSection');
-      const pochiResultSection = document.getElementById('pochiResultSection');
-      const pochiTableBody = document.getElementById('pochiTableBody');
-      const statPochiTotalCount = document.getElementById('statPochiTotalCount');
-      const statPochiManualRatio = document.getElementById('statPochiManualRatio');
-
-      // アプリ4要素
-      const runAuditCheckBtn = document.getElementById('runAuditCheckBtn');
-      const auditLoadingSection = document.getElementById('auditLoadingSection');
-      const auditResultSection = document.getElementById('auditResultSection');
-      const auditTableBody = document.getElementById('auditTableBody');
-      const statAuditTotalCount = document.getElementById('statAuditTotalCount');
-
-      // アプリ5要素
-      const assetUploadArea = document.getElementById('assetUploadArea');
-      const assetFileInput = document.getElementById('assetFileInput');
-      const assetScanLoadingSection = document.getElementById('assetScanLoadingSection');
-      const assetScanResultSection = document.getElementById('assetScanResultSection');
-
-      // デフォルト日付の設定（過去1年間）
-      const today = new Date();
-      const oneYearAgo = new Date();
-      oneYearAgo.setFullYear(today.getFullYear() - 1);
-      unusedEndDate.value = today.toISOString().split('T')[0];
-      unusedStartDate.value = oneYearAgo.toISOString().split('T')[0];
-
-      function showError(msg) {
-        errorBox.textContent = msg;
-        errorBox.style.display = 'block';
+        const res = await fetch(CONFIG.apiBase + endpoint, { ...options, headers });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || `APIエラー: ${res.status}`);
+        }
+        return await res.json();
       }
 
-      function clearError() {
-        errorBox.textContent = '';
-        errorBox.style.display = 'none';
-      }
-
-      function redirectToAuth() {
+      // 1. ログイン & 事業所選択
+      document.getElementById('loginBtn').addEventListener('click', () => {
         const params = new URLSearchParams({
           client_id: CONFIG.clientId,
           redirect_uri: CONFIG.redirectUri,
           response_type: 'token'
         });
         window.location.href = `${CONFIG.authEndpoint}?${params.toString()}`;
-      }
-
-      function getAccessToken() {
-        return sessionStorage.getItem('access_token');
-      }
-
-      async function callFreeeApi(endpoint) {
-        const token = getAccessToken();
-        if (!token) throw new Error('認証が切れています。ログインしてください。');
-
-        const res = await fetch(CONFIG.apiBase + endpoint, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'accept': 'application/json'
-          }
-        });
-
-        if (!res.ok) throw new Error(`APIエラー: ${res.status} ${res.statusText}`);
-        return await res.json();
-      }
-
-      function handleOAuthCallback() {
-        if (window.location.hash) {
-          const params = new URLSearchParams(window.location.hash.substring(1));
-          const token = params.get('access_token');
-          if (token) {
-            sessionStorage.setItem('access_token', token);
-            history.replaceState(null, null, window.location.pathname);
-          }
-        }
-      }
+      });
 
       async function loadCompanies() {
         try {
-          clearError();
           const data = await callFreeeApi('/companies');
-          companySelect.innerHTML = '<option value="">選択してください</option>';
+          const select = document.getElementById('companySelect');
+          select.innerHTML = '<option value="">選択してください</option>';
           data.companies.forEach(c => {
             const opt = document.createElement('option');
             opt.value = c.id;
             opt.textContent = c.display_name || c.name;
-            companySelect.appendChild(opt);
+            select.appendChild(opt);
           });
-
-          stepLogin.classList.add('hidden');
-          stepCompany.classList.remove('hidden');
-        } catch (err) {
-          showError(err.message);
-        }
+          document.getElementById('stepLogin').classList.add('hidden');
+          document.getElementById('stepCompany').classList.remove('hidden');
+        } catch (err) { showError(err.message); }
       }
 
-      // イベントリスナー
-      loginBtn.addEventListener('click', redirectToAuth);
-
-      selectCompanyBtn.addEventListener('click', () => {
-        if (!companySelect.value) {
-          alert('事業所を選択してください');
-          return;
-        }
-        selectedCompanyName.textContent = companySelect.options[companySelect.selectedIndex].text;
-        stepCompany.classList.add('hidden');
-        stepApps.classList.remove('hidden');
+      document.getElementById('selectCompanyBtn').addEventListener('click', () => {
+        const select = document.getElementById('companySelect');
+        if (!select.value) return alert('事業所を選択してください');
+        selectedCompanyId = select.value;
+        document.getElementById('selectedCompanyName').textContent = select.options[select.selectedIndex].text;
+        document.getElementById('stepCompany').classList.add('hidden');
+        document.getElementById('stepApps').classList.remove('hidden');
       });
 
-      backToCompanyBtn.addEventListener('click', () => {
-        stepApps.classList.add('hidden');
-        stepCompany.classList.remove('hidden');
-      });
+      // ナビゲーション処理
+      const sections = ['appDedupeSection', 'appOverdueSection', 'appManualPochiSection', 'appAnomalySection', 'appAssetScanSection'];
+      function showSection(id) {
+        document.getElementById('stepApps').classList.add('hidden');
+        sections.forEach(s => document.getElementById(s).classList.add('hidden'));
+        document.getElementById(id).classList.remove('hidden');
+      }
 
-      // アプリカードのクリック
-      appDedupeCard.addEventListener('click', () => {
-        stepApps.classList.add('hidden');
-        appDedupeSection.classList.remove('hidden');
-      });
-
-      appOverdueCard.addEventListener('click', () => {
-        stepApps.classList.add('hidden');
-        appOverdueSection.classList.remove('hidden');
-      });
-
-      appManualPochiCard.addEventListener('click', () => {
-        stepApps.classList.add('hidden');
-        appManualPochiSection.classList.remove('hidden');
-      });
-
-      appAuditCard.addEventListener('click', () => {
-        stepApps.classList.add('hidden');
-        appAuditSection.classList.remove('hidden');
-      });
-
-      appAssetScanCard.addEventListener('click', () => {
-        stepApps.classList.add('hidden');
-        appAssetScanSection.classList.remove('hidden');
-      });
+      document.getElementById('appDedupeCard').addEventListener('click', () => showSection('appDedupeSection'));
+      document.getElementById('appOverdueCard').addEventListener('click', () => showSection('appOverdueSection'));
+      document.getElementById('appManualPochiCard').addEventListener('click', () => showSection('appManualPochiSection'));
+      document.getElementById('appAnomalyCard').addEventListener('click', () => showSection('appAnomalySection'));
+      document.getElementById('appAssetScanCard').addEventListener('click', () => showSection('appAssetScanSection'));
 
       document.querySelectorAll('.backToAppsBtn').forEach(btn => {
         btn.addEventListener('click', () => {
-          appDedupeSection.classList.add('hidden');
-          appOverdueSection.classList.add('hidden');
-          appManualPochiSection.classList.add('hidden');
-          appAuditSection.classList.add('hidden');
-          appAssetScanSection.classList.add('hidden');
-          stepApps.classList.remove('hidden');
+          sections.forEach(s => document.getElementById(s).classList.add('hidden'));
+          document.getElementById('stepApps').classList.remove('hidden');
         });
       });
 
-      // 模擬重複グループデータ
-      const mockDedupeGroups = [
-        {
-          groupId: 'grp_1',
-          groupName: 'グループ1 (表記揺れ)',
-          partners: [
-            { id: 101, name: '株式会社サンプル (ID: 101)', isDefault: true },
-            { id: 102, name: '(株)サンプル (ID: 102)', isDefault: false }
-          ]
-        },
-        {
-          groupId: 'grp_2',
-          groupName: 'グループ2 (社名追加)',
-          partners: [
-            { id: 201, name: 'テスト商事株式会社 (ID: 201)', isDefault: true },
-            { id: 202, name: 'テスト商事 (ID: 202)', isDefault: false }
-          ]
-        }
-      ];
-
-      function updateMergeBtnState() {
-        const checkedCount = document.querySelectorAll('.dedupe-group-chk:checked').length;
-        if (checkedCount > 0) {
-          executeMergeBtn.disabled = false;
-          executeMergeBtn.textContent = `選択した ${checkedCount} 件のグループを統合（取引を置き換える）`;
-        } else {
-          executeMergeBtn.disabled = true;
-          executeMergeBtn.textContent = '統合対象が選択されていません';
-        }
-      }
-
-      // アプリ1-1: 重複チェック実行
-      runDedupeBtn.addEventListener('click', async () => {
-        clearError();
-        dedupeResultSection.classList.add('hidden');
-        dedupeLoadingSection.classList.remove('hidden');
-        runDedupeBtn.disabled = true;
-
-        try {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-
-          dedupeCardsContainer.innerHTML = '';
-          mockDedupeGroups.forEach(grp => {
-            const card = document.createElement('div');
-            card.className = 'dedupe-group-card';
-            card.id = `card_${grp.groupId}`;
-
-            let optionsHtml = '';
-            grp.partners.forEach(p => {
-              optionsHtml += `
-                <label class="dedupe-option">
-                  <input type="radio" name="${grp.groupId}" value="${p.id}" ${p.isDefault ? 'checked' : ''}>
-                  <div>
-                    <span style="font-weight:600; font-size:13px; color:var(--navy);">${p.name}</span>
-                    <span style="font-size:11px; color:var(--ink-soft); margin-left:6px;">${p.isDefault ? '← 残す取引先（正）' : '← 置き換え対象'}</span>
-                  </div>
-                </label>
-              `;
-            });
-
-            card.innerHTML = `
-              <div class="dedupe-group-title">
-                <label>
-                  <input type="checkbox" class="dedupe-group-chk" value="${grp.groupId}" checked>
-                  <span>${grp.groupName}</span>
-                </label>
-                <span style="font-size:11px; background:var(--red-soft); color:var(--red); padding:2px 6px; border-radius:4px;">重複疑い</span>
-              </div>
-              <div class="dedupe-option-list">
-                ${optionsHtml}
-              </div>
-            `;
-
-            // カード内のグループ選択ON/OFFリスナー
-            const groupChk = card.querySelector('.dedupe-group-chk');
-            groupChk.addEventListener('change', (e) => {
-              if (e.target.checked) {
-                card.classList.remove('disabled');
-              } else {
-                card.classList.add('disabled');
-              }
-              updateMergeBtnState();
-            });
-
-            dedupeCardsContainer.appendChild(card);
-          });
-
-          selectAllDedupeGroups.checked = true;
-          statDedupeCount.textContent = mockDedupeGroups.length + ' 件';
-          dedupeLoadingSection.classList.add('hidden');
-          dedupeResultSection.classList.remove('hidden');
-          updateMergeBtnState();
-        } catch (err) {
-          showError('重複取引先の解析中にエラーが発生しました。');
-          dedupeLoadingSection.classList.add('hidden');
-        } finally {
-          runDedupeBtn.disabled = false;
-        }
+      // --- アプリ1: 未使用取引先スキャン ---
+      document.getElementById('useDateRangeToggle').addEventListener('change', (e) => {
+        document.getElementById('dateRangeContainer').classList.toggle('hidden', !e.target.checked);
       });
 
-      // 重複グループ全選択 / 解除
-      selectAllDedupeGroups.addEventListener('change', () => {
-        const chks = document.querySelectorAll('.dedupe-group-chk');
-        chks.forEach(chk => {
-          chk.checked = selectAllDedupeGroups.checked;
-          const card = document.getElementById(`card_${chk.value}`);
-          if (card) {
-            if (chk.checked) card.classList.remove('disabled');
-            else card.classList.add('disabled');
+      document.getElementById('runUnusedCheckBtn').addEventListener('click', async () => {
+        clearError(); showLoading(true);
+        try {
+          const pRes = await callFreeeApi(`/partners?company_id=${selectedCompanyId}&limit=100`);
+          let queryParams = new URLSearchParams({ company_id: selectedCompanyId, limit: '100' });
+          if (document.getElementById('useDateRangeToggle').checked) {
+            const start = document.getElementById('startDateInput').value;
+            const end = document.getElementById('endDateInput').value;
+            if (start) queryParams.append('start_issue_date', start);
+            if (end) queryParams.append('end_issue_date', end);
           }
-        });
-        updateMergeBtnState();
+          const dRes = await callFreeeApi(`/deals?${queryParams.toString()}`);
+          const usedIds = new Set(dRes.deals.map(d => d.partner_id).filter(Boolean));
+          const unused = pRes.partners.filter(p => !usedIds.has(p.id));
+
+          document.getElementById('statUnusedCount').textContent = unused.length;
+          const tbody = document.getElementById('unusedTableBody');
+          tbody.innerHTML = '';
+          unused.forEach(p => {
+            tbody.innerHTML += `<tr><td><input type="checkbox" class="partner-cb" value="${p.id}"></td><td>${p.name}</td><td>${p.code||'-'}</td><td>${p.id}</td></tr>`;
+          });
+          document.getElementById('unusedResultSection').classList.remove('hidden');
+        } catch (err) { showError(err.message); } finally { showLoading(false); }
       });
 
-      // 重複名寄せ・取引置き換え実行
-      executeMergeBtn.addEventListener('click', async () => {
-        const checkedGroups = document.querySelectorAll('.dedupe-group-chk:checked');
-        if (checkedGroups.length === 0) return;
-
-        const confirmMsg = `【確認】\n選択された ${checkedGroups.length} 件のグループに対して、本当に統合（名寄せ）を実行しますか？\n\n選択されなかった側の取引先データが「残す取引先」へと置き換わります。この操作は取り消せません。`;
-        
-        if (!confirm(confirmMsg)) {
-          return;
-        }
-
-        executeMergeBtn.disabled = true;
-        executeMergeBtn.textContent = '統合・取引置換処理中...';
-
+      // --- アプリ2: 期日超過売掛金チェッカー ---
+      document.getElementById('runOverdueCheckBtn').addEventListener('click', async () => {
+        clearError(); showLoading(true);
         try {
-          await new Promise(resolve => setTimeout(resolve, 1500));
-          alert(`${checkedGroups.length} 件のグループの統合・取引置換処理が正常に完了しました！`);
+          const res = await callFreeeApi(`/deals?company_id=${selectedCompanyId}&type=income&status=unpaid&limit=100`);
+          const today = new Date().toISOString().split('T')[0];
+          const overdue = res.deals.filter(d => d.due_date && d.due_date < today);
           
-          // 処理が完了したカードを削除
-          checkedGroups.forEach(chk => {
-            const card = document.getElementById(`card_${chk.value}`);
-            if (card) card.remove();
+          let totalAmt = 0;
+          const tbody = document.getElementById('overdueTableBody');
+          tbody.innerHTML = '';
+          overdue.forEach(d => {
+            totalAmt += d.amount;
+            const diffDays = Math.floor((new Date(today) - new Date(d.due_date)) / (86400000));
+            tbody.innerHTML += `<tr><td>${d.issue_date}</td><td>${d.due_date}</td><td>${d.partner_id || '-'}</td><td>¥${d.amount.toLocaleString()}</td><td><b style="color:var(--red);">${diffDays}日</b></td></tr>`;
           });
 
-          const remainingCount = document.querySelectorAll('.dedupe-group-chk').length;
-          statDedupeCount.textContent = remainingCount + ' 件';
-
-          if (remainingCount === 0) {
-            dedupeResultSection.classList.add('hidden');
-          } else {
-            updateMergeBtnState();
-          }
-        } catch (err) {
-          alert("統合処理中にエラーが発生しました。");
-          updateMergeBtnState();
-        }
+          document.getElementById('statOverdueCount').textContent = overdue.length;
+          document.getElementById('statOverdueAmount').textContent = '¥' + totalAmt.toLocaleString();
+          document.getElementById('overdueResultSection').classList.remove('hidden');
+        } catch (err) { showError(err.message); } finally { showLoading(false); }
       });
 
-      // アプリ1-2: 未使用取引先の抽出
-      runUnusedBtn.addEventListener('click', async () => {
-        clearError();
-        const start = unusedStartDate.value;
-        const end = unusedEndDate.value;
-
-        if (!start || !end) {
-          alert('対象期間の開始日と終了日を指定してください。');
-          return;
-        }
-
-        const totalTransactions = 2450;
-        const confirmMsg = `${start} 〜 ${end} の期間に ${totalTransactions.toLocaleString()} 件の取引データが見つかりました。\n解析処理に時間がかかる可能性がありますが続けますか？`;
-
-        if (!confirm(confirmMsg)) {
-          return;
-        }
-
-        unusedResultSection.classList.add('hidden');
-        unusedProgressText.classList.remove('hidden');
-        unusedLoadingSection.classList.remove('hidden');
-        runUnusedBtn.disabled = true;
-
+      // --- アプリ3: ポチポチ手入力チェッカー ---
+      document.getElementById('runPochiCheckBtn').addEventListener('click', async () => {
+        clearError(); showLoading(true);
         try {
-          let currentProcessed = 0;
-          const chunkSize = 245;
-          while (currentProcessed < totalTransactions) {
-            await new Promise(resolve => setTimeout(resolve, 150));
-            currentProcessed = Math.min(currentProcessed + chunkSize, totalTransactions);
-            unusedProgressText.textContent = `過去の取引 ${currentProcessed.toLocaleString()} 件 / ${totalTransactions.toLocaleString()} 件`;
-          }
-
-          const mockUnusedData = [
-            { id: 12, code: 'TRD-0012', name: '旧・グローバルインク', status: '指定期間内 取引0件' },
-            { id: 45, code: 'TRD-0045', name: 'ダミーサプライヤ', status: '指定期間内 取引0件' },
-            { id: 89, code: 'TRD-0089', name: '合同会社ネクストステージ', status: '指定期間内 取引0件' }
-          ];
-
-          unusedTableBody.innerHTML = '';
-          mockUnusedData.forEach(row => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-              <td><input type="checkbox" class="unused-chk" value="${row.id}"></td>
-              <td><b>${row.code}</b></td>
-              <td>${row.name}</td>
-              <td><span style="font-size:11px; background:var(--amber-soft); color:var(--amber); padding:2px 6px; border-radius:4px; font-weight:bold;">${row.status}</span></td>
-            `;
-            unusedTableBody.appendChild(tr);
+          const res = await callFreeeApi(`/deals?company_id=${selectedCompanyId}&limit=100`);
+          const counts = {};
+          res.deals.forEach(d => {
+            const key = `${d.details[0]?.description || '摘要なし'}__${d.details[0]?.account_item_id || '科目未設定'}`;
+            counts[key] = (counts[key] || 0) + 1;
           });
 
-          selectAllUnused.checked = false;
-          statUnusedCount.textContent = mockUnusedData.length + ' 件';
-          unusedLoadingSection.classList.add('hidden');
-          unusedResultSection.classList.remove('hidden');
-        } catch (err) {
-          showError('未使用取引先の抽出処理中にエラーが発生しました。');
-          unusedLoadingSection.classList.add('hidden');
-        } finally {
-          runUnusedBtn.disabled = false;
-        }
-      });
-
-      // 全選択チェックボックス
-      selectAllUnused.addEventListener('change', () => {
-        document.querySelectorAll('.unused-chk').forEach(chk => {
-          chk.checked = selectAllUnused.checked;
-        });
-      });
-
-      // 未使用取引先の一括削除実行
-      executeDeleteUnusedBtn.addEventListener('click', async () => {
-        const checkedList = document.querySelectorAll('.unused-chk:checked');
-        if (checkedList.length === 0) {
-          alert('削除する取引先を1つ以上選択してください。');
-          return;
-        }
-
-        const confirmMsg = `【削除の最終確認】\n本当に選択された ${checkedList.length} 件の未使用取引先をfreeeから完全に削除しますか？\n\nこの操作は取り消せません。`;
-
-        if (!confirm(confirmMsg)) {
-          return;
-        }
-
-        executeDeleteUnusedBtn.disabled = true;
-        executeDeleteUnusedBtn.textContent = '削除処理中...';
-
-        try {
-          await new Promise(resolve => setTimeout(resolve, 1500));
-          alert(`${checkedList.length} 件の取引先を削除しました。`);
-          
-          // 削除された行を画面から取り除く
-          checkedList.forEach(chk => {
-            chk.closest('tr').remove();
+          const tbody = document.getElementById('pochiTableBody');
+          tbody.innerHTML = '';
+          let matchCount = 0;
+          Object.entries(counts).forEach(([key, count]) => {
+            if (count >= 2) {
+              matchCount++;
+              const [desc, acc] = key.split('__');
+              tbody.innerHTML += `<tr><td>${desc}</td><td>ID: ${acc}</td><td><b>${count}回</b></td></tr>`;
+            }
           });
 
-          const remainingCount = document.querySelectorAll('.unused-chk').length;
-          statUnusedCount.textContent = remainingCount + ' 件';
-
-          if (remainingCount === 0) {
-            unusedResultSection.classList.add('hidden');
-          }
-        } catch (err) {
-          alert('削除処理中にエラーが発生しました。');
-        } finally {
-          executeDeleteUnusedBtn.disabled = false;
-          executeDeleteUnusedBtn.textContent = '選択した未使用取引先を一括削除する';
-        }
+          document.getElementById('statPochiCount').textContent = matchCount;
+          document.getElementById('pochiResultSection').classList.remove('hidden');
+        } catch (err) { showError(err.message); } finally { showLoading(false); }
       });
 
-      // アプリ2: 期日超過チェック
-      runOverdueBtn.addEventListener('click', async () => {
-        clearError();
-        overdueResultSection.classList.add('hidden');
-        overdueLoadingSection.classList.remove('hidden');
-        runOverdueBtn.disabled = true;
-
+      // --- アプリ4: 異常値・異常入力チェッカー ---
+      document.getElementById('runAnomalyCheckBtn').addEventListener('click', async () => {
+        clearError(); showLoading(true);
         try {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          const res = await callFreeeApi(`/deals?company_id=${selectedCompanyId}&limit=100`);
+          const amounts = res.deals.map(d => d.amount);
+          const avg = amounts.reduce((a, b) => a + b, 0) / (amounts.length || 1);
+          const anomalies = res.deals.filter(d => d.amount > avg * 4); // 平均の4倍以上を異常値候補とする
 
-          const mockOverdueData = [
-            { partner: 'アルファ商事', date: '2026-08-31', amount: '¥ 330,000', days: '15 日超過' },
-            { partner: 'ベータテクノロジー', date: '2026-07-31', amount: '¥ 154,000', days: '46 日超過' }
-          ];
-
-          overdueTableBody.innerHTML = '';
-          mockOverdueData.forEach(row => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-              <td><b>${row.partner}</b></td>
-              <td>${row.date}</td>
-              <td style="font-weight:bold;">${row.amount}</td>
-              <td><span style="font-size:11px; background:var(--red-soft); color:var(--red); padding:2px 6px; border-radius:4px; font-weight:bold;">${row.days}</span></td>
-            `;
-            overdueTableBody.appendChild(tr);
+          const tbody = document.getElementById('anomalyTableBody');
+          tbody.innerHTML = '';
+          anomalies.forEach(d => {
+            tbody.innerHTML += `<tr><td>${d.issue_date}</td><td>${d.partner_id || '-'}</td><td>¥${d.amount.toLocaleString()}</td><td><span style="color:var(--red);">高額桁疑い (平均の4倍超)</span></td></tr>`;
           });
 
-          statOverdueCount.textContent = mockOverdueData.length + ' 件';
-          statOverdueAmount.textContent = '¥ 484,000';
-          overdueLoadingSection.classList.add('hidden');
-          overdueResultSection.classList.remove('hidden');
-        } catch (err) {
-          showError('売掛金データの取得中にエラーが発生しました。');
-          overdueLoadingSection.classList.add('hidden');
-        } finally {
-          runOverdueBtn.disabled = false;
-        }
+          document.getElementById('statAnomalyCount').textContent = anomalies.length;
+          document.getElementById('anomalyResultSection').classList.remove('hidden');
+        } catch (err) { showError(err.message); } finally { showLoading(false); }
       });
 
-      // アプリ3: ポチポチ取引チェック
-      runPochiCheckBtn.addEventListener('click', async () => {
-        clearError();
-        pochiResultSection.classList.add('hidden');
-        pochiLoadingSection.classList.remove('hidden');
-        runPochiCheckBtn.disabled = true;
+      // --- アプリ5: 固定資産1タップ登録 ---
+      document.getElementById('saveAssetBtn').addEventListener('click', async () => {
+        const name = document.getElementById('assetNameInput').value;
+        const amount = document.getElementById('assetAmountInput').value;
+        const date = document.getElementById('assetDateInput').value;
+        if (!name || !amount || !date) return alert('全項目を入力してください');
 
+        clearError(); showLoading(true);
         try {
-          await new Promise(resolve => setTimeout(resolve, 1200));
-
-          const mockData = [
-            { partner: 'Amazon.co.jp', account: '消耗品費', count: 18, monthly: '約 3 件/月', impact: '高（自動登録ルール推奨）' },
-            { partner: 'セブン-イレブン', account: '旅費交通費', count: 12, monthly: '約 2 件/月', impact: '高（自動登録ルール推奨）' },
-            { partner: 'ヤマト運輸', account: '通信費', count: 7, monthly: '約 1 件/月', impact: '中' }
-          ];
-
-          pochiTableBody.innerHTML = '';
-          mockData.forEach(row => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-              <td><b>${row.partner}</b></td>
-              <td>${row.account}</td>
-              <td style="color:var(--red); font-weight:bold;">${row.count} 回</td>
-              <td>${row.monthly}</td>
-              <td><span style="font-size:11px; background:var(--amber-soft); color:var(--amber); padding:2px 6px; border-radius:4px; font-weight:bold;">${row.impact}</span></td>
-            `;
-            pochiTableBody.appendChild(tr);
+          await callFreeeApi('/fixed_assets', {
+            method: 'POST',
+            body: JSON.stringify({
+              company_id: Number(selectedCompanyId),
+              name: name,
+              acquisition_cost: Number(amount),
+              acquisition_date: date
+            })
           });
-
-          statPochiTotalCount.textContent = mockData.length + ' 件';
-          statPochiManualRatio.textContent = '38.2%';
-
-          pochiLoadingSection.classList.add('hidden');
-          pochiResultSection.classList.remove('hidden');
-        } catch (err) {
-          showError('ポチポチ取引の抽出処理中にエラーが発生しました。');
-          pochiLoadingSection.classList.add('hidden');
-        } finally {
-          runPochiCheckBtn.disabled = false;
-        }
+          alert('freeeの固定資産台帳に正常登録されました！');
+        } catch (err) { showError(err.message); } finally { showLoading(false); }
       });
 
-      // アプリ4: 取引の異常値・異常入力チェック
-      runAuditCheckBtn.addEventListener('click', async () => {
-        clearError();
-        auditResultSection.classList.add('hidden');
-        auditLoadingSection.classList.remove('hidden');
-        runAuditCheckBtn.disabled = true;
-
-        try {
-          await new Promise(resolve => setTimeout(resolve, 1200));
-
-          const mockAuditData = [
-            { date: '2026-09-10', partner: 'オフィスサプライ社', account: '事務用品費', amount: '¥ 1,200,000', reason: '金額の桁間違い疑い（過去平均: ¥120,000）', risk: '高（要確認）' },
-            { date: '2026-09-05', partner: '東京ビル管理', account: '支払手数料', amount: '¥ 88,000', reason: '税区分不一致（過去は課税仕入 → 今回は非課税）', risk: '高（税務リスク）' },
-            { date: '2026-08-28', partner: 'クラウドワークス', account: '外注工賃', amount: '¥ 450,000', reason: '通常と大きく異なる金額乖離（平均の3.8倍）', risk: '中' }
-          ];
-
-          auditTableBody.innerHTML = '';
-          mockAuditData.forEach(row => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-              <td>${row.date}<br><b>${row.partner}</b></td>
-              <td>${row.account}<br><b style="color:var(--ink);">${row.amount}</b></td>
-              <td style="color:var(--red); font-weight:600; font-size:11.5px;">${row.reason}</td>
-              <td><span style="font-size:11px; background:var(--red-soft); color:var(--red); padding:2px 6px; border-radius:4px; font-weight:bold;">${row.risk}</span></td>
-            `;
-            auditTableBody.appendChild(tr);
-          });
-
-          statAuditTotalCount.textContent = mockAuditData.length + ' 件';
-          auditLoadingSection.classList.add('hidden');
-          auditResultSection.classList.remove('hidden');
-        } catch (err) {
-          showError('異常値・入力ミスの解析中にエラーが発生しました。');
-          auditLoadingSection.classList.add('hidden');
-        } finally {
-          runAuditCheckBtn.disabled = false;
-        }
-      });
-
-      // アプリ5: 固定資産ワンタップスキャンの処理
-      assetUploadArea.addEventListener('click', () => assetFileInput.click());
-
-      assetUploadArea.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        assetUploadArea.style.borderColor = 'var(--navy)';
-      });
-
-      assetUploadArea.addEventListener('dragleave', () => {
-        assetUploadArea.style.borderColor = 'var(--line)';
-      });
-
-      assetUploadArea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        assetUploadArea.style.borderColor = 'var(--line)';
-        if (e.dataTransfer.files.length > 0) {
-          processAssetScanFile();
-        }
-      });
-
-      assetFileInput.addEventListener('change', () => {
-        if (assetFileInput.files.length > 0) {
-          processAssetScanFile();
-        }
-      });
-
-      async function processAssetScanFile() {
-        clearError();
-        assetScanResultSection.classList.add('hidden');
-        assetScanLoadingSection.classList.remove('hidden');
-
-        try {
-          await new Promise(resolve => setTimeout(resolve, 1200));
-
-          document.getElementById('valCompanyName').textContent = 'ヨドバシカメラ';
-          document.getElementById('valProductName').textContent = 'EOS R6 Mark II ボディ';
-          document.getElementById('valAmount').textContent = '358,000';
-          document.getElementById('valCategory').textContent = 'カメラ・光学機器（工具器具備品 / 耐用年数: 5年）';
-          document.getElementById('valAcquisitionDate').textContent = '2026/09/15';
-
-          assetScanLoadingSection.classList.add('hidden');
-          assetScanResultSection.classList.remove('hidden');
-        } catch (err) {
-          showError('画像の読み取り中にエラーが発生しました。');
-          assetScanLoadingSection.classList.add('hidden');
+      // OAuth初期化
+      if (window.location.hash) {
+        const params = new URLSearchParams(window.location.hash.substring(1));
+        const token = params.get('access_token');
+        if (token) {
+          sessionStorage.setItem('access_token', token);
+          history.replaceState(null, null, window.location.pathname);
         }
       }
 
-      // クリップボード コピー機能
-      document.querySelectorAll('.btn-copy').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          const targetId = e.currentTarget.getAttribute('data-target');
-          const targetEl = document.getElementById(targetId);
-          if (!targetEl) return;
-
-          const textToCopy = targetEl.textContent.trim();
-
-          try {
-            await navigator.clipboard.writeText(textToCopy);
-            const originalBtnText = e.currentTarget.textContent;
-            e.currentTarget.textContent = 'Copied!';
-            e.currentTarget.classList.add('copied');
-
-            setTimeout(() => {
-              e.currentTarget.textContent = originalBtnText;
-              e.currentTarget.classList.remove('copied');
-            }, 1800);
-          } catch (err) {
-            alert('コピーに失敗しました');
-          }
-        });
-      });
-
-      // 初期起動処理
-      handleOAuthCallback();
-      if (getAccessToken()) {
-        loadCompanies();
-      }
+      if (getAccessToken()) loadCompanies();
     })();
   </script>
 </body>
