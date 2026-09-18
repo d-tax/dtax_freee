@@ -1062,7 +1062,7 @@
       appAssetScanCard.addEventListener('click', () => { hideAllSections(); appAssetScanSection.classList.remove('hidden'); });
 
      // ==========================================
-      // アプリ1-1: 重複チェック＆名寄せ統合（高感度検出版）
+      // アプリ1-1: 重複チェック＆名寄せ統合（精度最適化版）
       // ==========================================
       const runDedupeBtn = document.getElementById('runDedupeBtn');
       const dedupeLoadingSection = document.getElementById('dedupeLoadingSection');
@@ -1070,7 +1070,7 @@
       const dedupeCardsContainer = document.getElementById('dedupeCardsContainer');
       const statDedupeCount = document.getElementById('statDedupeCount');
 
-      // 住所の表記揺れを正規化（全角半角、ハイフン統一、空白除去）
+      // 住所の表記揺れを正規化
       function normalizeAddress(addr) {
         if (!addr) return '';
         return addr
@@ -1083,7 +1083,32 @@
           .toLowerCase();
       }
 
-      // レーベンシュタイン距離（文字列の類似度計算）
+      // 社名から法人格および一般的な業界共通語（業種名）を除外して固有名称を抽出
+      function extractCoreName(name) {
+        if (!name) return '';
+        let core = name
+          .replace(/[！-～]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0))
+          .replace(/\s+/g, '')
+          .replace(/（/g, '(').replace(/）/g, ')')
+          .replace(/\(株\)|株式会社|\(有\)|有限会社|\(同\)|合同会社|\(資\)|合資会社|\(名\)|合名会社|\(一社\)|一般社団法人/g, '')
+          .replace(/㈲|㊑|㈴|㈵/g, '') // 特殊文字の法人格削除
+          .toLowerCase();
+
+        // 誤検出の原因となる一般的な業界単語（必要に応じて追加可能）
+        const commonWords = [
+          '自動車工業', '自動車', '工業', '建設', '工務店', '不動産', 
+          '商事', '産業', 'システムズ', 'システム', 'クリニック', '医院', 
+          '商店', '製作所', '企画', 'ジャパン', 'グループ'
+        ];
+
+        commonWords.forEach(word => {
+          core = core.replaceAll(word, '');
+        });
+
+        return core;
+      }
+
+      // レーベンシュタイン距離
       function getLevenshteinDistance(a, b) {
         if (!a || !b) return Math.max(a ? a.length : 0, b ? b.length : 0);
         const matrix = [];
@@ -1106,7 +1131,7 @@
         return matrix[b.length][a.length];
       }
 
-      // 2つの文字列の類似率（0.0 ～ 1.0）
+      // 類似度計算（0.0 ～ 1.0）
       function getStringSimilarity(str1, str2) {
         if (!str1 || !str2) return 0;
         const dist = getLevenshteinDistance(str1, str2);
@@ -1131,50 +1156,54 @@
               let score = 0;
               let reasons = [];
 
-              // 1. 事業者登録番号の一致（絶対条件）
+              // 1. 事業者登録番号の一致（絶対一致）
               if (p1.payer_walletable_id && p2.payer_walletable_id && p1.payer_walletable_id === p2.payer_walletable_id) {
                 score += 100;
                 reasons.push('事業者番号一致');
               }
 
-              // 2. 社名・名称の比較（正規化 ＋ 類似度判定）
-              const norm1 = normalizeName(p1.name);
-              const norm2 = normalizeName(p2.name);
-              if (norm1 && norm2) {
-                if (norm1 === norm2) {
+              // 2. 社名のコア（固有名称）比較
+              const core1 = extractCoreName(p1.name);
+              const core2 = extractCoreName(p2.name);
+
+              if (core1 && core2) {
+                if (core1 === core2) {
                   score += 60;
-                  reasons.push('社名完全一致');
-                } else if (norm1.includes(norm2) || norm2.includes(norm1)) {
-                  score += 35;
-                  reasons.push('社名部分一致');
-                } else {
-                  const sim = getStringSimilarity(norm1, norm2);
-                  if (sim >= 0.5) { // 50%以上文字が似ていれば加算
-                    score += Math.round(sim * 40);
-                    reasons.push(`社名類似(${Math.round(sim * 100)}%)`);
+                  reasons.push('社名コア完全一致');
+                } else if (core1.length >= 2 && core2.length >= 2) {
+                  // 固有名称が2文字以上あり、かつ相互に含まれる場合
+                  if (core1.includes(core2) || core2.includes(core1)) {
+                    score += 30;
+                    reasons.push('社名コア部分一致');
+                  } else {
+                    const sim = getStringSimilarity(core1, core2);
+                    if (sim >= 0.6) { // 60%以上似ている場合のみ加算
+                      score += Math.round(sim * 30);
+                      reasons.push(`社名コア類似(${Math.round(sim * 100)}%)`);
+                    }
                   }
                 }
               }
 
-              // 3. 住所の比較（正規化後の部分一致）
+              // 3. 住所の比較
               const addr1 = normalizeAddress((p1.street_name1 || '') + (p1.street_name2 || ''));
               const addr2 = normalizeAddress((p2.street_name1 || '') + (p2.street_name2 || ''));
               if (addr1 && addr2) {
                 if (addr1 === addr2) {
-                  score += 40;
+                  score += 45;
                   reasons.push('住所完全一致');
-                } else if (addr1.length > 5 && addr2.length > 5 && (addr1.includes(addr2) || addr2.includes(addr1))) {
+                } else if (addr1.length > 6 && addr2.length > 6 && (addr1.includes(addr2) || addr2.includes(addr1))) {
                   score += 25;
                   reasons.push('住所部分一致');
                 }
               }
 
-              // 4. 電話番号の比較（数値のみ抽出＆末尾一致）
+              // 4. 電話番号の比較（末尾一致）
               const phone1 = p1.phone ? p1.phone.replace(/\D/g, '') : '';
               const phone2 = p2.phone ? p2.phone.replace(/\D/g, '') : '';
               if (phone1 && phone2) {
                 if (phone1 === phone2) {
-                  score += 40;
+                  score += 45;
                   reasons.push('電話番号一致');
                 } else if (phone1.length >= 7 && phone2.length >= 7 && (phone1.endsWith(phone2) || phone2.endsWith(phone1))) {
                   score += 20;
@@ -1182,14 +1211,15 @@
                 }
               }
 
-              // 【検出基準】少しでも懸念があれば検出（25点以上に設定）
-              if (score >= 25) {
+              // 【検出適正閾値】単一条件の誤検知を防ぐため「35点以上」に設定
+              // （例: 単に社名の一部が似ているだけ(30点)では検出されず、住所や電話番号の類似と組み合わさると検出）
+              if (score >= 35) {
                 duplicates.push({ p1, p2, score, reasons: reasons.join(', ') });
               }
             }
           }
 
-          // スコアが高い順（重複の疑いが強い順）にソート
+          // スコア順にソート
           duplicates.sort((a, b) => b.score - a.score);
 
           dedupeCardsContainer.innerHTML = '';
