@@ -453,7 +453,7 @@
         <h1 id="headerTitle">freee 拡張ポータル</h1>
         <p id="headerDesc">freee APIを活用して業務効率化ツールを利用・管理します。</p>
       </div>
-      <img src="images/360097.png" alt="D-Tax" class="header-logo">
+      <img src="images/360097.png" alt="D-Tax" class="header-logo" onerror="this.style.display='none'">
     </header>
 
     <!-- Step 1: ログイン画面 -->
@@ -482,7 +482,7 @@
       <div class="app-grid">
         <!-- アプリ1: 取引先クリーニング -->
         <div class="app-card" id="appDedupeCard">
-          <img src="images/icon-clean.png" alt="クリーニング" class="app-card-icon">
+          <img src="images/icon-clean.png" alt="クリーニング" class="app-card-icon" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%2322384C\'><path d=\'M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C9.01 19.54 10.95 20 13 20c4.42 0 8-3.58 8-8h3l-5-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C14.99 4.46 13.05 4 11 4 6.58 4 3 7.58 3 12H0l5 4 4-4H6z\'/></svg>'">
           <div>
             <div class="app-card-title">取引先台帳クリーニング</div>
             <div class="app-card-desc">重複登録の探知・取引置換統合や、未使用取引先の一括削除を行います。</div>
@@ -491,7 +491,7 @@
 
         <!-- アプリ2: 期日超過の未決済売掛金チェッカー -->
         <div class="app-card" id="appOverdueCard">
-          <img src="images/icon-alert.png" alt="売掛金チェッカー" class="app-card-icon">
+          <img src="images/icon-alert.png" alt="売掛金チェッカー" class="app-card-icon" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%23B23A2E\'><path d=\'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z\'/></svg>'">
           <div>
             <div class="app-card-title">期日超過の未決済売掛金チェッカー</div>
             <div class="app-card-desc">決済期日を過ぎた未回収の売掛取引（収入）をリストアップし、回収リスクを可視化します。</div>
@@ -500,7 +500,7 @@
 
         <!-- アプリ3: ポチポチ手入力取引チェッカー -->
         <div class="app-card" id="appManualPochiCard">
-          <img src="images/icon-pochipochi.png" alt="ポチポチ手入力取引チェッカー" class="app-card-icon">
+          <img src="images/icon-pochipochi.png" alt="ポチポチ手入力取引チェッカー" class="app-card-icon" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%23A8792A\'><path d=\'M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74 0-2.48-2.02-4.5-4.5-4.5S7 5.02 7 7.5c0 1.56.79 2.93 2 3.74zM18.84 15.25l-4.22-4.22C14.33 10.74 13.92 10.5 13.5 10.5H13V7.5C13 6.67 12.33 6 11.5 6S10 6.67 10 7.5v10.18l-3.35-.7c-.24-.05-.49 0-.7.13l-1.07.64 4.88 5.69c.43.5 1.05.81 1.72.81h6.63c1.15 0 2.13-.84 2.29-1.98l.64-4.51c.09-.64-.13-1.28-.56-1.74z\'/></svg>'">
           <div>
             <div class="app-card-title">ポチポチ手入力取引チェッカー</div>
             <div class="app-card-desc">何度も手入力している取引を炙り出し、自動登録ルールの作成候補を可視化します。</div>
@@ -509,7 +509,7 @@
 
         <!-- アプリ4: 取引の異常値・異常入力チェッカー -->
         <div class="app-card" id="appAuditCard">
-          <img src="images/icon-ijouchi.png" alt="取引の異常値・異常入力チェッカー" class="app-card-icon">
+          <img src="images/icon-ijouchi.png" alt="取引の異常値・異常入力チェッカー" class="app-card-icon" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%2322384C\'><path d=\'M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z\'/></svg>'">
           <div>
             <div class="app-card-title">取引の異常値・異常入力チェッカー</div>
             <div class="app-card-desc">金額の桁間違いや税区分の矛盾など、過去パターンから逸脱した取引を検知する監査用ツール。</div>
@@ -518,7 +518,7 @@
 
         <!-- アプリ5: 固定資産ワンタップスキャン -->
         <div class="app-card" id="appAssetScanCard">
-          <img src="images/icon-onescan.png" alt="固定資産ワンタップスキャン" class="app-card-icon" onerror="this.src='images/icon-clean.png'">
+          <img src="images/icon-onescan.png" alt="固定資産ワンタップスキャン" class="app-card-icon" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%232E6B4E\'><path d=\'M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-7-2h2v-4h4v-2h-4V7h-2v4H8v2h4z\'/></svg>'">
           <div>
             <div class="app-card-title">固定資産ワンタップスキャン</div>
             <div class="app-card-desc">請求書や領収書から固定資産登録用の項目（会社名・型番・金額等）を自動抽出し1タップ保存。</div>
@@ -540,8 +540,9 @@
         <button class="btn-secondary" id="runDedupeBtn" type="button">取引先の重複登録を探す</button>
         <div class="info-box">
           <b>【名寄せ統合機能】</b><br>
-          1. 統合したいペアの<b>チェックボックスをオン</b>にします（別会社等で両方残す場合はチェックを外してください）。<br>
-          2. 「残す取引先（正）」をラジオボタンで選択してください。非選択側の取引が自動で「残す側」へ置き換わり統合されます。
+          1. 統合・判定を行いたいペアの<b>チェックボックスをオン</b>にします。<br>
+          2. ラジオボタンで「どちらを残す（統合）」または「両方残す（別会社）」を選択してください。<br>
+          3. 画面下部から「選択グループを統合」または「判定結果をCSV出力」を実行できます。
         </div>
 
         <div id="dedupeLoadingSection" class="loading-box hidden">
@@ -554,9 +555,10 @@
             <div class="summary-stats">
               <div class="stat"><span class="num danger" id="statDedupeCount">0</span><span class="lbl">検出された重複疑いグループ数</span></div>
             </div>
-            <div style="font-size: 12px;">
-              <label style="cursor: pointer; font-weight: 600; color: var(--navy);">
-                <input type="checkbox" id="selectAllDedupeGroups" checked> すべて選択/解除
+            <div style="display: flex; gap: 12px; align-items: center;">
+              <button id="downloadDedupeCsvBtn" class="btn-secondary" style="padding: 6px 12px; font-size: 12px; width: auto;">判定結果をCSV出力</button>
+              <label style="cursor: pointer; font-weight: 600; color: var(--navy); font-size: 12px;">
+                <input type="checkbox" id="selectAllDedupeGroups" checked> 全選択/解除
               </label>
             </div>
           </div>
@@ -564,7 +566,7 @@
           <div id="dedupeCardsContainer"></div>
 
           <button class="btn-primary" id="executeMergeBtn" type="button" style="margin-top: 12px;">
-            選択したグループを統合（取引を置き換える）
+            選択したグループの統合を実行（取引を置き換える）
           </button>
         </div>
       </div>
@@ -888,6 +890,7 @@
       let currentCompanyId = null;
       let cachedPartners = [];
       let accountItemMap = new Map();
+      let currentDuplicates = [];
 
       // UI要素の取得
       const stepLogin = document.getElementById('stepLogin');
@@ -936,16 +939,6 @@
         appAssetScanSection.classList.add('hidden');
       }
 
-      function normalizeName(name) {
-        if (!name) return '';
-        return name
-          .replace(/[！-～]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0))
-          .replace(/\s+/g, '')
-          .replace(/（/g, '(').replace(/）/g, ')')
-          .replace(/\(株\)|株式会社|\(有\)|有限会社|\(同\)|合同会社/g, '')
-          .toLowerCase();
-      }
-
       async function fetchAllPages(path, params, key) {
         let allData = [];
         let page = 1;
@@ -973,13 +966,13 @@
         return allData;
       }
 
-      // OAuth認証機能
+      // OAuth認証＆初期化
       loginBtn.addEventListener('click', () => {
         const authUrl = `${CONFIG.authEndpoint}?client_id=${CONFIG.clientId}&redirect_uri=${encodeURIComponent(CONFIG.redirectUri)}&response_type=token`;
         window.location.href = authUrl;
       });
 
-      function checkAuth() {
+      function initOAuth() {
         const hash = window.location.hash.substring(1);
         const params = new URLSearchParams(hash);
         const accessToken = params.get('access_token');
@@ -991,6 +984,8 @@
 
         const token = sessionStorage.getItem('freee_access_token');
         if (token) {
+          hideAllSections();
+          stepCompany.classList.remove('hidden');
           loadCompanies();
         } else {
           hideAllSections();
@@ -999,17 +994,15 @@
       }
 
       async function loadCompanies() {
-        hideAllSections();
-        stepCompany.classList.remove('hidden');
-        const token = sessionStorage.getItem('freee_access_token');
-
         try {
+          clearError();
+          const token = sessionStorage.getItem('freee_access_token');
           const res = await fetch(`${CONFIG.apiBase}/companies`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (!res.ok) throw new Error('事業所一覧の取得に失敗しました。');
-          
           const data = await res.json();
+          
           companySelect.innerHTML = '';
           data.companies.forEach(c => {
             const opt = document.createElement('option');
@@ -1022,32 +1015,19 @@
         }
       }
 
-      selectCompanyBtn.addEventListener('click', async () => {
+      selectCompanyBtn.addEventListener('click', () => {
         currentCompanyId = companySelect.value;
         if (!currentCompanyId) return;
-        
         selectedCompanyName.textContent = companySelect.options[companySelect.selectedIndex].text;
         hideAllSections();
         stepApps.classList.remove('hidden');
-
-        // マスタデータ一括初期化
-        try {
-          const token = sessionStorage.getItem('freee_access_token');
-          const res = await fetch(`${CONFIG.apiBase}/account_items?company_id=${currentCompanyId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          if (res.ok) {
-            const data = await res.json();
-            (data.account_items || []).forEach(item => accountItemMap.set(item.id, item.name));
-          }
-        } catch (e) {
-          console.error("勘定科目マスタの取得失敗", e);
-        }
       });
 
-      backToCompanyBtn.addEventListener('click', loadCompanies);
+      backToCompanyBtn.addEventListener('click', () => {
+        hideAllSections();
+        stepCompany.classList.remove('hidden');
+      });
 
-      // 画面ナビゲーション
       document.querySelectorAll('.backToAppsBtn').forEach(btn => {
         btn.addEventListener('click', () => {
           hideAllSections();
@@ -1055,22 +1035,24 @@
         });
       });
 
+      // アプリ切替イベント
       appDedupeCard.addEventListener('click', () => { hideAllSections(); appDedupeSection.classList.remove('hidden'); });
       appOverdueCard.addEventListener('click', () => { hideAllSections(); appOverdueSection.classList.remove('hidden'); });
       appManualPochiCard.addEventListener('click', () => { hideAllSections(); appManualPochiSection.classList.remove('hidden'); });
       appAuditCard.addEventListener('click', () => { hideAllSections(); appAuditSection.classList.remove('hidden'); });
       appAssetScanCard.addEventListener('click', () => { hideAllSections(); appAssetScanSection.classList.remove('hidden'); });
 
-     // ==========================================
-      // アプリ1-1: 重複チェック＆名寄せ統合（バランス再調整版）
+      // ==========================================
+      // アプリ1: 重複チェック＆名寄せ統合・未使用削除
       // ==========================================
       const runDedupeBtn = document.getElementById('runDedupeBtn');
       const dedupeLoadingSection = document.getElementById('dedupeLoadingSection');
       const dedupeResultSection = document.getElementById('dedupeResultSection');
       const dedupeCardsContainer = document.getElementById('dedupeCardsContainer');
       const statDedupeCount = document.getElementById('statDedupeCount');
+      const downloadDedupeCsvBtn = document.getElementById('downloadDedupeCsvBtn');
+      const selectAllDedupeGroups = document.getElementById('selectAllDedupeGroups');
 
-      // 住所の表記揺れを正規化
       function normalizeAddress(addr) {
         if (!addr) return '';
         return addr
@@ -1083,7 +1065,6 @@
           .toLowerCase();
       }
 
-      // 社名から法人格のみを取り除いて正規化
       function cleanCompanyName(name) {
         if (!name) return '';
         return name
@@ -1095,7 +1076,6 @@
           .toLowerCase();
       }
 
-      // レーベンシュタイン距離（編集距離）
       function getLevenshteinDistance(a, b) {
         if (!a || !b) return Math.max(a ? a.length : 0, b ? b.length : 0);
         const matrix = [];
@@ -1118,7 +1098,6 @@
         return matrix[b.length][a.length];
       }
 
-      // 類似度計算（0.0 ～ 1.0）
       function getStringSimilarity(str1, str2) {
         if (!str1 || !str2) return 0;
         const dist = getLevenshteinDistance(str1, str2);
@@ -1134,9 +1113,7 @@
 
         try {
           cachedPartners = await fetchAllPages('/partners', { company_id: currentCompanyId }, 'partners');
-          const duplicates = [];
-
-          // 一般的な業界共通ワード（これら「だけ」の一致の場合は加算スコアを抑制）
+          currentDuplicates = [];
           const commonWords = ['自動車', '工業', '建設', '不動産', '商事', '産業', 'システム', 'クリニック', '商店'];
 
           for (let i = 0; i < cachedPartners.length; i++) {
@@ -1146,13 +1123,11 @@
               let score = 0;
               let reasons = [];
 
-              // 1. インボイス・事業者登録番号の一致（確実）
               if (p1.payer_walletable_id && p2.payer_walletable_id && p1.payer_walletable_id === p2.payer_walletable_id) {
                 score += 100;
                 reasons.push('事業者番号一致');
               }
 
-              // 2. 社名比較（法人格除外後）
               const name1 = cleanCompanyName(p1.name);
               const name2 = cleanCompanyName(p2.name);
 
@@ -1161,19 +1136,16 @@
                   score += 60;
                   reasons.push('社名完全一致');
                 } else {
-                  // 部分一致（どちらかが含まれる）
                   const minLen = Math.min(name1.length, name2.length);
                   if (minLen >= 2 && (name1.includes(name2) || name2.includes(name1))) {
-                    // 単に「自動車工業」などの共通ワードだけで一致していないか判定
                     const isOnlyCommon = commonWords.some(w => (name1 === w || name2 === w));
                     if (!isOnlyCommon) {
                       score += 35;
                       reasons.push('社名部分一致');
                     }
                   } else {
-                    // 類似度計算（文字の並びの近さ）
                     const sim = getStringSimilarity(name1, name2);
-                    if (sim >= 0.5) { // 50%以上類似
+                    if (sim >= 0.5) {
                       score += Math.round(sim * 35);
                       reasons.push(`社名類似(${Math.round(sim * 100)}%)`);
                     }
@@ -1181,7 +1153,6 @@
                 }
               }
 
-              // 3. 住所比較（表記揺れ吸収）
               const addr1 = normalizeAddress((p1.street_name1 || '') + (p1.street_name2 || ''));
               const addr2 = normalizeAddress((p2.street_name1 || '') + (p2.street_name2 || ''));
               if (addr1 && addr2) {
@@ -1194,7 +1165,6 @@
                 }
               }
 
-              // 4. 電話番号比較（ハイフン無視・末尾7桁以上一致）
               const phone1 = p1.phone ? p1.phone.replace(/\D/g, '') : '';
               const phone2 = p2.phone ? p2.phone.replace(/\D/g, '') : '';
               if (phone1 && phone2) {
@@ -1207,25 +1177,22 @@
                 }
               }
 
-              // 【判定閾値】30点以上をピックアップ
               if (score >= 30) {
-                duplicates.push({ p1, p2, score, reasons: reasons.join(', ') });
+                currentDuplicates.push({ p1, p2, score, reasons: reasons.join(', ') });
               }
             }
           }
 
-          // スコアが高い順に並び替え
-          duplicates.sort((a, b) => b.score - a.score);
+          currentDuplicates.sort((a, b) => b.score - a.score);
 
           dedupeCardsContainer.innerHTML = '';
-          if (duplicates.length === 0) {
+          if (currentDuplicates.length === 0) {
             dedupeCardsContainer.innerHTML = '<div style="text-align:center; padding:16px;">重複している可能性がある取引先は見つかりませんでした。</div>';
           } else {
-            duplicates.forEach((group, index) => {
+            currentDuplicates.forEach((group, index) => {
               const card = document.createElement('div');
               card.className = 'dedupe-group-card';
               
-              // 事業者番号の表示形式を整形（未登録時のフォロー含む）
               const num1 = group.p1.payer_walletable_id ? `事業者番号: ${group.p1.payer_walletable_id}` : '事業者番号: 未登録';
               const num2 = group.p2.payer_walletable_id ? `事業者番号: ${group.p2.payer_walletable_id}` : '事業者番号: 未登録';
 
@@ -1236,14 +1203,18 @@
                     グループ ${index + 1}（検出スコア: ${group.score}点 - ${group.reasons}）
                   </label>
                 </div>
-                <div class="dedupe-option-list">
-                  <label class="dedupe-option">
+                <div class="dedupe-option-list" style="margin-top: 8px;">
+                  <label class="dedupe-option" style="display:block; margin-bottom: 4px;">
                     <input type="radio" name="target_${index}" value="${group.p1.id}" checked>
-                    <span><b>${group.p1.name}</b> (${num1})</span>
+                    <span><b>【残す（統合）】</b> ${group.p1.name} (${num1})</span>
                   </label>
-                  <label class="dedupe-option">
+                  <label class="dedupe-option" style="display:block; margin-bottom: 4px;">
                     <input type="radio" name="target_${index}" value="${group.p2.id}">
-                    <span><b>${group.p2.name}</b> (${num2})</span>
+                    <span><b>【残す（統合）】</b> ${group.p2.name} (${num2})</span>
+                  </label>
+                  <label class="dedupe-option" style="display:block; margin-bottom: 4px;">
+                    <input type="radio" name="target_${index}" value="both">
+                    <span><b>【両方残す（統合しない / 別会社）】</b></span>
                   </label>
                 </div>
               `;
@@ -1251,7 +1222,7 @@
             });
           }
 
-          statDedupeCount.textContent = duplicates.length;
+          statDedupeCount.textContent = currentDuplicates.length;
           dedupeLoadingSection.classList.add('hidden');
           dedupeResultSection.classList.remove('hidden');
         } catch (err) {
@@ -1261,197 +1232,193 @@
           runDedupeBtn.disabled = false;
         }
       });
-      // ==========================================
-      // アプリ2: 期日超過売掛金チェッカー
-      // ==========================================
-      const runOverdueBtn = document.getElementById('runOverdueBtn');
-      const overdueLoadingSection = document.getElementById('overdueLoadingSection');
-      const overdueResultSection = document.getElementById('overdueResultSection');
-      const overdueTableBody = document.getElementById('overdueTableBody');
-      const statOverdueCount = document.getElementById('statOverdueCount');
-      const statOverdueAmount = document.getElementById('statOverdueAmount');
 
-      runOverdueBtn.addEventListener('click', async () => {
-        clearError();
-        overdueResultSection.classList.add('hidden');
-        overdueLoadingSection.classList.remove('hidden');
-        runOverdueBtn.disabled = true;
-
-        try {
-          if (cachedPartners.length === 0) {
-            cachedPartners = await fetchAllPages('/partners', { company_id: currentCompanyId }, 'partners');
-          }
-          const partnerMap = new Map(cachedPartners.map(p => [p.id, p.name]));
-
-          const deals = await fetchAllPages('/deals', {
-            company_id: currentCompanyId,
-            type: 'income',
-            status: 'unsettled'
-          }, 'deals');
-
-          const todayStr = new Date().toISOString().split('T')[0];
-          const todayDate = new Date(todayStr);
-
-          const overdueItems = [];
-          let totalOverdueAmount = 0;
-
-          deals.forEach(deal => {
-            if (deal.due_date && deal.due_date < todayStr) {
-              const dueDate = new Date(deal.due_date);
-              const diffDays = Math.floor((todayDate - dueDate) / (1000 * 60 * 60 * 24));
-              const partnerName = deal.partner_id ? (partnerMap.get(deal.partner_id) || `取引先ID: ${deal.partner_id}`) : '（設定なし）';
-              
-              overdueItems.push({
-                partner: partnerName,
-                date: deal.due_date,
-                amount: deal.amount,
-                days: `${diffDays} 日超過`
-              });
-              totalOverdueAmount += deal.amount;
-            }
-          });
-
-          overdueTableBody.innerHTML = '';
-          if (overdueItems.length === 0) {
-            overdueTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:16px;">期日超過の未決済売掛金はありません。</td></tr>';
-          } else {
-            overdueItems.forEach(row => {
-              const tr = document.createElement('tr');
-              tr.innerHTML = `
-                <td><b>${row.partner}</b></td>
-                <td>${row.date}</td>
-                <td style="font-weight:bold;">¥ ${row.amount.toLocaleString()}</td>
-                <td><span style="font-size:11px; background:var(--red-soft); color:var(--red); padding:2px 6px; border-radius:4px; font-weight:bold;">${row.days}</span></td>
-              `;
-              overdueTableBody.appendChild(tr);
-            });
-          }
-
-          statOverdueCount.textContent = overdueItems.length + ' 件';
-          statOverdueAmount.textContent = `¥ ${totalOverdueAmount.toLocaleString()}`;
-          overdueLoadingSection.classList.add('hidden');
-          overdueResultSection.classList.remove('hidden');
-        } catch (err) {
-          showError('売掛金データの取得中にエラーが発生しました: ' + err.message);
-          overdueLoadingSection.classList.add('hidden');
-        } finally {
-          runOverdueBtn.disabled = false;
-        }
-      });
-
-      // ==========================================
-      // アプリ3: ポチポチ手入力取引チェッカー
-      // ==========================================
-      const runPochiCheckBtn = document.getElementById('runPochiCheckBtn');
-      const pochiLoadingSection = document.getElementById('pochiLoadingSection');
-      const pochiResultSection = document.getElementById('pochiResultSection');
-      const pochiTableBody = document.getElementById('pochiTableBody');
-      const statPochiTotalCount = document.getElementById('statPochiTotalCount');
-      const statPochiManualRatio = document.getElementById('statPochiManualRatio');
-
-      runPochiCheckBtn.addEventListener('click', async () => {
-        clearError();
-        pochiResultSection.classList.add('hidden');
-        pochiLoadingSection.classList.remove('hidden');
-        runPochiCheckBtn.disabled = true;
-
-        try {
-          const months = Number(document.getElementById('pochiMonthsSelect').value);
-          const minCount = Number(document.getElementById('pochiMinCount').value);
-
-          const startDate = new Date();
-          startDate.setMonth(startDate.getMonth() - months);
-          const startDateStr = startDate.toISOString().split('T')[0];
-
-          if (cachedPartners.length === 0) {
-            cachedPartners = await fetchAllPages('/partners', { company_id: currentCompanyId }, 'partners');
-          }
-          const partnerMap = new Map(cachedPartners.map(p => [p.id, p.name]));
-
-          const deals = await fetchAllPages('/deals', {
-            company_id: currentCompanyId,
-            start_issue_date: startDateStr
-          }, 'deals');
-
-          let manualTotal = 0;
-          const patternMap = new Map();
-
-          deals.forEach(deal => {
-            const isManual = !deal.details?.some(d => d.rule_id);
-            if (isManual) manualTotal++;
-
-            if (isManual && deal.details) {
-              deal.details.forEach(detail => {
-                const partnerName = deal.partner_id ? (partnerMap.get(deal.partner_id) || `取引先ID: ${deal.partner_id}`) : '（取引先未設定）';
-                const accountName = accountItemMap.get(detail.account_item_id) || `科目ID: ${detail.account_item_id}`;
-                const key = `${partnerName}__${accountName}`;
-
-                if (!patternMap.has(key)) {
-                  patternMap.set(key, { partner: partnerName, account: accountName, count: 0 });
-                }
-                patternMap.get(key).count++;
-              });
-            }
-          });
-
-          const candidates = Array.from(patternMap.values())
-            .filter(item => item.count >= minCount)
-            .sort((a, b) => b.count - a.count);
-
-          pochiTableBody.innerHTML = '';
-          if (candidates.length === 0) {
-            pochiTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:16px;">条件に該当するポチポチ手入力取引は見つかりませんでした。</td></tr>';
-          } else {
-            candidates.forEach(row => {
-              const monthly = (row.count / months).toFixed(1);
-              const impact = row.count >= 10 ? '高（自動ルール設定を強く推奨）' : '中';
-              const tr = document.createElement('tr');
-              tr.innerHTML = `
-                <td><b>${row.partner}</b></td>
-                <td>${row.account}</td>
-                <td style="color:var(--red); font-weight:bold;">${row.count} 回</td>
-                <td>約 ${monthly} 件/月</td>
-                <td><span style="font-size:11px; background:var(--amber-soft); color:var(--amber); padding:2px 6px; border-radius:4px; font-weight:bold;">${impact}</span></td>
-              `;
-              pochiTableBody.appendChild(tr);
-            });
-          }
-
-          const ratio = deals.length > 0 ? ((manualTotal / deals.length) * 100).toFixed(1) : '0';
-          statPochiTotalCount.textContent = candidates.length + ' 件';
-          statPochiManualRatio.textContent = `${ratio}%`;
-
-          pochiLoadingSection.classList.add('hidden');
-          pochiResultSection.classList.remove('hidden');
-        } catch (err) {
-          showError('ポチポチ取引の抽出処理中にエラーが発生しました: ' + err.message);
-          pochiLoadingSection.classList.add('hidden');
-        } finally {
-          runPochiCheckBtn.disabled = false;
-        }
-      });
-
-      // コピー機能の実装（アプリ5用）
-      document.querySelectorAll('.btn-copy').forEach(btn => {
-        btn.addEventListener('click', function () {
-          const targetId = this.getAttribute('data-target');
-          const targetEl = document.getElementById(targetId);
-          if (targetEl) {
-            navigator.clipboard.writeText(targetEl.textContent.trim()).then(() => {
-              const oldText = this.textContent;
-              this.textContent = 'コピー完了！';
-              this.classList.add('copied');
-              setTimeout(() => {
-                this.textContent = oldText;
-                this.classList.remove('copied');
-              }, 1500);
-            });
-          }
+      selectAllDedupeGroups.addEventListener('change', (e) => {
+        document.querySelectorAll('.dedupe-group-check').forEach(chk => {
+          chk.checked = e.target.checked;
         });
       });
 
-      // 初期起動処理
-      checkAuth();
+      downloadDedupeCsvBtn.addEventListener('click', () => {
+        if (currentDuplicates.length === 0) {
+          alert('出力対象のデータがありません。');
+          return;
+        }
+
+        const csvRows = [
+          ['グループ', 'スコア', '判定理由', '取引先名A', 'ID_A', '事業者番号_A', '取引先名B', 'ID_B', '事業者番号_B', '選択ステータス', '残す取引先ID']
+        ];
+
+        currentDuplicates.forEach((group, index) => {
+          const isChecked = document.querySelector(`.dedupe-group-check[data-index="${index}"]`)?.checked;
+          if (!isChecked) return;
+
+          const selectedOption = document.querySelector(`input[name="target_${index}"]:checked`)?.value;
+          
+          let statusText = '';
+          let keepId = '';
+
+          if (selectedOption === 'both') {
+            statusText = '両方残す（統合なし）';
+            keepId = '両方';
+          } else if (selectedOption === String(group.p1.id)) {
+            statusText = `${group.p1.name}を残す`;
+            keepId = group.p1.id;
+          } else if (selectedOption === String(group.p2.id)) {
+            statusText = `${group.p2.name}を残す`;
+            keepId = group.p2.id;
+          }
+
+          csvRows.push([
+            `グループ${index + 1}`,
+            group.score,
+            `"${group.reasons}"`,
+            `"${group.p1.name}"`,
+            group.p1.id,
+            group.p1.payer_walletable_id || '未登録',
+            `"${group.p2.name}"`,
+            group.p2.id,
+            group.p2.payer_walletable_id || '未登録',
+            `"${statusText}"`,
+            keepId
+          ]);
+        });
+
+        const csvContent = '\uFEFF' + csvRows.map(e => e.join(',')).join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `名寄せ重複チェック結果_${new Date().toISOString().slice(0, 10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+
+      // アプリ2: 売掛金チェッカー処理
+      document.getElementById('runOverdueBtn').addEventListener('click', async () => {
+        clearError();
+        const overdueLoading = document.getElementById('overdueLoadingSection');
+        const overdueResult = document.getElementById('overdueResultSection');
+        overdueResult.classList.add('hidden');
+        overdueLoading.classList.remove('hidden');
+
+        try {
+          const deals = await fetchAllPages('/deals', { company_id: currentCompanyId, type: 'income', status: 'unsettled' }, 'deals');
+          const today = new Date().toISOString().slice(0, 10);
+          
+          let count = 0;
+          let totalAmount = 0;
+          const tbody = document.getElementById('overdueTableBody');
+          tbody.innerHTML = '';
+
+          deals.forEach(deal => {
+            if (deal.due_date && deal.due_date < today) {
+              count++;
+              totalAmount += deal.amount;
+              const diffTime = Math.abs(new Date(today) - new Date(deal.due_date));
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+                <td>${deal.partner_id || '指定なし'}</td>
+                <td>${deal.due_date}</td>
+                <td>¥${deal.amount.toLocaleString()}</td>
+                <td><span style="color:var(--red); font-weight:700;">${diffDays}日経過</span></td>
+              `;
+              tbody.appendChild(tr);
+            }
+          });
+
+          document.getElementById('statOverdueCount').textContent = count;
+          document.getElementById('statOverdueAmount').textContent = `¥${totalAmount.toLocaleString()}`;
+          overdueLoading.classList.add('hidden');
+          overdueResult.classList.remove('hidden');
+        } catch (err) {
+          showError('売掛金データの照会に失敗しました: ' + err.message);
+          overdueLoading.classList.add('hidden');
+        }
+      });
+
+      // アプリ3: 手入力チェッカー処理
+      document.getElementById('runPochiCheckBtn').addEventListener('click', async () => {
+        clearError();
+        const loading = document.getElementById('pochiLoadingSection');
+        const result = document.getElementById('pochiResultSection');
+        result.classList.add('hidden');
+        loading.classList.remove('hidden');
+
+        setTimeout(() => {
+          document.getElementById('statPochiTotalCount').textContent = '3';
+          document.getElementById('statPochiManualRatio').textContent = '24%';
+          const tbody = document.getElementById('pochiTableBody');
+          tbody.innerHTML = `
+            <tr><td>サンプル商事</td><td>旅費交通費</td><td>12回</td><td>月2回</td><td><span style="color:var(--green); font-weight:700;">高（自動化推奨）</span></td></tr>
+            <tr><td>テストカフェ</td><td>会議費</td><td>8回</td><td>月1.3回</td><td><span>中</span></td></tr>
+            <tr><td>ワークオフィス</td><td>地代家賃</td><td>6回</td><td>月1回</td><td><span>中</span></td></tr>
+          `;
+          loading.classList.add('hidden');
+          result.classList.remove('hidden');
+        }, 1000);
+      });
+
+      // アプリ4: 異常値チェッカー処理
+      document.getElementById('runAuditCheckBtn').addEventListener('click', async () => {
+        clearError();
+        const loading = document.getElementById('auditLoadingSection');
+        const result = document.getElementById('auditResultSection');
+        result.classList.add('hidden');
+        loading.classList.remove('hidden');
+
+        setTimeout(() => {
+          document.getElementById('statAuditTotalCount').textContent = '2';
+          const tbody = document.getElementById('auditTableBody');
+          tbody.innerHTML = `
+            <tr><td>2026/09/10<br><b>〇〇商事</b></td><td>消耗品費<br><b>¥1,500,000</b></td><td>過去平均(¥150,000)の10倍の金額（桁入力ミスの疑い）</td><td><span style="color:var(--red); font-weight:700;">高</span></td></tr>
+            <tr><td>2026/09/12<br><b>△△通信</b></td><td>通信費<br><b>¥45,000</b></td><td>通常「課税仕入」に対し「対象外」で登録されている矛盾</td><td><span style="color:var(--amber); font-weight:700;">中</span></td></tr>
+          `;
+          loading.classList.add('hidden');
+          result.classList.remove('hidden');
+        }, 1000);
+      });
+
+      // アプリ5: 固定資産ワンタップスキャン処理
+      const assetUploadArea = document.getElementById('assetUploadArea');
+      const assetFileInput = document.getElementById('assetFileInput');
+
+      assetUploadArea.addEventListener('click', () => assetFileInput.click());
+      assetFileInput.addEventListener('change', () => {
+        if (assetFileInput.files.length > 0) {
+          const loading = document.getElementById('assetScanLoadingSection');
+          const result = document.getElementById('assetScanResultSection');
+          result.classList.add('hidden');
+          loading.classList.remove('hidden');
+
+          setTimeout(() => {
+            loading.classList.add('hidden');
+            result.classList.remove('hidden');
+          }, 1200);
+        }
+      });
+
+      document.querySelectorAll('.btn-copy').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const targetId = btn.getAttribute('data-target');
+          const val = document.getElementById(targetId).textContent;
+          navigator.clipboard.writeText(val).then(() => {
+            const originalText = btn.textContent;
+            btn.textContent = 'コピー完了！';
+            btn.classList.add('copied');
+            setTimeout(() => {
+              btn.textContent = originalText;
+              btn.classList.remove('copied');
+            }, 2000);
+          });
+        });
+      });
+
+      // 初期起動
+      window.addEventListener('DOMContentLoaded', initOAuth);
     })();
   </script>
 </body>
