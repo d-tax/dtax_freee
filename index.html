@@ -1224,6 +1224,11 @@
             duplicates.forEach((group, index) => {
               const card = document.createElement('div');
               card.className = 'dedupe-group-card';
+              
+              // 事業者番号の表示形式を整形（未登録時のフォロー含む）
+              const num1 = group.p1.payer_walletable_id ? `事業者番号: ${group.p1.payer_walletable_id}` : '事業者番号: 未登録';
+              const num2 = group.p2.payer_walletable_id ? `事業者番号: ${group.p2.payer_walletable_id}` : '事業者番号: 未登録';
+
               card.innerHTML = `
                 <div class="dedupe-group-title">
                   <label>
@@ -1234,11 +1239,11 @@
                 <div class="dedupe-option-list">
                   <label class="dedupe-option">
                     <input type="radio" name="target_${index}" value="${group.p1.id}" checked>
-                    <span><b>${group.p1.name}</b> (ID: ${group.p1.id})</span>
+                    <span><b>${group.p1.name}</b> (${num1})</span>
                   </label>
                   <label class="dedupe-option">
                     <input type="radio" name="target_${index}" value="${group.p2.id}">
-                    <span><b>${group.p2.name}</b> (ID: ${group.p2.id})</span>
+                    <span><b>${group.p2.name}</b> (${num2})</span>
                   </label>
                 </div>
               `;
