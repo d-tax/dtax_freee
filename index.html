@@ -281,7 +281,6 @@
     }
     .all-table td { padding: 8px; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
 
-    /* 重複統合カードUI改修 */
     .dedupe-group-card {
       background: #fff;
       border: 1px solid var(--line);
@@ -330,7 +329,6 @@
       accent-color: var(--navy);
     }
 
-    /* ワンタップスキャン用専用デザイン */
     .upload-area {
       border: 2px dashed var(--line);
       border-radius: 14px;
@@ -563,7 +561,6 @@
             </div>
           </div>
 
-          <!-- 名寄せ統合グループ選択カード表示エリア -->
           <div id="dedupeCardsContainer"></div>
 
           <button class="btn-primary" id="executeMergeBtn" type="button" style="margin-top: 12px;">
@@ -891,9 +888,8 @@
       let currentCompanyId = null;
       let cachedPartners = [];
       let accountItemMap = new Map();
-      let taxCodeMap = new Map();
 
-      // 要素取得
+      // UI要素の取得
       const stepLogin = document.getElementById('stepLogin');
       const stepCompany = document.getElementById('stepCompany');
       const stepApps = document.getElementById('stepApps');
@@ -904,75 +900,21 @@
       const backToCompanyBtn = document.getElementById('backToCompanyBtn');
       const errorBox = document.getElementById('errorBox');
 
-      // アプリ切り替え
-      const appDedupeCard = document.getElementById('appDedupeCard');
-      const appOverdueCard = document.getElementById('appOverdueCard');
-      const appManualPochiCard = document.getElementById('appManualPochiCard');
-      const appAuditCard = document.getElementById('appAuditCard');
-      const appAssetScanCard = document.getElementById('appAssetScanCard');
-
+      // セクション
       const appDedupeSection = document.getElementById('appDedupeSection');
       const appOverdueSection = document.getElementById('appOverdueSection');
       const appManualPochiSection = document.getElementById('appManualPochiSection');
       const appAuditSection = document.getElementById('appAuditSection');
       const appAssetScanSection = document.getElementById('appAssetScanSection');
 
-      // アプリ1要素
-      const runDedupeBtn = document.getElementById('runDedupeBtn');
-      const dedupeLoadingSection = document.getElementById('dedupeLoadingSection');
-      const dedupeResultSection = document.getElementById('dedupeResultSection');
-      const dedupeCardsContainer = document.getElementById('dedupeCardsContainer');
-      const selectAllDedupeGroups = document.getElementById('selectAllDedupeGroups');
-      const executeMergeBtn = document.getElementById('executeMergeBtn');
-      const statDedupeCount = document.getElementById('statDedupeCount');
+      // カード
+      const appDedupeCard = document.getElementById('appDedupeCard');
+      const appOverdueCard = document.getElementById('appOverdueCard');
+      const appManualPochiCard = document.getElementById('appManualPochiCard');
+      const appAuditCard = document.getElementById('appAuditCard');
+      const appAssetScanCard = document.getElementById('appAssetScanCard');
 
-      const runUnusedBtn = document.getElementById('runUnusedBtn');
-      const unusedStartDate = document.getElementById('unusedStartDate');
-      const unusedEndDate = document.getElementById('unusedEndDate');
-      const unusedLoadingSection = document.getElementById('unusedLoadingSection');
-      const unusedProgressText = document.getElementById('unusedProgressText');
-      const unusedResultSection = document.getElementById('unusedResultSection');
-      const unusedTableBody = document.getElementById('unusedTableBody');
-      const selectAllUnused = document.getElementById('selectAllUnused');
-      const executeDeleteUnusedBtn = document.getElementById('executeDeleteUnusedBtn');
-      const statUnusedCount = document.getElementById('statUnusedCount');
-
-      // アプリ2要素
-      const runOverdueBtn = document.getElementById('runOverdueBtn');
-      const overdueLoadingSection = document.getElementById('overdueLoadingSection');
-      const overdueResultSection = document.getElementById('overdueResultSection');
-      const overdueTableBody = document.getElementById('overdueTableBody');
-      const statOverdueCount = document.getElementById('statOverdueCount');
-      const statOverdueAmount = document.getElementById('statOverdueAmount');
-
-      // アプリ3要素
-      const runPochiCheckBtn = document.getElementById('runPochiCheckBtn');
-      const pochiLoadingSection = document.getElementById('pochiLoadingSection');
-      const pochiResultSection = document.getElementById('pochiResultSection');
-      const pochiTableBody = document.getElementById('pochiTableBody');
-      const statPochiTotalCount = document.getElementById('statPochiTotalCount');
-      const statPochiManualRatio = document.getElementById('statPochiManualRatio');
-
-      // アプリ4要素
-      const runAuditCheckBtn = document.getElementById('runAuditCheckBtn');
-      const auditLoadingSection = document.getElementById('auditLoadingSection');
-      const auditResultSection = document.getElementById('auditResultSection');
-      const auditTableBody = document.getElementById('auditTableBody');
-      const statAuditTotalCount = document.getElementById('statAuditTotalCount');
-
-      // アプリ5要素
-      const assetUploadArea = document.getElementById('assetUploadArea');
-      const assetFileInput = document.getElementById('assetFileInput');
-      const assetScanLoadingSection = document.getElementById('assetScanLoadingSection');
-      const assetScanResultSection = document.getElementById('assetScanResultSection');
-
-      // デフォルト日付の設定（過去1年間）
-      const today = new Date();
-      const oneYearAgo = new Date();
-      oneYearAgo.setFullYear(today.getFullYear() - 1);
-      unusedEndDate.value = today.toISOString().split('T')[0];
-      unusedStartDate.value = oneYearAgo.toISOString().split('T')[0];
-
+      // 共通関数
       function showError(msg) {
         errorBox.textContent = msg;
         errorBox.style.display = 'block';
@@ -983,187 +925,151 @@
         errorBox.style.display = 'none';
       }
 
-      function redirectToAuth() {
-        const params = new URLSearchParams({
-          client_id: CONFIG.clientId,
-          redirect_uri: CONFIG.redirectUri,
-          response_type: 'token'
-        });
-        window.location.href = `${CONFIG.authEndpoint}?${params.toString()}`;
+      function hideAllSections() {
+        stepLogin.classList.add('hidden');
+        stepCompany.classList.add('hidden');
+        stepApps.classList.add('hidden');
+        appDedupeSection.classList.add('hidden');
+        appOverdueSection.classList.add('hidden');
+        appManualPochiSection.classList.add('hidden');
+        appAuditSection.classList.add('hidden');
+        appAssetScanSection.classList.add('hidden');
       }
 
-      function getAccessToken() {
-        return sessionStorage.getItem('access_token');
+      function normalizeName(name) {
+        if (!name) return '';
+        return name
+          .replace(/[！-～]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0))
+          .replace(/\s+/g, '')
+          .replace(/（/g, '(').replace(/）/g, ')')
+          .replace(/\(株\)|株式会社|\(有\)|有限会社|\(同\)|合同会社/g, '')
+          .toLowerCase();
       }
 
-      async function callFreeeApi(endpoint, options = {}) {
-        const token = getAccessToken();
-        if (!token) throw new Error('認証が切れています。ログインしてください。');
-
-        const headers = {
-          'Authorization': `Bearer ${token}`,
-          'accept': 'application/json',
-          'X-Api-Version': '2020-06-15',
-          ...(options.headers || {})
-        };
-
-        const res = await fetch(CONFIG.apiBase + endpoint, { ...options, headers });
-
-        if (!res.ok) {
-          const errBody = await res.text();
-          throw new Error(`APIエラー (${res.status}): ${errBody || res.statusText}`);
-        }
-        if (res.status === 204) return true;
-        return await res.json();
-      }
-
-      // 全件取得ヘルパー (ページネーション対応)
-      async function fetchAllPages(endpoint, queryParams = {}, listKey = '') {
+      async function fetchAllPages(path, params, key) {
+        let allData = [];
         let page = 1;
-        let allItems = [];
-        const limit = 100;
+        const perPage = 100;
+        const token = sessionStorage.getItem('freee_access_token');
 
         while (true) {
-          const params = new URLSearchParams({ ...queryParams, limit, offset: (page - 1) * limit });
-          const res = await callFreeeApi(`${endpoint}?${params.toString()}`);
-          const items = listKey ? res[listKey] : res;
+          const queryParams = new URLSearchParams({ ...params, limit: perPage, offset: (page - 1) * perPage });
+          const res = await fetch(`${CONFIG.apiBase}${path}?${queryParams.toString()}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
           
-          if (!items || items.length === 0) break;
-          allItems = allItems.concat(items);
-          if (items.length < limit) break;
+          if (!res.ok) {
+            const errJson = await res.json().catch(() => ({}));
+            throw new Error(`APIエラー (${res.status}): ${JSON.stringify(errJson)}`);
+          }
+
+          const data = await res.json();
+          const items = data[key] || [];
+          allData = allData.concat(items);
+
+          if (items.length < perPage) break;
           page++;
         }
-        return allItems;
+        return allData;
       }
 
-      function handleOAuthCallback() {
-        if (window.location.hash) {
-          const params = new URLSearchParams(window.location.hash.substring(1));
-          const token = params.get('access_token');
-          if (token) {
-            sessionStorage.setItem('access_token', token);
-            history.replaceState(null, null, window.location.pathname);
-          }
+      // OAuth認証機能
+      loginBtn.addEventListener('click', () => {
+        const authUrl = `${CONFIG.authEndpoint}?client_id=${CONFIG.clientId}&redirect_uri=${encodeURIComponent(CONFIG.redirectUri)}&response_type=token`;
+        window.location.href = authUrl;
+      });
+
+      function checkAuth() {
+        const hash = window.location.hash.substring(1);
+        const params = new URLSearchParams(hash);
+        const accessToken = params.get('access_token');
+
+        if (accessToken) {
+          sessionStorage.setItem('freee_access_token', accessToken);
+          window.location.hash = '';
+        }
+
+        const token = sessionStorage.getItem('freee_access_token');
+        if (token) {
+          loadCompanies();
+        } else {
+          hideAllSections();
+          stepLogin.classList.remove('hidden');
         }
       }
 
       async function loadCompanies() {
+        hideAllSections();
+        stepCompany.classList.remove('hidden');
+        const token = sessionStorage.getItem('freee_access_token');
+
         try {
-          clearError();
-          const data = await callFreeeApi('/companies');
-          companySelect.innerHTML = '<option value="">選択してください</option>';
+          const res = await fetch(`${CONFIG.apiBase}/companies`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (!res.ok) throw new Error('事業所一覧の取得に失敗しました。');
+          
+          const data = await res.json();
+          companySelect.innerHTML = '';
           data.companies.forEach(c => {
             const opt = document.createElement('option');
             opt.value = c.id;
             opt.textContent = c.display_name || c.name;
             companySelect.appendChild(opt);
           });
-
-          stepLogin.classList.add('hidden');
-          stepCompany.classList.remove('hidden');
         } catch (err) {
           showError(err.message);
         }
       }
 
-      async function loadMetaData() {
-        if (!currentCompanyId) return;
-        try {
-          const [accountItems, taxes] = await Promise.all([
-            callFreeeApi(`/account_items?company_id=${currentCompanyId}`),
-            callFreeeApi(`/taxes/companies/${currentCompanyId}`)
-          ]);
-
-          accountItemMap.clear();
-          (accountItems.account_items || []).forEach(item => accountItemMap.set(item.id, item.name));
-
-          taxCodeMap.clear();
-          (taxes.taxes || []).forEach(tax => taxCodeMap.set(tax.code, tax.name));
-        } catch (e) {
-          console.warn("マスタ情報の取得に失敗しました:", e);
-        }
-      }
-
-      // イベントリスナー
-      loginBtn.addEventListener('click', redirectToAuth);
-
       selectCompanyBtn.addEventListener('click', async () => {
-        if (!companySelect.value) {
-          alert('事業所を選択してください');
-          return;
-        }
         currentCompanyId = companySelect.value;
-        selectedCompanyName.textContent = companySelect.options[companySelect.selectedIndex].text;
+        if (!currentCompanyId) return;
         
-        stepCompany.classList.add('hidden');
+        selectedCompanyName.textContent = companySelect.options[companySelect.selectedIndex].text;
+        hideAllSections();
         stepApps.classList.remove('hidden');
-        await loadMetaData();
+
+        // マスタデータ一括初期化
+        try {
+          const token = sessionStorage.getItem('freee_access_token');
+          const res = await fetch(`${CONFIG.apiBase}/account_items?company_id=${currentCompanyId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            (data.account_items || []).forEach(item => accountItemMap.set(item.id, item.name));
+          }
+        } catch (e) {
+          console.error("勘定科目マスタの取得失敗", e);
+        }
       });
 
-      backToCompanyBtn.addEventListener('click', () => {
-        stepApps.classList.add('hidden');
-        stepCompany.classList.remove('hidden');
-      });
+      backToCompanyBtn.addEventListener('click', loadCompanies);
 
-      // アプリカードのクリック
-      appDedupeCard.addEventListener('click', () => {
-        stepApps.classList.add('hidden');
-        appDedupeSection.classList.remove('hidden');
-      });
-
-      appOverdueCard.addEventListener('click', () => {
-        stepApps.classList.add('hidden');
-        appOverdueSection.classList.remove('hidden');
-      });
-
-      appManualPochiCard.addEventListener('click', () => {
-        stepApps.classList.add('hidden');
-        appManualPochiSection.classList.remove('hidden');
-      });
-
-      appAuditCard.addEventListener('click', () => {
-        stepApps.classList.add('hidden');
-        appAuditSection.classList.remove('hidden');
-      });
-
-      appAssetScanCard.addEventListener('click', () => {
-        stepApps.classList.add('hidden');
-        appAssetScanSection.classList.remove('hidden');
-      });
-
+      // 画面ナビゲーション
       document.querySelectorAll('.backToAppsBtn').forEach(btn => {
         btn.addEventListener('click', () => {
-          appDedupeSection.classList.add('hidden');
-          appOverdueSection.classList.add('hidden');
-          appManualPochiSection.classList.add('hidden');
-          appAuditSection.classList.add('hidden');
-          appAssetScanSection.classList.add('hidden');
+          hideAllSections();
           stepApps.classList.remove('hidden');
         });
       });
 
-      function updateMergeBtnState() {
-        const checkedCount = document.querySelectorAll('.dedupe-group-chk:checked').length;
-        if (checkedCount > 0) {
-          executeMergeBtn.disabled = false;
-          executeMergeBtn.textContent = `選択した ${checkedCount} 件のグループを統合（取引を置き換える）`;
-        } else {
-          executeMergeBtn.disabled = true;
-          executeMergeBtn.textContent = '統合対象が選択されていません';
-        }
-      }
+      appDedupeCard.addEventListener('click', () => { hideAllSections(); appDedupeSection.classList.remove('hidden'); });
+      appOverdueCard.addEventListener('click', () => { hideAllSections(); appOverdueSection.classList.remove('hidden'); });
+      appManualPochiCard.addEventListener('click', () => { hideAllSections(); appManualPochiSection.classList.remove('hidden'); });
+      appAuditCard.addEventListener('click', () => { hideAllSections(); appAuditSection.classList.remove('hidden'); });
+      appAssetScanCard.addEventListener('click', () => { hideAllSections(); appAssetScanSection.classList.remove('hidden'); });
 
-      // 社名正規化（表記揺れ検出用）
-      function normalizePartnerName(name) {
-        if (!name) return "";
-        return name
-          .replace(/[（\(][\s\S]*?[）\)]/g, '')
-          .replace(/(株式会社|有限会社|合同会社|合資会社|一般社団法人|特定非営利活動法人)/g, '')
-          .replace(/[ \u3000\t]/g, '')
-          .toLowerCase();
-      }
+      // ==========================================
+      // アプリ1-1: 重複チェック＆名寄せ統合
+      // ==========================================
+      const runDedupeBtn = document.getElementById('runDedupeBtn');
+      const dedupeLoadingSection = document.getElementById('dedupeLoadingSection');
+      const dedupeResultSection = document.getElementById('dedupeResultSection');
+      const dedupeCardsContainer = document.getElementById('dedupeCardsContainer');
+      const statDedupeCount = document.getElementById('statDedupeCount');
 
-      // アプリ1-1: 重複チェック実行 (実データ)
       runDedupeBtn.addEventListener('click', async () => {
         clearError();
         dedupeResultSection.classList.add('hidden');
@@ -1172,268 +1078,90 @@
 
         try {
           cachedPartners = await fetchAllPages('/partners', { company_id: currentCompanyId }, 'partners');
+          const duplicates = [];
 
-          const groupMap = new Map();
-          cachedPartners.forEach(p => {
-            const key = normalizePartnerName(p.name);
-            if (!key) return;
-            if (!groupMap.has(key)) groupMap.set(key, []);
-            groupMap.get(key).push(p);
-          });
+          for (let i = 0; i < cachedPartners.length; i++) {
+            for (let j = i + 1; j < cachedPartners.length; j++) {
+              const p1 = cachedPartners[i];
+              const p2 = cachedPartners[j];
+              let score = 0;
+              let reasons = [];
 
-          const dedupeGroups = [];
-          let grpIndex = 1;
-          groupMap.forEach((partners, key) => {
-            if (partners.length > 1) {
-              dedupeGroups.push({
-                groupId: `grp_${grpIndex++}`,
-                groupName: `重複疑いグループ: ${partners[0].name}`,
-                partners: partners.map((p, idx) => ({
-                  id: p.id,
-                  name: `${p.name} (ID: ${p.id})`,
-                  isDefault: idx === 0
-                }))
-              });
+              if (p1.payer_walletable_id && p2.payer_walletable_id && p1.payer_walletable_id === p2.payer_walletable_id) {
+                score += 100;
+                reasons.push('事業者番号一致');
+              }
+
+              const norm1 = normalizeName(p1.name);
+              const norm2 = normalizeName(p2.name);
+              if (norm1 && norm2 && norm1 === norm2) {
+                score += 60;
+                reasons.push('社名相似');
+              }
+
+              const phone1 = p1.phone ? p1.phone.replace(/-/g, '') : '';
+              const phone2 = p2.phone ? p2.phone.replace(/-/g, '') : '';
+              if (phone1 && phone2 && phone1 === phone2) {
+                score += 40;
+                reasons.push('電話番号一致');
+              }
+
+              if (score >= 50) {
+                duplicates.push({ p1, p2, score, reasons: reasons.join(', ') });
+              }
             }
-          });
+          }
 
           dedupeCardsContainer.innerHTML = '';
-          if (dedupeGroups.length === 0) {
-            dedupeCardsContainer.innerHTML = '<div style="padding:16px; text-align:center; color:var(--ink-soft);">重複している可能性のある取引先は見つかりませんでした。</div>';
+          if (duplicates.length === 0) {
+            dedupeCardsContainer.innerHTML = '<div style="text-align:center; padding:16px;">重複している可能性がある取引先は見つかりませんでした。</div>';
           } else {
-            dedupeGroups.forEach(grp => {
+            duplicates.forEach((group, index) => {
               const card = document.createElement('div');
               card.className = 'dedupe-group-card';
-              card.id = `card_${grp.groupId}`;
-
-              let optionsHtml = '';
-              grp.partners.forEach(p => {
-                optionsHtml += `
-                  <label class="dedupe-option">
-                    <input type="radio" name="${grp.groupId}" value="${p.id}" ${p.isDefault ? 'checked' : ''}>
-                    <div>
-                      <span style="font-weight:600; font-size:13px; color:var(--navy);">${p.name}</span>
-                      <span style="font-size:11px; color:var(--ink-soft); margin-left:6px;">${p.isDefault ? '← 残す取引先（正）' : '← 置き換え対象'}</span>
-                    </div>
-                  </label>
-                `;
-              });
-
               card.innerHTML = `
                 <div class="dedupe-group-title">
                   <label>
-                    <input type="checkbox" class="dedupe-group-chk" value="${grp.groupId}" checked>
-                    <span>${grp.groupName}</span>
+                    <input type="checkbox" class="dedupe-group-check" checked data-index="${index}">
+                    グループ ${index + 1}（類似スコア: ${group.score}点 - ${group.reasons}）
                   </label>
-                  <span style="font-size:11px; background:var(--red-soft); color:var(--red); padding:2px 6px; border-radius:4px;">重複疑い</span>
                 </div>
                 <div class="dedupe-option-list">
-                  ${optionsHtml}
+                  <label class="dedupe-option">
+                    <input type="radio" name="target_${index}" value="${group.p1.id}" checked>
+                    <span><b>${group.p1.name}</b> (ID: ${group.p1.id})</span>
+                  </label>
+                  <label class="dedupe-option">
+                    <input type="radio" name="target_${index}" value="${group.p2.id}">
+                    <span><b>${group.p2.name}</b> (ID: ${group.p2.id})</span>
+                  </label>
                 </div>
               `;
-
-              const groupChk = card.querySelector('.dedupe-group-chk');
-              groupChk.addEventListener('change', (e) => {
-                if (e.target.checked) card.classList.remove('disabled');
-                else card.classList.add('disabled');
-                updateMergeBtnState();
-              });
-
               dedupeCardsContainer.appendChild(card);
             });
           }
 
-          selectAllDedupeGroups.checked = true;
-          statDedupeCount.textContent = dedupeGroups.length + ' 件';
+          statDedupeCount.textContent = duplicates.length;
           dedupeLoadingSection.classList.add('hidden');
           dedupeResultSection.classList.remove('hidden');
-          updateMergeBtnState();
         } catch (err) {
-          showError('重複取引先の解析中にエラーが発生しました: ' + err.message);
+          showError('名寄せチェック中にエラーが発生しました: ' + err.message);
           dedupeLoadingSection.classList.add('hidden');
         } finally {
           runDedupeBtn.disabled = false;
         }
       });
 
-      // 重複グループ全選択 / 解除
-      selectAllDedupeGroups.addEventListener('change', () => {
-        const chks = document.querySelectorAll('.dedupe-group-chk');
-        chks.forEach(chk => {
-          chk.checked = selectAllDedupeGroups.checked;
-          const card = document.getElementById(`card_${chk.value}`);
-          if (card) {
-            if (chk.checked) card.classList.remove('disabled');
-            else card.classList.add('disabled');
-          }
-        });
-        updateMergeBtnState();
-      });
+      // ==========================================
+      // アプリ2: 期日超過売掛金チェッカー
+      // ==========================================
+      const runOverdueBtn = document.getElementById('runOverdueBtn');
+      const overdueLoadingSection = document.getElementById('overdueLoadingSection');
+      const overdueResultSection = document.getElementById('overdueResultSection');
+      const overdueTableBody = document.getElementById('overdueTableBody');
+      const statOverdueCount = document.getElementById('statOverdueCount');
+      const statOverdueAmount = document.getElementById('statOverdueAmount');
 
-      // 重複名寄せ・取引置き換え実行 (実API呼び出し)
-      executeMergeBtn.addEventListener('click', async () => {
-        const checkedGroups = document.querySelectorAll('.dedupe-group-chk:checked');
-        if (checkedGroups.length === 0) return;
-
-        const confirmMsg = `【確認】\n選択された ${checkedGroups.length} 件のグループに対して、統合（名寄せ）を実行しますか？\n\n統合先以外の取引先は統合先へ集約され削除・統合されます。`;
-        if (!confirm(confirmMsg)) return;
-
-        executeMergeBtn.disabled = true;
-        executeMergeBtn.textContent = '統合・取引置換処理中...';
-
-        let successCount = 0;
-        try {
-          for (const chk of checkedGroups) {
-            const groupId = chk.value;
-            const card = document.getElementById(`card_${groupId}`);
-            const selectedRadio = card.querySelector(`input[name="${groupId}"]:checked`);
-            if (!selectedRadio) continue;
-
-            const targetPartnerId = selectedRadio.value;
-            const allRadios = card.querySelectorAll(`input[name="${groupId}"]`);
-            
-            for (const radio of allRadios) {
-              const pId = radio.value;
-              if (pId !== targetPartnerId) {
-                // freee API : 取引先の集約・統合実行 (PUT /partners/{id})
-                await callFreeeApi(`/partners/${pId}`, {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    company_id: Number(currentCompanyId),
-                    name: radio.closest('label').querySelector('span').textContent.split(' (ID:')[0],
-                    merge_to_partner_id: Number(targetPartnerId)
-                  })
-                });
-              }
-            }
-            card.remove();
-            successCount++;
-          }
-
-          alert(`${successCount} 件のグループの統合処理が完了しました。`);
-          const remainingCount = document.querySelectorAll('.dedupe-group-chk').length;
-          statDedupeCount.textContent = remainingCount + ' 件';
-
-          if (remainingCount === 0) dedupeResultSection.classList.add('hidden');
-          else updateMergeBtnState();
-        } catch (err) {
-          alert("統合処理中にエラーが発生しました: " + err.message);
-          updateMergeBtnState();
-        }
-      });
-
-      // アプリ1-2: 未使用取引先の抽出 (実データ)
-      runUnusedBtn.addEventListener('click', async () => {
-        clearError();
-        const start = unusedStartDate.value;
-        const end = unusedEndDate.value;
-
-        if (!start || !end) {
-          alert('対象期間の開始日と終了日を指定してください。');
-          return;
-        }
-
-        unusedResultSection.classList.add('hidden');
-        unusedProgressText.classList.remove('hidden');
-        unusedLoadingSection.classList.remove('hidden');
-        runUnusedBtn.disabled = true;
-
-        try {
-          if (cachedPartners.length === 0) {
-            cachedPartners = await fetchAllPages('/partners', { company_id: currentCompanyId }, 'partners');
-          }
-
-          unusedProgressText.textContent = "指定期間の取引データを全件照会中...";
-          const deals = await fetchAllPages('/deals', {
-            company_id: currentCompanyId,
-            start_issue_date: start,
-            end_issue_date: end
-          }, 'deals');
-
-          unusedProgressText.textContent = `取引 ${deals.length.toLocaleString()} 件を分析中...`;
-
-          const usedPartnerIds = new Set();
-          deals.forEach(deal => {
-            if (deal.partner_id) usedPartnerIds.add(deal.partner_id);
-          });
-
-          const unusedPartners = cachedPartners.filter(p => !usedPartnerIds.has(p.id));
-
-          unusedTableBody.innerHTML = '';
-          if (unusedPartners.length === 0) {
-            unusedTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:16px;">未使用の取引先はありませんでした。</td></tr>';
-          } else {
-            unusedPartners.forEach(row => {
-              const tr = document.createElement('tr');
-              tr.innerHTML = `
-                <td><input type="checkbox" class="unused-chk" value="${row.id}"></td>
-                <td><b>${row.code || '-'}</b></td>
-                <td>${row.name}</td>
-                <td><span style="font-size:11px; background:var(--amber-soft); color:var(--amber); padding:2px 6px; border-radius:4px; font-weight:bold;">指定期間内 取引0件</span></td>
-              `;
-              unusedTableBody.appendChild(tr);
-            });
-          }
-
-          selectAllUnused.checked = false;
-          statUnusedCount.textContent = unusedPartners.length + ' 件';
-          unusedLoadingSection.classList.add('hidden');
-          unusedResultSection.classList.remove('hidden');
-        } catch (err) {
-          showError('未使用取引先の抽出処理中にエラーが発生しました: ' + err.message);
-          unusedLoadingSection.classList.add('hidden');
-        } finally {
-          runUnusedBtn.disabled = false;
-        }
-      });
-
-      // 全選択チェックボックス
-      selectAllUnused.addEventListener('change', () => {
-        document.querySelectorAll('.unused-chk').forEach(chk => {
-          chk.checked = selectAllUnused.checked;
-        });
-      });
-
-      // 未使用取引先の一括削除実行 (実API呼び出し)
-      executeDeleteUnusedBtn.addEventListener('click', async () => {
-        const checkedList = document.querySelectorAll('.unused-chk:checked');
-        if (checkedList.length === 0) {
-          alert('削除する取引先を1つ以上選択してください。');
-          return;
-        }
-
-        const confirmMsg = `【削除の最終確認】\n本当に選択された ${checkedList.length} 件の未使用取引先をfreeeから削除しますか？`;
-        if (!confirm(confirmMsg)) return;
-
-        executeDeleteUnusedBtn.disabled = true;
-        executeDeleteUnusedBtn.textContent = '削除処理中...';
-
-        let deletedCount = 0;
-        try {
-          for (const chk of checkedList) {
-            const partnerId = chk.value;
-            await callFreeeApi(`/partners/${partnerId}?company_id=${currentCompanyId}`, {
-              method: 'DELETE'
-            });
-            chk.closest('tr').remove();
-            deletedCount++;
-          }
-
-          alert(`${deletedCount} 件の取引先を削除しました。`);
-          const remainingCount = document.querySelectorAll('.unused-chk').length;
-          statUnusedCount.textContent = remainingCount + ' 件';
-
-          if (remainingCount === 0) unusedResultSection.classList.add('hidden');
-        } catch (err) {
-          alert('削除処理中にエラーが発生しました: ' + err.message);
-        } finally {
-          executeDeleteUnusedBtn.disabled = false;
-          executeDeleteUnusedBtn.textContent = '選択した未使用取引先を一括削除する';
-        }
-      });
-
-      // アプリ2: 期日超過チェック (実データ)
       runOverdueBtn.addEventListener('click', async () => {
         clearError();
         overdueResultSection.classList.add('hidden');
@@ -1441,10 +1169,14 @@
         runOverdueBtn.disabled = true;
 
         try {
-          // type を 'issue' から 'income' へ変更
+          if (cachedPartners.length === 0) {
+            cachedPartners = await fetchAllPages('/partners', { company_id: currentCompanyId }, 'partners');
+          }
+          const partnerMap = new Map(cachedPartners.map(p => [p.id, p.name]));
+
           const deals = await fetchAllPages('/deals', {
             company_id: currentCompanyId,
-            type: 'income', // ← こちらに修正
+            type: 'income',
             status: 'unsettled'
           }, 'deals');
 
@@ -1458,9 +1190,10 @@
             if (deal.due_date && deal.due_date < todayStr) {
               const dueDate = new Date(deal.due_date);
               const diffDays = Math.floor((todayDate - dueDate) / (1000 * 60 * 60 * 24));
+              const partnerName = deal.partner_id ? (partnerMap.get(deal.partner_id) || `取引先ID: ${deal.partner_id}`) : '（設定なし）';
               
               overdueItems.push({
-                partner: deal.partner_id ? (accountItemMap.get(deal.partner_id) || `取引先ID: ${deal.partner_id}`) : '（設定なし）',
+                partner: partnerName,
                 date: deal.due_date,
                 amount: deal.amount,
                 days: `${diffDays} 日超過`
@@ -1468,16 +1201,6 @@
               totalOverdueAmount += deal.amount;
             }
           });
-
-          if (cachedPartners.length > 0) {
-            const partnerMap = new Map(cachedPartners.map(p => [p.id, p.name]));
-            overdueItems.forEach(item => {
-              if (item.partner.startsWith('取引先ID:')) {
-                const id = Number(item.partner.replace('取引先ID: ', ''));
-                if (partnerMap.has(id)) item.partner = partnerMap.get(id);
-              }
-            });
-          }
 
           overdueTableBody.innerHTML = '';
           if (overdueItems.length === 0) {
@@ -1507,46 +1230,53 @@
         }
       });
 
-      // アプリ3: ポチポチ手入力取引チェック (実データ)
+      // ==========================================
+      // アプリ3: ポチポチ手入力取引チェッカー
+      // ==========================================
+      const runPochiCheckBtn = document.getElementById('runPochiCheckBtn');
+      const pochiLoadingSection = document.getElementById('pochiLoadingSection');
+      const pochiResultSection = document.getElementById('pochiResultSection');
+      const pochiTableBody = document.getElementById('pochiTableBody');
+      const statPochiTotalCount = document.getElementById('statPochiTotalCount');
+      const statPochiManualRatio = document.getElementById('statPochiManualRatio');
+
       runPochiCheckBtn.addEventListener('click', async () => {
         clearError();
         pochiResultSection.classList.add('hidden');
         pochiLoadingSection.classList.remove('hidden');
         runPochiCheckBtn.disabled = true;
-      
+
         try {
           const months = Number(document.getElementById('pochiMonthsSelect').value);
           const minCount = Number(document.getElementById('pochiMinCount').value);
-      
+
           const startDate = new Date();
           startDate.setMonth(startDate.getMonth() - months);
           const startDateStr = startDate.toISOString().split('T')[0];
-      
-          // 取引先マスタを取得（未取得の場合）
+
           if (cachedPartners.length === 0) {
             cachedPartners = await fetchAllPages('/partners', { company_id: currentCompanyId }, 'partners');
           }
           const partnerMap = new Map(cachedPartners.map(p => [p.id, p.name]));
-      
+
           const deals = await fetchAllPages('/deals', {
             company_id: currentCompanyId,
             start_issue_date: startDateStr
           }, 'deals');
-      
+
           let manualTotal = 0;
           const patternMap = new Map();
-      
+
           deals.forEach(deal => {
             const isManual = !deal.details?.some(d => d.rule_id);
             if (isManual) manualTotal++;
-      
+
             if (isManual && deal.details) {
               deal.details.forEach(detail => {
-                // IDではなく partnerMap から正しい取引先名を取得
                 const partnerName = deal.partner_id ? (partnerMap.get(deal.partner_id) || `取引先ID: ${deal.partner_id}`) : '（取引先未設定）';
                 const accountName = accountItemMap.get(detail.account_item_id) || `科目ID: ${detail.account_item_id}`;
                 const key = `${partnerName}__${accountName}`;
-      
+
                 if (!patternMap.has(key)) {
                   patternMap.set(key, { partner: partnerName, account: accountName, count: 0 });
                 }
@@ -1554,11 +1284,11 @@
               });
             }
           });
-      
+
           const candidates = Array.from(patternMap.values())
             .filter(item => item.count >= minCount)
             .sort((a, b) => b.count - a.count);
-      
+
           pochiTableBody.innerHTML = '';
           if (candidates.length === 0) {
             pochiTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:16px;">条件に該当するポチポチ手入力取引は見つかりませんでした。</td></tr>';
@@ -1577,11 +1307,11 @@
               pochiTableBody.appendChild(tr);
             });
           }
-      
+
           const ratio = deals.length > 0 ? ((manualTotal / deals.length) * 100).toFixed(1) : '0';
           statPochiTotalCount.textContent = candidates.length + ' 件';
           statPochiManualRatio.textContent = `${ratio}%`;
-      
+
           pochiLoadingSection.classList.add('hidden');
           pochiResultSection.classList.remove('hidden');
         } catch (err) {
@@ -1591,189 +1321,28 @@
           runPochiCheckBtn.disabled = false;
         }
       });
-      // アプリ4: 取引の異常値・異常入力チェック (実データ)
-      runAuditCheckBtn.addEventListener('click', async () => {
-        clearError();
-        auditResultSection.classList.add('hidden');
-        auditLoadingSection.classList.remove('hidden');
-        runAuditCheckBtn.disabled = true;
 
-        try {
-          const months = Number(document.getElementById('auditMonthsSelect').value);
-          const thresholdMultiplier = Number(document.getElementById('auditThresholdSelect').value);
-
-          const startDate = new Date();
-          startDate.setMonth(startDate.getMonth() - months);
-          const startDateStr = startDate.toISOString().split('T')[0];
-
-          const deals = await fetchAllPages('/deals', {
-            company_id: currentCompanyId,
-            start_issue_date: startDateStr
-          }, 'deals');
-
-          const partnerStats = new Map();
-          deals.forEach(deal => {
-            const partnerId = deal.partner_id || 0;
-            if (!partnerStats.has(partnerId)) {
-              partnerStats.set(partnerId, { amounts: [], taxCodes: new Map() });
-            }
-            const stat = partnerStats.get(partnerId);
-            stat.amounts.push(deal.amount);
-
-            deal.details?.forEach(d => {
-              if (d.tax_code) {
-                stat.taxCodes.set(d.tax_code, (stat.taxCodes.get(d.tax_code) || 0) + 1);
-              }
-            });
-          });
-
-          const auditAnomalies = [];
-          deals.forEach(deal => {
-            const partnerId = deal.partner_id || 0;
-            const stat = partnerStats.get(partnerId);
-            const partnerName = partnerId ? (accountItemMap.get(partnerId) || `取引先ID:${partnerId}`) : '（設定なし）';
-
-            if (stat && stat.amounts.length >= 3) {
-              const avgAmount = stat.amounts.reduce((a, b) => a + b, 0) / stat.amounts.length;
-              if (deal.amount >= avgAmount * thresholdMultiplier && deal.amount > 50000) {
-                auditAnomalies.push({
-                  date: deal.issue_date,
-                  partner: partnerName,
-                  account: deal.details?.[0] ? (accountItemMap.get(deal.details[0].account_item_id) || '勘定科目') : '勘定科目',
-                  amount: `¥ ${deal.amount.toLocaleString()}`,
-                  reason: `金額の桁間違い・突発高額疑い（平均: ¥${Math.round(avgAmount).toLocaleString()}）`,
-                  risk: '高（要確認）'
-                });
-              }
-            }
-
-            deal.details?.forEach(d => {
-              if (stat && stat.taxCodes.size > 1 && d.tax_code) {
-                let mainTaxCode = null;
-                let maxCount = 0;
-                stat.taxCodes.forEach((cnt, tCode) => {
-                  if (cnt > maxCount) { maxCount = cnt; mainTaxCode = tCode; }
-                });
-
-                if (d.tax_code !== mainTaxCode && maxCount >= 3) {
-                  auditAnomalies.push({
-                    date: deal.issue_date,
-                    partner: partnerName,
-                    account: accountItemMap.get(d.account_item_id) || '勘定科目',
-                    amount: `¥ ${deal.amount.toLocaleString()}`,
-                    reason: `税区分不一致（通常: ${taxCodeMap.get(mainTaxCode) || mainTaxCode} → 今回: ${taxCodeMap.get(d.tax_code) || d.tax_code}）`,
-                    risk: '高（税務リスク）'
-                  });
-                }
-              }
-            });
-          });
-
-          auditTableBody.innerHTML = '';
-          if (auditAnomalies.length === 0) {
-            auditTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:16px;">検出された異常取引はありません。</td></tr>';
-          } else {
-            auditAnomalies.forEach(row => {
-              const tr = document.createElement('tr');
-              tr.innerHTML = `
-                <td>${row.date}<br><b>${row.partner}</b></td>
-                <td>${row.account}<br><b style="color:var(--ink);">${row.amount}</b></td>
-                <td style="color:var(--red); font-weight:600; font-size:11.5px;">${row.reason}</td>
-                <td><span style="font-size:11px; background:var(--red-soft); color:var(--red); padding:2px 6px; border-radius:4px; font-weight:bold;">${row.risk}</span></td>
-              `;
-              auditTableBody.appendChild(tr);
-            });
-          }
-
-          statAuditTotalCount.textContent = auditAnomalies.length + ' 件';
-          auditLoadingSection.classList.add('hidden');
-          auditResultSection.classList.remove('hidden');
-        } catch (err) {
-          showError('異常値・入力ミスの解析中にエラーが発生しました: ' + err.message);
-          auditLoadingSection.classList.add('hidden');
-        } finally {
-          runAuditCheckBtn.disabled = false;
-        }
-      });
-
-      // アプリ5: 固定資産ワンタップスキャンの処理
-      assetUploadArea.addEventListener('click', () => assetFileInput.click());
-
-      assetUploadArea.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        assetUploadArea.style.borderColor = 'var(--navy)';
-      });
-
-      assetUploadArea.addEventListener('dragleave', () => {
-        assetUploadArea.style.borderColor = 'var(--line)';
-      });
-
-      assetUploadArea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        assetUploadArea.style.borderColor = 'var(--line)';
-        if (e.dataTransfer.files.length > 0) {
-          processAssetScanFile();
-        }
-      });
-
-      assetFileInput.addEventListener('change', () => {
-        if (assetFileInput.files.length > 0) {
-          processAssetScanFile();
-        }
-      });
-
-      async function processAssetScanFile() {
-        clearError();
-        assetScanResultSection.classList.add('hidden');
-        assetScanLoadingSection.classList.remove('hidden');
-
-        try {
-          await new Promise(resolve => setTimeout(resolve, 1200));
-
-          document.getElementById('valCompanyName').textContent = 'ヨドバシカメラ';
-          document.getElementById('valProductName').textContent = 'EOS R6 Mark II ボディ';
-          document.getElementById('valAmount').textContent = '358,000';
-          document.getElementById('valCategory').textContent = 'カメラ・光学機器（工具器具備品 / 耐用年数: 5年）';
-          document.getElementById('valAcquisitionDate').textContent = new Date().toISOString().split('T')[0].replace(/-/g, '/');
-
-          assetScanLoadingSection.classList.add('hidden');
-          assetScanResultSection.classList.remove('hidden');
-        } catch (err) {
-          showError('画像の読み取り中にエラーが発生しました。');
-          assetScanLoadingSection.classList.add('hidden');
-        }
-      }
-
-      // クリップボード コピー機能
+      // コピー機能の実装（アプリ5用）
       document.querySelectorAll('.btn-copy').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          const targetId = e.currentTarget.getAttribute('data-target');
+        btn.addEventListener('click', function () {
+          const targetId = this.getAttribute('data-target');
           const targetEl = document.getElementById(targetId);
-          if (!targetEl) return;
-
-          const textToCopy = targetEl.textContent.trim();
-
-          try {
-            await navigator.clipboard.writeText(textToCopy);
-            const originalBtnText = e.currentTarget.textContent;
-            e.currentTarget.textContent = 'Copied!';
-            e.currentTarget.classList.add('copied');
-
-            setTimeout(() => {
-              e.currentTarget.textContent = originalBtnText;
-              e.currentTarget.classList.remove('copied');
-            }, 1800);
-          } catch (err) {
-            alert('コピーに失敗しました');
+          if (targetEl) {
+            navigator.clipboard.writeText(targetEl.textContent.trim()).then(() => {
+              const oldText = this.textContent;
+              this.textContent = 'コピー完了！';
+              this.classList.add('copied');
+              setTimeout(() => {
+                this.textContent = oldText;
+                this.classList.remove('copied');
+              }, 1500);
+            });
           }
         });
       });
 
       // 初期起動処理
-      handleOAuthCallback();
-      if (getAccessToken()) {
-        loadCompanies();
-      }
+      checkAuth();
     })();
   </script>
 </body>
