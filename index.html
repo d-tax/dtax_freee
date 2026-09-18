@@ -550,12 +550,16 @@
         </div>
 
         <div id="dedupeResultSection" class="hidden">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <div>重複の可能性があるグループ: <span id="statDedupeCount">0</span> 件</div>
-            <button id="downloadDedupeCsvBtn" class="btn btn-secondary">判定結果をCSV出力</button>
+          <div class="summary">
+            <div class="summary-stats">
+              <div class="stat"><span class="num danger" id="statDedupeCount">0</span><span class="lbl">検出された重複疑いグループ数</span></div>
+            </div>
+            <div style="font-size: 12px;">
+              <label style="cursor: pointer; font-weight: 600; color: var(--navy);">
+                <input type="checkbox" id="selectAllDedupeGroups" checked> すべて選択/解除
+              </label>
+            </div>
           </div>
-          <div id="dedupeCardsContainer"></div>
-        </div>
 
           <div id="dedupeCardsContainer"></div>
 
@@ -1058,18 +1062,15 @@
       appAssetScanCard.addEventListener('click', () => { hideAllSections(); appAssetScanSection.classList.remove('hidden'); });
 
      // ==========================================
-      // アプリ1-1: 重複チェック＆名寄せ統合（CSV出力＆両方残す対応版）
+      // アプリ1-1: 重複チェック＆名寄せ統合（バランス再調整版）
       // ==========================================
       const runDedupeBtn = document.getElementById('runDedupeBtn');
       const dedupeLoadingSection = document.getElementById('dedupeLoadingSection');
       const dedupeResultSection = document.getElementById('dedupeResultSection');
       const dedupeCardsContainer = document.getElementById('dedupeCardsContainer');
       const statDedupeCount = document.getElementById('statDedupeCount');
-      const downloadDedupeCsvBtn = document.getElementById('downloadDedupeCsvBtn');
 
-      let currentDuplicates = []; // 検出された重複結果を保持する配列
-
-      // 住所の正規化
+      // 住所の表記揺れを正規化
       function normalizeAddress(addr) {
         if (!addr) return '';
         return addr
@@ -1082,7 +1083,7 @@
           .toLowerCase();
       }
 
-      // 社名の正規化（法人格除外）
+      // 社名から法人格のみを取り除いて正規化
       function cleanCompanyName(name) {
         if (!name) return '';
         return name
@@ -1094,7 +1095,7 @@
           .toLowerCase();
       }
 
-      // レーベンシュタイン距離
+      // レーベンシュタイン距離（編集距離）
       function getLevenshteinDistance(a, b) {
         if (!a || !b) return Math.max(a ? a.length : 0, b ? b.length : 0);
         const matrix = [];
@@ -1117,6 +1118,7 @@
         return matrix[b.length][a.length];
       }
 
+      // 類似度計算（0.0 ～ 1.0）
       function getStringSimilarity(str1, str2) {
         if (!str1 || !str2) return 0;
         const dist = getLevenshteinDistance(str1, str2);
@@ -1124,7 +1126,6 @@
         return maxLen === 0 ? 1.0 : (1.0 - dist / maxLen);
       }
 
-      // 名寄せチェック実行
       runDedupeBtn.addEventListener('click', async () => {
         clearError();
         dedupeResultSection.classList.add('hidden');
@@ -1133,7 +1134,9 @@
 
         try {
           cachedPartners = await fetchAllPages('/partners', { company_id: currentCompanyId }, 'partners');
-          currentDuplicates = [];
+          const duplicates = [];
+
+          // 一般的な業界共通ワード（これら「だけ」の一致の場合は加算スコアを抑制）
           const commonWords = ['自動車', '工業', '建設', '不動産', '商事', '産業', 'システム', 'クリニック', '商店'];
 
           for (let i = 0; i < cachedPartners.length; i++) {
@@ -1143,11 +1146,13 @@
               let score = 0;
               let reasons = [];
 
+              // 1. インボイス・事業者登録番号の一致（確実）
               if (p1.payer_walletable_id && p2.payer_walletable_id && p1.payer_walletable_id === p2.payer_walletable_id) {
                 score += 100;
                 reasons.push('事業者番号一致');
               }
 
+              // 2. 社名比較（法人格除外後）
               const name1 = cleanCompanyName(p1.name);
               const name2 = cleanCompanyName(p2.name);
 
@@ -1156,16 +1161,19 @@
                   score += 60;
                   reasons.push('社名完全一致');
                 } else {
+                  // 部分一致（どちらかが含まれる）
                   const minLen = Math.min(name1.length, name2.length);
                   if (minLen >= 2 && (name1.includes(name2) || name2.includes(name1))) {
+                    // 単に「自動車工業」などの共通ワードだけで一致していないか判定
                     const isOnlyCommon = commonWords.some(w => (name1 === w || name2 === w));
                     if (!isOnlyCommon) {
                       score += 35;
                       reasons.push('社名部分一致');
                     }
                   } else {
+                    // 類似度計算（文字の並びの近さ）
                     const sim = getStringSimilarity(name1, name2);
-                    if (sim >= 0.5) {
+                    if (sim >= 0.5) { // 50%以上類似
                       score += Math.round(sim * 35);
                       reasons.push(`社名類似(${Math.round(sim * 100)}%)`);
                     }
@@ -1173,6 +1181,7 @@
                 }
               }
 
+              // 3. 住所比較（表記揺れ吸収）
               const addr1 = normalizeAddress((p1.street_name1 || '') + (p1.street_name2 || ''));
               const addr2 = normalizeAddress((p2.street_name1 || '') + (p2.street_name2 || ''));
               if (addr1 && addr2) {
@@ -1185,6 +1194,7 @@
                 }
               }
 
+              // 4. 電話番号比較（ハイフン無視・末尾7桁以上一致）
               const phone1 = p1.phone ? p1.phone.replace(/\D/g, '') : '';
               const phone2 = p2.phone ? p2.phone.replace(/\D/g, '') : '';
               if (phone1 && phone2) {
@@ -1197,22 +1207,25 @@
                 }
               }
 
+              // 【判定閾値】30点以上をピックアップ
               if (score >= 30) {
-                currentDuplicates.push({ p1, p2, score, reasons: reasons.join(', ') });
+                duplicates.push({ p1, p2, score, reasons: reasons.join(', ') });
               }
             }
           }
 
-          currentDuplicates.sort((a, b) => b.score - a.score);
+          // スコアが高い順に並び替え
+          duplicates.sort((a, b) => b.score - a.score);
 
           dedupeCardsContainer.innerHTML = '';
-          if (currentDuplicates.length === 0) {
+          if (duplicates.length === 0) {
             dedupeCardsContainer.innerHTML = '<div style="text-align:center; padding:16px;">重複している可能性がある取引先は見つかりませんでした。</div>';
           } else {
-            currentDuplicates.forEach((group, index) => {
+            duplicates.forEach((group, index) => {
               const card = document.createElement('div');
               card.className = 'dedupe-group-card';
               
+              // 事業者番号の表示形式を整形（未登録時のフォロー含む）
               const num1 = group.p1.payer_walletable_id ? `事業者番号: ${group.p1.payer_walletable_id}` : '事業者番号: 未登録';
               const num2 = group.p2.payer_walletable_id ? `事業者番号: ${group.p2.payer_walletable_id}` : '事業者番号: 未登録';
 
@@ -1223,18 +1236,14 @@
                     グループ ${index + 1}（検出スコア: ${group.score}点 - ${group.reasons}）
                   </label>
                 </div>
-                <div class="dedupe-option-list" style="margin-top: 8px;">
-                  <label class="dedupe-option" style="display:block; margin-bottom: 4px;">
+                <div class="dedupe-option-list">
+                  <label class="dedupe-option">
                     <input type="radio" name="target_${index}" value="${group.p1.id}" checked>
-                    <span><b>【残す】</b> ${group.p1.name} (${num1})</span>
+                    <span><b>${group.p1.name}</b> (${num1})</span>
                   </label>
-                  <label class="dedupe-option" style="display:block; margin-bottom: 4px;">
+                  <label class="dedupe-option">
                     <input type="radio" name="target_${index}" value="${group.p2.id}">
-                    <span><b>【残す】</b> ${group.p2.name} (${num2})</span>
-                  </label>
-                  <label class="dedupe-option" style="display:block; margin-bottom: 4px;">
-                    <input type="radio" name="target_${index}" value="both">
-                    <span><b>【両方残す】</b> （統合しない / 別会社として扱う）</span>
+                    <span><b>${group.p2.name}</b> (${num2})</span>
                   </label>
                 </div>
               `;
@@ -1242,7 +1251,7 @@
             });
           }
 
-          statDedupeCount.textContent = currentDuplicates.length;
+          statDedupeCount.textContent = duplicates.length;
           dedupeLoadingSection.classList.add('hidden');
           dedupeResultSection.classList.remove('hidden');
         } catch (err) {
@@ -1252,67 +1261,6 @@
           runDedupeBtn.disabled = false;
         }
       });
-
-      // CSVダウンロード機能
-      downloadDedupeCsvBtn.addEventListener('click', () => {
-        if (currentDuplicates.length === 0) {
-          alert('出力対象のデータがありません。');
-          return;
-        }
-
-        const csvRows = [
-          ['グループ', 'スコア', '判定理由', '取引先名A', 'ID_A', '事業者番号_A', '取引先名B', 'ID_B', '事業者番号_B', '選択ステータス', '残す取引先ID']
-        ];
-
-        currentDuplicates.forEach((group, index) => {
-          const isChecked = document.querySelector(`.dedupe-group-check[data-index="${index}"]`)?.checked;
-          if (!isChecked) return; // チェックが外れているグループはスキップ
-
-          const selectedOption = document.querySelector(`input[name="target_${index}"]:checked`)?.value;
-          
-          let statusText = '';
-          let keepId = '';
-
-          if (selectedOption === 'both') {
-            statusText = '両方残す（統合なし）';
-            keepId = '両方';
-          } else if (selectedOption === String(group.p1.id)) {
-            statusText = `${group.p1.name}を残す`;
-            keepId = group.p1.id;
-          } else if (selectedOption === String(group.p2.id)) {
-            statusText = `${group.p2.name}を残す`;
-            keepId = group.p2.id;
-          }
-
-          csvRows.push([
-            `グループ${index + 1}`,
-            group.score,
-            `"${group.reasons}"`,
-            `"${group.p1.name}"`,
-            group.p1.id,
-            group.p1.payer_walletable_id || '未登録',
-            `"${group.p2.name}"`,
-            group.p2.id,
-            group.p2.payer_walletable_id || '未登録',
-            `"${statusText}"`,
-            keepId
-          ]);
-        });
-
-        // BOMを付与して文字化け防止（UTF-8）
-        const csvContent = '\uFEFF' + csvRows.map(e => e.join(',')).join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.setAttribute('href', url);
-        link.setAttribute('download', `名寄せ重複チェック結果_${new Date().toISOString().slice(0, 10)}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      });
-
-
-      
       // ==========================================
       // アプリ2: 期日超過売掛金チェッカー
       // ==========================================
