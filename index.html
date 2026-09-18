@@ -1061,14 +1061,58 @@
       appAuditCard.addEventListener('click', () => { hideAllSections(); appAuditSection.classList.remove('hidden'); });
       appAssetScanCard.addEventListener('click', () => { hideAllSections(); appAssetScanSection.classList.remove('hidden'); });
 
-      // ==========================================
-      // アプリ1-1: 重複チェック＆名寄せ統合
+     // ==========================================
+      // アプリ1-1: 重複チェック＆名寄せ統合（高感度検出版）
       // ==========================================
       const runDedupeBtn = document.getElementById('runDedupeBtn');
       const dedupeLoadingSection = document.getElementById('dedupeLoadingSection');
       const dedupeResultSection = document.getElementById('dedupeResultSection');
       const dedupeCardsContainer = document.getElementById('dedupeCardsContainer');
       const statDedupeCount = document.getElementById('statDedupeCount');
+
+      // 住所の表記揺れを正規化（全角半角、ハイフン統一、空白除去）
+      function normalizeAddress(addr) {
+        if (!addr) return '';
+        return addr
+          .replace(/[！-～]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0))
+          .replace(/\s+/g, '')
+          .replace(/[―ー\-－]/g, '-')
+          .replace(/(丁目|番地|番|号)/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/-$/, '')
+          .toLowerCase();
+      }
+
+      // レーベンシュタイン距離（文字列の類似度計算）
+      function getLevenshteinDistance(a, b) {
+        if (!a || !b) return Math.max(a ? a.length : 0, b ? b.length : 0);
+        const matrix = [];
+        for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+        for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+
+        for (let i = 1; i <= b.length; i++) {
+          for (let j = 1; j <= a.length; j++) {
+            if (b.charAt(i - 1) === a.charAt(j - 1)) {
+              matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+              matrix[i][j] = Math.min(
+                matrix[i - 1][j - 1] + 1,
+                matrix[i][j - 1] + 1,
+                matrix[i - 1][j] + 1
+              );
+            }
+          }
+        }
+        return matrix[b.length][a.length];
+      }
+
+      // 2つの文字列の類似率（0.0 ～ 1.0）
+      function getStringSimilarity(str1, str2) {
+        if (!str1 || !str2) return 0;
+        const dist = getLevenshteinDistance(str1, str2);
+        const maxLen = Math.max(str1.length, str2.length);
+        return maxLen === 0 ? 1.0 : (1.0 - dist / maxLen);
+      }
 
       runDedupeBtn.addEventListener('click', async () => {
         clearError();
@@ -1087,30 +1131,66 @@
               let score = 0;
               let reasons = [];
 
+              // 1. 事業者登録番号の一致（絶対条件）
               if (p1.payer_walletable_id && p2.payer_walletable_id && p1.payer_walletable_id === p2.payer_walletable_id) {
                 score += 100;
                 reasons.push('事業者番号一致');
               }
 
+              // 2. 社名・名称の比較（正規化 ＋ 類似度判定）
               const norm1 = normalizeName(p1.name);
               const norm2 = normalizeName(p2.name);
-              if (norm1 && norm2 && norm1 === norm2) {
-                score += 60;
-                reasons.push('社名相似');
+              if (norm1 && norm2) {
+                if (norm1 === norm2) {
+                  score += 60;
+                  reasons.push('社名完全一致');
+                } else if (norm1.includes(norm2) || norm2.includes(norm1)) {
+                  score += 35;
+                  reasons.push('社名部分一致');
+                } else {
+                  const sim = getStringSimilarity(norm1, norm2);
+                  if (sim >= 0.5) { // 50%以上文字が似ていれば加算
+                    score += Math.round(sim * 40);
+                    reasons.push(`社名類似(${Math.round(sim * 100)}%)`);
+                  }
+                }
               }
 
-              const phone1 = p1.phone ? p1.phone.replace(/-/g, '') : '';
-              const phone2 = p2.phone ? p2.phone.replace(/-/g, '') : '';
-              if (phone1 && phone2 && phone1 === phone2) {
-                score += 40;
-                reasons.push('電話番号一致');
+              // 3. 住所の比較（正規化後の部分一致）
+              const addr1 = normalizeAddress((p1.street_name1 || '') + (p1.street_name2 || ''));
+              const addr2 = normalizeAddress((p2.street_name1 || '') + (p2.street_name2 || ''));
+              if (addr1 && addr2) {
+                if (addr1 === addr2) {
+                  score += 40;
+                  reasons.push('住所完全一致');
+                } else if (addr1.length > 5 && addr2.length > 5 && (addr1.includes(addr2) || addr2.includes(addr1))) {
+                  score += 25;
+                  reasons.push('住所部分一致');
+                }
               }
 
-              if (score >= 50) {
+              // 4. 電話番号の比較（数値のみ抽出＆末尾一致）
+              const phone1 = p1.phone ? p1.phone.replace(/\D/g, '') : '';
+              const phone2 = p2.phone ? p2.phone.replace(/\D/g, '') : '';
+              if (phone1 && phone2) {
+                if (phone1 === phone2) {
+                  score += 40;
+                  reasons.push('電話番号一致');
+                } else if (phone1.length >= 7 && phone2.length >= 7 && (phone1.endsWith(phone2) || phone2.endsWith(phone1))) {
+                  score += 20;
+                  reasons.push('電話番号末尾一致');
+                }
+              }
+
+              // 【検出基準】少しでも懸念があれば検出（25点以上に設定）
+              if (score >= 25) {
                 duplicates.push({ p1, p2, score, reasons: reasons.join(', ') });
               }
             }
           }
+
+          // スコアが高い順（重複の疑いが強い順）にソート
+          duplicates.sort((a, b) => b.score - a.score);
 
           dedupeCardsContainer.innerHTML = '';
           if (duplicates.length === 0) {
@@ -1123,7 +1203,7 @@
                 <div class="dedupe-group-title">
                   <label>
                     <input type="checkbox" class="dedupe-group-check" checked data-index="${index}">
-                    グループ ${index + 1}（類似スコア: ${group.score}点 - ${group.reasons}）
+                    グループ ${index + 1}（検出スコア: ${group.score}点 - ${group.reasons}）
                   </label>
                 </div>
                 <div class="dedupe-option-list">
@@ -1151,7 +1231,6 @@
           runDedupeBtn.disabled = false;
         }
       });
-
       // ==========================================
       // アプリ2: 期日超過売掛金チェッカー
       // ==========================================
