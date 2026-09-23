@@ -62,10 +62,7 @@
       "use strict";
       const token = sessionStorage.getItem('access_token');
       const companyId = sessionStorage.getItem('company_id');
-      if (!token || !companyId) {
-        window.location.href = '../index.html';
-        return;
-      }
+      if (!token || !companyId) { window.location.href = '../index.html'; return; }
       document.getElementById('currentCompanyLabel').textContent = sessionStorage.getItem('company_name');
 
       document.getElementById('runOverdueBtn').addEventListener('click', async () => {
@@ -76,21 +73,57 @@
         loading.classList.remove('hidden');
         btn.disabled = true;
 
-        await new Promise(r => setTimeout(r, 1200));
-        const mockData = [
-          { partner: 'アルファ商事', date: '2026-08-31', amount: '¥ 330,000', days: '15 日超過' },
-          { partner: 'ベータテクノロジー', date: '2026-07-31', amount: '¥ 154,000', days: '46 日超過' }
-        ];
-        const tbody = document.getElementById('overdueTableBody');
-        tbody.innerHTML = '';
-        mockData.forEach(row => {
-          tbody.innerHTML += `<tr><td><b>${row.partner}</b></td><td>${row.date}</td><td style="font-weight:bold;">${row.amount}</td><td><span style="font-size:11px; background:var(--red-soft); color:var(--red); padding:2px 6px; border-radius:4px; font-weight:bold;">${row.days}</span></td></tr>`;
-        });
-        document.getElementById('statOverdueCount').textContent = mockData.length + ' 件';
-        document.getElementById('statOverdueAmount').textContent = '¥ 484,000';
-        loading.classList.add('hidden');
-        result.classList.remove('hidden');
-        btn.disabled = false;
+        try {
+          const res = await fetch(`https://api.freee.co.jp/api/1/deals?company_id=${companyId}&type=income&settlement_status=unsettled&limit=100`, {
+            headers: { 'Authorization': `Bearer ${token}`, 'accept': 'application/json' }
+          });
+          if (!res.ok) throw new Error(`APIエラー: ${res.status}`);
+          const data = await res.json();
+          const deals = data.deals || [];
+
+          const today = new Date();
+          const overdueList = [];
+          let totalAmount = 0;
+
+          deals.forEach(d => {
+            // freeeの各決済(payments)の期日(due_date)をチェック
+            d.payments.forEach(p => {
+              if (p.status === 'unsettled' && p.due_date) {
+                const dueDate = new Date(p.due_date);
+                if (dueDate < today) {
+                  const diffDays = Math.floor((today - dueDate) / (1000 * 60 * 60 * 24));
+                  overdueList.push({
+                    partner: d.partner_name || '取引先未設定',
+                    date: p.due_date,
+                    amount: p.amount,
+                    days: diffDays
+                  });
+                  totalAmount += p.amount;
+                }
+              }
+            });
+          });
+
+          const tbody = document.getElementById('overdueTableBody');
+          tbody.innerHTML = '';
+          if (overdueList.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--ink-soft);">期日を過ぎた未決済の売掛金はありません。素晴らしいです！</td></tr>';
+          } else {
+            overdueList.forEach(row => {
+              tbody.innerHTML += `<tr><td><b>${row.partner}</b></td><td>${row.date}</td><td style="font-weight:bold;">¥ ${row.amount.toLocaleString()}</td><td><span style="font-size:11px; background:var(--red-soft); color:var(--red); padding:2px 6px; border-radius:4px; font-weight:bold;">${row.days} 日超過</span></td></tr>`;
+            });
+          }
+
+          document.getElementById('statOverdueCount').textContent = overdueList.length + ' 件';
+          document.getElementById('statOverdueAmount').textContent = '¥ ' + totalAmount.toLocaleString();
+          loading.classList.add('hidden');
+          result.classList.remove('hidden');
+        } catch (err) {
+          alert('売掛金データの取得に失敗しました: ' + err.message);
+          loading.classList.add('hidden');
+        } finally {
+          btn.disabled = false;
+        }
       });
     })();
   </script>
