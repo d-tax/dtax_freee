@@ -146,31 +146,45 @@
       }
     });
 
-    // 3. 事業所一覧の取得関数
+    // 3. 事業所一覧の取得関数（本番API連携版）
     async function fetchCompanies(token) {
       try {
         companySelect.innerHTML = '<option value="">事業所を読み込んでいます...</option>';
         
-        // 【注意】実際にはfreee API（ /api/1/companies ）を叩いて取得します
-        // 例: const res = await fetch('https://api.freee.co.jp/api/1/companies', { headers: { 'Authorization': 'Bearer ' + token, 'accept': 'application/json' } });
-        // const data = await res.json();
+        // freee APIから実際の事業所一覧を取得
+        const response = await fetch("https://api.freee.co.jp/api/1/companies", {
+          method: "GET",
+          headers: {
+            "Authorization": "Bearer " + token,
+            "accept": "application/json"
+          }
+        });
 
-        // ── ダミーデータ（動作確認用） ──
-        const dummyCompanies = [
-          { id: 12345, display_name: "株式会社D-tax（テスト事業所）" },
-          { id: 67890, display_name: "個人事業主アカウント" }
-        ];
+        if (!response.ok) {
+          throw new Error(`API通信に失敗しました (ステータス: ${response.status})`);
+        }
 
+        const data = await response.json();
+        const companies = data.companies;
+
+        if (!companies || companies.length === 0) {
+          throw new Error("利用可能な事業所が見つかりませんでした。");
+        }
+
+        // セレクトボックスを実際の事業所で埋める
         companySelect.innerHTML = "";
-        dummyCompanies.forEach(comp => {
+        companies.forEach(comp => {
           const opt = document.createElement("option");
           opt.value = comp.id;
-          opt.textContent = comp.display_name;
+          // 表示名（display_name または name）を設定
+          opt.textContent = comp.display_name || comp.name;
           companySelect.appendChild(opt);
         });
 
       } catch (err) {
         showError("事業所一覧の取得に失敗しました: " + err.message);
+        // トークンが無効な場合などのためにストレージをクリアする選択肢も持たせられます
+        console.error(err);
       }
     }
 
