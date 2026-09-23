@@ -75,89 +75,89 @@
 
     <div class="error-box" id="errorBox"></div>
   </div>
-
-  <script>
-    (function () {
-      "use strict";
-      const token = sessionStorage.getItem('access_token');
-      const companyId = sessionStorage.getItem('company_id');
-      if (!token || !companyId) { window.location.href = '../index.html'; return; }
-      document.getElementById('currentCompanyLabel').textContent = sessionStorage.getItem('company_name');
-
-      document.getElementById('runAuditCheckBtn').addEventListener('click', async () => {
-        const thresholdMultiplier = parseFloat(document.getElementById('auditThresholdSelect').value) || 5;
-
-        const btn = document.getElementById('runAuditCheckBtn');
-        const loading = document.getElementById('auditLoadingSection');
-        const result = document.getElementById('auditResultSection');
-        result.classList.add('hidden');
-        loading.classList.remove('hidden');
-        btn.disabled = true;
-
-        try {
-          const res = await fetch(`https://api.freee.co.jp/api/1/deals?company_id=${companyId}&limit=100`, {
-            headers: { 'Authorization': `Bearer ${token}`, 'accept': 'application/json' }
-          });
-          if (!res.ok) throw new Error(`APIエラー: ${res.status}`);
-          const data = await res.json();
-          const deals = data.deals || [];
-
-          // 勘定科目ごとの合計・平均を算出するための集計
-          const accountStats = {};
-          deals.forEach(d => {
-            d.details.forEach(det => {
-              const accName = det.account_item_name || 'その他';
-              if (!accountStats[accName]) accountStats[accName] = { total: 0, count: 0 };
-              accountStats[accName].total += det.amount;
-              accountStats[accName].count += 1;
+  
+    <script>
+      (function () {
+        "use strict";
+        const token = sessionStorage.getItem('access_token');
+        const companyId = sessionStorage.getItem('company_id');
+        if (!token || !companyId) { window.location.href = '../index.html'; return; }
+        document.getElementById('currentCompanyLabel').textContent = sessionStorage.getItem('company_name');
+  
+        document.getElementById('runAuditCheckBtn').addEventListener('click', async () => {
+          const thresholdMultiplier = parseFloat(document.getElementById('auditThresholdSelect').value) || 5;
+  
+          const btn = document.getElementById('runAuditCheckBtn');
+          const loading = document.getElementById('auditLoadingSection');
+          const result = document.getElementById('auditResultSection');
+          result.classList.add('hidden');
+          loading.classList.remove('hidden');
+          btn.disabled = true;
+  
+          try {
+            const res = await fetch(`https://api.freee.co.jp/api/1/deals?company_id=${companyId}&limit=100`, {
+              headers: { 'Authorization': `Bearer ${token}`, 'accept': 'application/json' }
             });
-          });
-
-          const averages = {};
-          Object.keys(accountStats).forEach(acc => {
-            averages[acc] = accountStats[acc].total / accountStats[acc].count;
-          });
-
-          // 平均の閾値を超える異常値を検知
-          const anomalies = [];
-          deals.forEach(d => {
-            d.details.forEach(det => {
-              const accName = det.account_item_name || 'その他';
-              const avg = averages[accName] || 0;
-              if (avg > 0 && det.amount >= avg * thresholdMultiplier) {
-                anomalies.push({
-                  date: d.issue_date,
-                  partner: d.partner_name || '取引先未設定',
-                  account: accName,
-                  amount: det.amount,
-                  avg: Math.round(avg),
-                  multiple: (det.amount / avg).toFixed(1)
-                });
-              }
+            if (!res.ok) throw new Error(`APIエラー: ${res.status}`);
+            const data = await res.json();
+            const deals = data.deals || [];
+  
+            // 勘定科目ごとの合計・平均を算出するための集計
+            const accountStats = {};
+            deals.forEach(d => {
+              d.details.forEach(det => {
+                const accName = det.account_item_name || 'その他';
+                if (!accountStats[accName]) accountStats[accName] = { total: 0, count: 0 };
+                accountStats[accName].total += det.amount;
+                accountStats[accName].count += 1;
+              });
             });
-          });
-
-          const tbody = document.getElementById('auditTableBody');
-          tbody.innerHTML = '';
-          if (anomalies.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--ink-soft);">異常値が疑われる取引は検出されませんでした。</td></tr>';
-          } else {
-            anomalies.forEach(row => {
-              tbody.innerHTML += `<tr><td>${row.date}<br><b>${row.partner}</b></td><td>${row.account}<br><b style="color:var(--ink);">¥ ${row.amount.toLocaleString()}</b></td><td style="color:var(--red); font-weight:600; font-size:11.5px;">平均(${row.line || '約¥' + row.avg.toLocaleString()})の ${row.multiple}倍の金額乖離</td><td><span style="font-size:11px; background:var(--red-soft); color:var(--red); padding:2px 6px; border-radius:4px; font-weight:bold;">高（要確認）</span></td></tr>`;
+  
+            const averages = {};
+            Object.keys(accountStats).forEach(acc => {
+              averages[acc] = accountStats[acc].total / accountStats[acc].count;
             });
+  
+            // 平均の閾値を超える異常値を検知
+            const anomalies = [];
+            deals.forEach(d => {
+              d.details.forEach(det => {
+                const accName = det.account_item_name || 'その他';
+                const avg = averages[accName] || 0;
+                if (avg > 0 && det.amount >= avg * thresholdMultiplier) {
+                  anomalies.push({
+                    date: d.issue_date,
+                    partner: d.partner_name || '取引先未設定',
+                    account: accName,
+                    amount: det.amount,
+                    avg: Math.round(avg),
+                    multiple: (det.amount / avg).toFixed(1)
+                  });
+                }
+              });
+            });
+  
+            const tbody = document.getElementById('auditTableBody');
+            tbody.innerHTML = '';
+            if (anomalies.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--ink-soft);">異常値が疑われる取引は検出されませんでした。</td></tr>';
+            } else {
+              anomalies.forEach(row => {
+                tbody.innerHTML += `<tr><td>${row.date}<br><b>${row.partner}</b></td><td>${row.account}<br><b style="color:var(--ink);">¥ ${row.amount.toLocaleString()}</b></td><td style="color:var(--red); font-weight:600; font-size:11.5px;">平均(${row.line || '約¥' + row.avg.toLocaleString()})の ${row.multiple}倍の金額乖離</td><td><span style="font-size:11px; background:var(--red-soft); color:var(--red); padding:2px 6px; border-radius:4px; font-weight:bold;">高（要確認）</span></td></tr>`;
+              });
+            }
+  
+            document.getElementById('statAuditTotalCount').textContent = anomalies.length + ' 件';
+            loading.classList.add('hidden');
+            result.classList.remove('hidden');
+          } catch (err) {
+            alert('データ取得に失敗しました: ' + err.message);
+            loading.classList.add('hidden');
+          } finally {
+            btn.disabled = false;
           }
-
-          document.getElementById('statAuditTotalCount').textContent = anomalies.length + ' 件';
-          loading.classList.add('hidden');
-          result.classList.remove('hidden');
-        } catch (err) {
-          alert('データ取得に失敗しました: ' + err.message);
-          loading.classList.add('hidden');
-        } finally {
-          btn.disabled = false;
-        }
-      });
-    })();
-  </script>
-</body>
+        });
+      })();
+    </script>
+  </body>
 </html>
