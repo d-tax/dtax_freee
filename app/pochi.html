@@ -39,11 +39,18 @@
           <input type="number" class="form-input" id="pochiMinCount" value="5" min="2">
         </div>
       </div>
+      
+      <!-- 追加：除外フィルター用チェックボックス -->
+      <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+        <input type="checkbox" id="excludeNoPartner" checked style="width: 16px; height: 16px; cursor: pointer;">
+        <label for="excludeNoPartner" style="font-size: 13px; color: var(--ink); cursor: pointer;">「取引先が指定なし」のデータを集計から除外する（推奨）</label>
+      </div>
+
       <button class="btn-primary" id="runPochiCheckBtn" type="button">ポチポチ取引を抽出する</button>
 
       <div class="info-box">
         <b>【何を抽出するのか】</b><br>
-        自動登録ルールが未適用のため「画面上で手動クリック（ポチポチ操作）」して登録されている繰り返し取引を抽出します。
+        自動登録ルールが未適用のため「画面上で手動クリック（ポチポチ操作）」して登録されている繰り返し取引を抽出します。取引先未設定のものは摘要（メモ）を解析してグループ化します。
       </div>
     </div>
 
@@ -62,7 +69,7 @@
       <div style="overflow-x: auto;">
         <table class="all-table">
           <thead>
-            <tr><th>取引先</th><th>勘定科目</th><th>手入力回数</th><th>月平均推定量</th><th>改善インパクト</th></tr>
+            <tr><th>取引先 / 摘要ヒント</th><th>勘定科目</th><th>手入力回数</th><th>月平均推定量</th><th>改善インパクト</th></tr>
           </thead>
           <tbody id="pochiTableBody"></tbody>
         </table>
@@ -72,72 +79,94 @@
     <div class="error-box" id="errorBox"></div>
   </div>
 
-    <script>
-      (function () {
-        "use strict";
-        const token = sessionStorage.getItem('access_token');
-        const companyId = sessionStorage.getItem('company_id');
-        if (!token || !companyId) { window.location.href = '../index.html'; return; }
-        document.getElementById('currentCompanyLabel').textContent = sessionStorage.getItem('company_name');
-  
-        document.getElementById('runPochiCheckBtn').addEventListener('click', async () => {
-          const months = document.getElementById('pochiMonthsSelect').value;
-          const minCount = parseInt(document.getElementById('pochiMinCount').value, 10) || 5;
-  
-          const btn = document.getElementById('runPochiCheckBtn');
-          const loading = document.getElementById('pochiLoadingSection');
-          const result = document.getElementById('pochiResultSection');
-          result.classList.add('hidden');
-          loading.classList.remove('hidden');
-          btn.disabled = true;
-  
-          try {
-            const res = await fetch(`https://api.freee.co.jp/api/1/deals?company_id=${companyId}&limit=100`, {
-              headers: { 'Authorization': `Bearer ${token}`, 'accept': 'application/json' }
+  <script>
+    (function () {
+      "use strict";
+      const token = sessionStorage.getItem('access_token');
+      const companyId = sessionStorage.getItem('company_id');
+      if (!token || !companyId) { window.location.href = '../index.html'; return; }
+      document.getElementById('currentCompanyLabel').textContent = sessionStorage.getItem('company_name');
+
+      document.getElementById('runPochiCheckBtn').addEventListener('click', async () => {
+        const months = document.getElementById('pochiMonthsSelect').value;
+        const minCount = parseInt(document.getElementById('pochiMinCount').value, 10) || 5;
+        const excludeNoPartner = document.getElementById('excludeNoPartner').checked;
+
+        const btn = document.getElementById('runPochiCheckBtn');
+        const loading = document.getElementById('pochiLoadingSection');
+        const result = document.getElementById('pochiResultSection');
+        result.classList.add('hidden');
+        loading.classList.remove('hidden');
+        btn.disabled = true;
+
+        try {
+          const res = await fetch(`https://api.freee.co.jp/api/1/deals?company_id=${companyId}&limit=100`, {
+            headers: { 'Authorization': `Bearer ${token}`, 'accept': 'application/json' }
+          });
+          if (!res.ok) throw new Error(`APIエラー: ${res.status}`);
+          const data = await res.json();
+          const deals = data.deals || [];
+
+          // 取引先×勘定科目ごとにカウント
+          const freqMap = {};
+          deals.forEach(d => {
+            const rawPartner = d.partner_name ? d.partner_name.trim() : '';
+            
+            d.details.forEach(det => {
+              const account = det.account_item_name || '不明';
+              const desc = det.description ? det.description.trim() : '';
+
+              let partnerKey = rawPartner;
+              let displayName = rawPartner;
+
+              // 取引先が空の場合の救済措置：摘要（メモ）があればそれをキーにする
+              if (!rawPartner) {
+                if (excludeNoPartner) {
+                  return; // 除外設定がONならスキップ
+                }
+                if (desc) {
+                  partnerKey = `[摘要一致] ${desc}`;
+                  displayName = `<span style="color:var(--ink-soft); font-size:11px;">[取引先未設定]</span> ${desc}`;
+                } else {
+                  partnerKey = '指定なし';
+                  displayName = '<span style="color:var(--ink-soft);">指定なし</span>';
+                }
+              }
+
+              const key = `${partnerKey}__${account}`;
+              if (!freqMap[key]) {
+                freqMap[key] = { partnerDisplay: displayName, account, count: 0 };
+              }
+              freqMap[key].count += 1;
             });
-            if (!res.ok) throw new Error(`APIエラー: ${res.status}`);
-            const data = await res.json();
-            const deals = data.deals || [];
-  
-            // 取引先×勘定科目ごとにカウント
-            const freqMap = {};
-            deals.forEach(d => {
-              const partner = d.partner_name || '指定なし';
-              // 取引の内訳（details）から勘定科目を拾う
-              d.details.forEach(det => {
-                const account = det.account_item_name || '不明';
-                const key = `${partner}__${account}`;
-                if (!freqMap[key]) freqMap[key] = { partner, account, count: 0 };
-                freqMap[key].count += 1;
-              });
+          });
+
+          // 指定回数以上のものを抽出
+          const candidates = Object.values(freqMap).filter(item => item.count >= minCount);
+          candidates.sort((a, b) => b.count - a.count);
+
+          const tbody = document.getElementById('pochiTableBody');
+          tbody.innerHTML = '';
+          if (candidates.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--ink-soft);">条件に合致する手入力頻発パターンはありませんでした。</td></tr>';
+          } else {
+            candidates.forEach(item => {
+              tbody.innerHTML += `<tr><td><b>${item.partnerDisplay}</b></td><td>${item.account}</td><td style="color:var(--red); font-weight:bold;">${item.count} 回</td><td>約 ${Math.round(item.count / months)} 件/月</td><td><span style="font-size:11px; background:var(--amber-soft); color:var(--amber); padding:2px 6px; border-radius:4px; font-weight:bold;">自動登録ルール推奨</span></td></tr>`;
             });
-  
-            // 指定回数以上のものを抽出
-            const candidates = Object.values(freqMap).filter(item => item.count >= minCount);
-            candidates.sort((a, b) => b.count - a.count);
-  
-            const tbody = document.getElementById('pochiTableBody');
-            tbody.innerHTML = '';
-            if (candidates.length === 0) {
-              tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--ink-soft);">条件に合致する手入力頻発パターンはありませんでした。</td></tr>';
-            } else {
-              candidates.forEach(item => {
-                tbody.innerHTML += `<tr><td><b>${item.partner}</b></td><td>${item.account}</td><td style="color:var(--red); font-weight:bold;">${item.count} 回</td><td>約 ${Math.round(item.count / months)} 件/月</td><td><span style="font-size:11px; background:var(--amber-soft); color:var(--amber); padding:2px 6px; border-radius:4px; font-weight:bold;">自動登録ルール推奨</span></td></tr>`;
-              });
-            }
-  
-            document.getElementById('statPochiTotalCount').textContent = candidates.length + ' 件';
-            document.getElementById('statPochiManualRatio').textContent = deals.length > 0 ? Math.round((candidates.reduce((acc, cur) => acc + cur.count, 0) / deals.length) * 100) + '%' : '0%';
-            loading.classList.add('hidden');
-            result.classList.remove('hidden');
-          } catch (err) {
-            alert('データ取得に失敗しました: ' + err.message);
-            loading.classList.add('hidden');
-          } finally {
-            btn.disabled = false;
           }
-        });
-      })();
-    </script>
-  </body>
+
+          document.getElementById('statPochiTotalCount').textContent = candidates.length + ' 件';
+          document.getElementById('statPochiManualRatio').textContent = deals.length > 0 ? Math.round((candidates.reduce((acc, cur) => acc + cur.count, 0) / deals.length) * 100) + '%' : '0%';
+          loading.classList.add('hidden');
+          result.classList.remove('hidden');
+        } catch (err) {
+          alert('データ取得に失敗しました: ' + err.message);
+          loading.classList.add('hidden');
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    })();
+  </script>
+</body>
 </html>
