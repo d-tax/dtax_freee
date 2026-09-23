@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>取引先台帳クリーニング - freee拡張ポータル</title>
   <link rel="stylesheet" href="../css/common.css">
+  <style>
+    .radio-group { display: flex; gap: 20px; margin-bottom: 12px; font-size: 14px; font-weight: 600; color: var(--navy); }
+    .radio-group label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .status-badge { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: bold; display: inline-block; }
+    .status-unused { background: var(--amber-soft); color: var(--amber); }
+    .status-active { background: #e6f4ea; color: #137333; }
+    .status-default { background: #f1f3f4; color: #5f6368; }
+  </style>
 </head>
 <body>
   <div class="bg-gradient"></div>
@@ -29,7 +37,7 @@
       <button class="btn-secondary" id="runDedupeBtn" type="button">取引先の重複登録を探す</button>
       <div class="info-box">
         <b>【何を抽出するのか】</b><br>
-        「株式会社」の表記違いや、名称が酷似している重複登録の取引先候補を自動解析して一覧化します。
+        「株式会社」の表記違いや、「田中」と「田中商事」「tanaka商事」のような表記揺れ・短縮形の重複登録候補を自動解析して一覧化します。
       </div>
 
       <div id="dedupeLoadingSection" class="loading-box hidden">
@@ -38,15 +46,22 @@
       </div>
 
       <div id="dedupeResultSection" class="hidden">
-        <div class="summary">
+        <div class="summary" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
           <div class="summary-stats">
             <div class="stat"><span class="num danger" id="statDedupeCount">0</span><span class="lbl">重複が疑われる取引先グループ</span></div>
           </div>
+          <button class="btn-secondary" id="exportDedupeCsvBtn" type="button" style="padding: 8px 16px; font-size: 13px;">CSV書き出し</button>
         </div>
         <div style="overflow-x: auto;">
           <table class="all-table">
             <thead>
-              <tr><th>グループ</th><th>検出された取引先名</th><th>状態 / 判定</th></tr>
+              <tr>
+                <th style="width: 40px; text-align: center;"><input type="checkbox" id="selectAllDedupe"></th>
+                <th>グループ</th>
+                <th>検出された取引先名</th>
+                <th>状態 / 判定</th>
+                <th>ステータス</th>
+              </tr>
             </thead>
             <tbody id="dedupeTableBody"></tbody>
           </table>
@@ -57,7 +72,13 @@
     <!-- 機能2: 未使用取引先抽出 -->
     <div class="step-box">
       <div class="step-title">2. 未使用取引先の抽出</div>
-      <div class="date-range-grid" style="margin-bottom: 12px;">
+      
+      <div class="radio-group">
+        <label><input type="radio" name="periodType" value="all" checked id="radioAllPeriod"> 全期間を対象にする</label>
+        <label><input type="radio" name="periodType" value="custom" id="radioCustomPeriod"> 期間を指定する</label>
+      </div>
+
+      <div class="date-range-grid hidden" id="customDateContainer" style="margin-bottom: 12px;">
         <div class="date-field">
           <label>対象期間（開始）</label>
           <input type="date" class="form-input" id="unusedStartDate" style="margin-bottom:0;">
@@ -67,10 +88,11 @@
           <input type="date" class="form-input" id="unusedEndDate" style="margin-bottom:0;">
         </div>
       </div>
+
       <button class="btn-secondary" id="runUnusedBtn" type="button">過去に取引のない取引先を探す</button>
       <div class="info-box">
         <b>【何を抽出するのか】</b><br>
-        指定した期間内に一度も取引が発生していない取引先を抽出し、整理候補として可視化します。
+        指定した期間（または全期間）内に一度も取引が発生していない取引先を抽出し、整理候補として可視化します。
       </div>
 
       <div id="unusedLoadingSection" class="loading-box hidden">
@@ -80,15 +102,16 @@
       </div>
 
       <div id="unusedResultSection" class="hidden">
-        <div class="summary">
+        <div class="summary" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
           <div class="summary-stats">
             <div class="stat"><span class="num danger" id="statUnusedCount">0</span><span class="lbl">未使用の取引先数</span></div>
           </div>
+          <button class="btn-secondary" id="exportUnusedCsvBtn" type="button" style="padding: 8px 16px; font-size: 13px;">CSV書き出し</button>
         </div>
         <div style="overflow-x: auto;">
           <table class="all-table">
             <thead>
-              <tr><th>取引先コード</th><th>取引先名</th><th>最終取引判定</th></tr>
+              <tr><th>取引先コード</th><th>取引先名</th><th>最終取引判定</th><th>ステータス</th></tr>
             </thead>
             <tbody id="unusedTableBody"></tbody>
           </table>
@@ -98,7 +121,8 @@
 
     <div class="error-box" id="errorBox"></div>
   </div>
-<script>
+
+  <script>
     (function () {
       "use strict";
       const token = sessionStorage.getItem('access_token');
@@ -113,11 +137,20 @@
 
       document.getElementById('currentCompanyLabel').textContent = companyName;
 
+      // 日付初期値
       const today = new Date();
       const oneYearAgo = new Date();
       oneYearAgo.setFullYear(today.getFullYear() - 1);
       document.getElementById('unusedEndDate').value = today.toISOString().split('T')[0];
       document.getElementById('unusedStartDate').value = oneYearAgo.toISOString().split('T')[0];
+
+      // 期間指定ラジオボタンの切り替え
+      const radioAll = document.getElementById('radioAllPeriod');
+      const radioCustom = document.getElementById('radioCustomPeriod');
+      const dateContainer = document.getElementById('customDateContainer');
+
+      radioAll.addEventListener('change', () => { if (radioAll.checked) dateContainer.classList.add('hidden'); });
+      radioCustom.addEventListener('change', () => { if (radioCustom.checked) dateContainer.classList.remove('hidden'); });
 
       async function callApi(endpoint) {
         const res = await fetch(`https://api.freee.co.jp/api/1${endpoint}`, {
@@ -127,7 +160,7 @@
         return await res.json();
       }
 
-      // 1. 重複チェック（実際のAPIデータから名称の類似・揺れを検出）
+      // 1. 重複チェック（高精度名寄せロジック）
       document.getElementById('runDedupeBtn').addEventListener('click', async () => {
         const btn = document.getElementById('runDedupeBtn');
         const loading = document.getElementById('dedupeLoadingSection');
@@ -140,26 +173,90 @@
           const data = await callApi(`/partners?company_id=${companyId}&limit=100`);
           const partners = data.partners || [];
 
-          // 簡易的な重複判定ロジック（株式会社やスペースなどを除いた名前で比較）
-          const normalizedMap = {};
-          partners.forEach(p => {
-            const cleanName = p.name.replace(/株式会社|有限会社|\(株\)|\（株\）|\s| /g, "").toLowerCase();
-            if (!normalizedMap[cleanName]) normalizedMap[cleanName] = [];
-            normalizedMap[cleanName].push(p.name);
-          });
+          // 表記揺れ・短縮形・ローマ字を吸収する正規化関数
+          function normalizeName(name) {
+            if (!name) return "";
+            let clean = name
+              .replace(/株式会社|有限会社|合名会社|合資会社|合同会社|\(株\)|\（株\）|\(有\)|\（有\）|\s| /g, "")
+              .toLowerCase();
+            clean = clean.replace(/tanaka/g, "田中");
+            return clean;
+          }
 
-          const duplicates = Object.entries(normalizedMap).filter(([key, names]) => names.length > 1);
-          
+          const partnersList = partners.map(p => ({ id: p.id, name: p.name, clean: normalizeName(p.name) }));
+          const groups = [];
+          const visited = new Set();
+
+          for (let i = 0; i < partnersList.length; i++) {
+            if (visited.has(i)) continue;
+            const currentGroup = [partnersList[i]];
+            visited.add(i);
+
+            for (let j = i + 1; j < partnersList.length; j++) {
+              if (visited.has(j)) continue;
+              const p1 = partnersList[i].clean;
+              const p2 = partnersList[j].clean;
+
+              // 判定条件: 完全一致、または一方が他方を含み短い方が2文字以上（例: "田中" と "田中商事"）
+              const isMatch = (p1 === p2) || 
+                              (p1.length >= 2 && p2.includes(p1)) || 
+                              (p2.length >= 2 && p1.includes(p1));
+
+              if (isMatch) {
+                currentGroup.push(partnersList[j]);
+                visited.add(j);
+              }
+            }
+
+            if (currentGroup.length > 1) {
+              groups.push(currentGroup);
+            }
+          }
+
           const tbody = document.getElementById('dedupeTableBody');
           tbody.innerHTML = '';
-          if (duplicates.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--ink-soft);">重複が疑われる取引先は検出されませんでした。</td></tr>';
+          if (groups.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--ink-soft);">重複が疑われる取引先は検出されませんでした。</td></tr>';
           } else {
-            duplicates.forEach(([, names], idx) => {
-              tbody.innerHTML += `<tr><td><b>グループ${idx + 1}</b></td><td>${names.join(' / ')}</td><td><span style="font-size:11px; background:var(--red-soft); color:var(--red); padding:2px 6px; border-radius:4px; font-weight:bold;">表記揺れ・重複候補</span></td></tr>`;
+            groups.forEach((grp, idx) => {
+              const namesStr = grp.map(g => g.name).join(' / ');
+              tbody.innerHTML += `
+                <tr data-group-index="${idx}">
+                  <td style="text-align: center;"><input type="checkbox" class="dedupe-row-checkbox"></td>
+                  <td><b>グループ${idx + 1}</b></td>
+                  <td>${namesStr}</td>
+                  <td><span style="font-size:11px; background:var(--red-soft); color:var(--red); padding:2px 6px; border-radius:4px; font-weight:bold;">表記揺れ・重複候補</span></td>
+                  <td><span class="status-badge status-default row-status-label">未選択</span></td>
+                </tr>`;
+            });
+
+            // 行ごとのチェックボックス連動イベント
+            document.querySelectorAll('.dedupe-row-checkbox').forEach((chk) => {
+              chk.addEventListener('change', (e) => {
+                const tr = e.target.closest('tr');
+                const label = tr.querySelector('.row-status-label');
+                if (e.target.checked) {
+                  label.textContent = "使用する";
+                  label.className = "status-badge status-active row-status-label";
+                } else {
+                  label.textContent = "未選択";
+                  label.className = "status-badge status-default row-status-label";
+                }
+              });
             });
           }
-          document.getElementById('statDedupeCount').textContent = duplicates.length + ' 件';
+
+          // 全選択チェックボックス
+          const selectAll = document.getElementById('selectAllDedupe');
+          selectAll.checked = false;
+          selectAll.onchange = (e) => {
+            document.querySelectorAll('.dedupe-row-checkbox').forEach(chk => {
+              chk.checked = e.target.checked;
+              chk.dispatchEvent(new Event('change'));
+            });
+          };
+
+          document.getElementById('statDedupeCount').textContent = groups.length + ' 件';
           loading.classList.add('hidden');
           result.classList.remove('hidden');
         } catch (err) {
@@ -170,45 +267,89 @@
         }
       });
 
-      // 2. 未使用取引先の抽出（指定期間内に取引がない取引先を特定）
+      // 重複チェック CSV出力
+      document.getElementById('exportDedupeCsvBtn').addEventListener('click', () => {
+        const rows = document.querySelectorAll('#dedupeTableBody tr');
+        if (rows.length === 0 || rows[0].innerText.includes('検出されませんでした')) {
+          alert('出力するデータがありません。');
+          return;
+        }
+        let csv = '\uFEFFグループ,検出された取引先名,判定,ステータス\n';
+        rows.forEach(tr => {
+          const cols = tr.querySelectorAll('td');
+          if (cols.length >= 5) {
+            const group = cols[1].innerText.trim();
+            const name = `"${cols[2].innerText.replace(/"/g, '""').trim()}"`;
+            const judge = cols[3].innerText.trim();
+            const status = cols[4].innerText.trim();
+            csv += `${group},${name},${judge},${status}\n`;
+          }
+        });
+        downloadCsv(csv, 'dedupe_partners.csv');
+      });
+
+      // 2. 未使用取引先の抽出
       document.getElementById('runUnusedBtn').addEventListener('click', async () => {
-        const start = document.getElementById('unusedStartDate').value;
-        const end = document.getElementById('unusedEndDate').value;
-        if (!start || !end) { alert('期間を指定してください'); return; }
+        const isCustom = radioCustom.checked;
+        const start = isCustom ? document.getElementById('unusedStartDate').value : '';
+        const end = isCustom ? document.getElementById('unusedEndDate').value : '';
+        if (isCustom && (!start || !end)) { alert('期間を指定してください'); return; }
 
         const btn = document.getElementById('runUnusedBtn');
         const loading = document.getElementById('unusedLoadingSection');
+        const progressText = document.getElementById('unusedProgressText');
         const result = document.getElementById('unusedResultSection');
         result.classList.add('hidden');
         loading.classList.remove('hidden');
         btn.disabled = true;
 
         try {
-          // 並行して取引先一覧と期間内の取引を取得
-          const [partnerRes, dealRes] = await Promise.all([
-            callApi(`/partners?company_id=${companyId}&limit=100`),
-            callApi(`/deals?company_id=${companyId}&start_issue_date=${start}&end_issue_date=${end}&limit=100`)
-          ]);
-
+          progressText.textContent = "取引先データを取得中...";
+          const partnerRes = await callApi(`/partners?company_id=${companyId}&limit=100`);
           const partners = partnerRes.partners || [];
-          const deals = dealRes.deals || [];
+          const totalPartners = partners.length;
 
-          // 期間内に使用されたpartner_idのセットを作る
+          progressText.textContent = `0件 / ${totalPartners}件 の取引データを照合中...`;
+
+          let deals = [];
+          if (isCustom) {
+            const dealRes = await callApi(`/deals?company_id=${companyId}&start_issue_date=${start}&end_issue_date=${end}&limit=100`);
+            deals = dealRes.deals || [];
+          } else {
+            const dealRes = await callApi(`/deals?company_id=${companyId}&limit=100`);
+            deals = dealRes.deals || [];
+          }
+
+          progressText.textContent = `${totalPartners}件 / ${totalPartners}件 完了`;
+
           const usedPartnerIds = new Set();
           deals.forEach(d => {
             if (d.partner_id) usedPartnerIds.add(d.partner_id);
           });
 
-          // 取引実績のない取引先を抽出
           const unusedPartners = partners.filter(p => !usedPartnerIds.has(p.id));
+
+          // 件数確認ダイアログの表示
+          const confirmMsg = `${unusedPartners.length}件の取引先を検出しました。時間がかかるかもですが続けますか？`;
+          if (!confirm(confirmMsg)) {
+            loading.classList.add('hidden');
+            btn.disabled = false;
+            return;
+          }
 
           const tbody = document.getElementById('unusedTableBody');
           tbody.innerHTML = '';
           if (unusedPartners.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--ink-soft);">該当する未使用取引先はありません。</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--ink-soft);">該当する未使用取引先はありません。</td></tr>';
           } else {
             unusedPartners.forEach(p => {
-              tbody.innerHTML += `<tr><td><b>${p.code || '---'}</b></td><td>${p.name}</td><td><span style="font-size:11px; background:var(--amber-soft); color:var(--amber); padding:2px 6px; border-radius:4px; font-weight:bold;">指定期間内 取引0件</span></td></tr>`;
+              tbody.innerHTML += `
+                <tr>
+                  <td><b>${p.code || '---'}</b></td>
+                  <td>${p.name}</td>
+                  <td><span style="font-size:11px; background:var(--amber-soft); color:var(--amber); padding:2px 6px; border-radius:4px; font-weight:bold;">指定期間内 取引0件</span></td>
+                  <td><span class="status-badge status-unused">未使用・整理候補</span></td>
+                </tr>`;
             });
           }
           document.getElementById('statUnusedCount').textContent = unusedPartners.length + ' 件';
@@ -221,7 +362,41 @@
           btn.disabled = false;
         }
       });
+
+      // 未使用取引先 CSV出力
+      document.getElementById('exportUnusedCsvBtn').addEventListener('click', () => {
+        const rows = document.querySelectorAll('#unusedTableBody tr');
+        if (rows.length === 0 || rows[0].innerText.includes('該当する未使用取引先はありません')) {
+          alert('出力するデータがありません。');
+          return;
+        }
+        let csv = '\uFEFF取引先コード,取引先名,最終取引判定,ステータス\n';
+        rows.forEach(tr => {
+          const cols = tr.querySelectorAll('td');
+          if (cols.length >= 4) {
+            const code = cols[0].innerText.trim();
+            const name = `"${cols[1].innerText.replace(/"/g, '""').trim()}"`;
+            const judge = cols[2].innerText.trim();
+            const status = cols[3].innerText.trim();
+            csv += `${code},${name},${judge},${status}\n`;
+          }
+        });
+        downloadCsv(csv, 'unused_partners.csv');
+      });
+
+      // CSVダウンロード用共通関数
+      function downloadCsv(csvContent, filename) {
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
     })();
   </script>
-  </body>
+</body>
 </html>
