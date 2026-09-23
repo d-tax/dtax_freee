@@ -64,8 +64,8 @@
           <table class="all-table">
             <thead>
               <tr>
-                <th style="width: 40px; text-align: center;"><input type="checkbox" id="selectAllDedupe"></th>
                 <th style="width: 80px; text-align: center;">グループ</th>
+                <th style="width: 40px; text-align: center;"><input type="checkbox" id="selectAllDedupe"></th>
                 <th style="width: 90px; text-align: center;">ステータス</th>
                 <th>取引先名</th>
                 <th>詳細情報（住所 / 番号）</th>
@@ -229,7 +229,7 @@
         return maxLen === 0 ? 1.0 : (1.0 - dist / maxLen);
       }
 
-      // 1. 重複チェック（グループ結合・中央揃え・区切り線付き）
+      // 1. 重複チェック（列順：グループ、チェックボックス、ステータス、取引先名、詳細情報、状態/判定）
       document.getElementById('runDedupeBtn').addEventListener('click', async () => {
         const btn = document.getElementById('runDedupeBtn');
         const loading = document.getElementById('dedupeLoadingSection');
@@ -311,8 +311,8 @@
 
                 tbody.innerHTML += `
                   <tr class="${rowClass}">
+                    ${isFirstInGroup ? `<td rowspan="${grp.length}" style="text-align: center; font-weight: bold;">グループ${idx + 1}</td>` : ''}
                     <td style="text-align: center;"><input type="checkbox" class="dedupe-row-checkbox"></td>
-                    ${isFirstInGroup ? `<td rowspan="${grp.length}" style="text-align: center; font-weight: bold; background: #fafafa;">グループ${idx + 1}</td>` : ''}
                     <td style="text-align: center;"><span class="status-badge status-default row-status-label">未選択</span></td>
                     <td><b>${item.name}</b></td>
                     <td style="font-size:12px; color:var(--ink-soft);">${item.normAddr ? '住所一致等' : '社名類似'}</td>
@@ -364,30 +364,29 @@
           alert('出力するデータがありません。');
           return;
         }
-        let csv = '\uFEFFグループ,ステータス,取引先名,判定\n';
-        // CSV出力用に直近のグループ名を保持する変数
+        let csv = '\uFEFFグループ,ステータス,取引先名,詳細情報,判定\n';
         let lastGroup = "";
         rows.forEach(tr => {
           const cols = tr.querySelectorAll('td');
-          // グループ列の有無でrowspanセルに対応
           if (cols.length >= 6) {
-            lastGroup = cols[1].innerText.trim();
+            lastGroup = cols[0].innerText.trim();
             const status = cols[2].innerText.trim();
             const name = `"${cols[3].innerText.replace(/"/g, '""').trim()}"`;
+            const detail = `"${cols[4].innerText.trim()}"`;
             const judge = cols[5].innerText.trim();
-            csv += `${lastGroup},${status},${name},${judge}\n`;
+            csv += `${lastGroup},${status},${name},${detail},${judge}\n`;
           } else if (cols.length === 5) {
-            // rowspanでグループセルが省略されている行
             const status = cols[1].innerText.trim();
             const name = `"${cols[2].innerText.replace(/"/g, '""').trim()}"`;
+            const detail = `"${cols[3].innerText.trim()}"`;
             const judge = cols[4].innerText.trim();
-            csv += `${lastGroup},${status},${name},${judge}\n`;
+            csv += `${lastGroup},${status},${name},${detail},${judge}\n`;
           }
         });
         downloadCsv(csv, 'dedupe_partners.csv');
       });
 
-      // 2. 未使用取引先の抽出（件数表示付き確認メッセージ）
+      // 2. 未使用取引先の抽出
       document.getElementById('runUnusedBtn').addEventListener('click', async () => {
         const isCustom = radioCustom.checked;
         const start = isCustom ? document.getElementById('unusedStartDate').value : '';
