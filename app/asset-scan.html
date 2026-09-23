@@ -61,10 +61,7 @@
       "use strict";
       const token = sessionStorage.getItem('access_token');
       const companyId = sessionStorage.getItem('company_id');
-      if (!token || !companyId) {
-        window.location.href = '../index.html';
-        return;
-      }
+      if (!token || !companyId) { window.location.href = '../index.html'; return; }
       document.getElementById('currentCompanyLabel').textContent = sessionStorage.getItem('company_name');
 
       document.getElementById('runAssetScanBtn').addEventListener('click', async () => {
@@ -75,19 +72,49 @@
         loading.classList.remove('hidden');
         btn.disabled = true;
 
-        await new Promise(r => setTimeout(r, 1200));
-        const mockData = [
-          { date: '2026-08-15', content: 'ノートPC購入（PC専門店）', amount: '¥ 185,000', reason: '消耗品費で処理されています（10万円以上）' }
-        ];
-        const tbody = document.getElementById('assetTableBody');
-        tbody.innerHTML = '';
-        mockData.forEach(row => {
-          tbody.innerHTML += `<tr><td>${row.date}</td><td><b>${row.content}</b></td><td>${row.amount}</td><td style="color:var(--red);">${row.reason}</td></tr>`;
-        });
-        document.getElementById('statAssetCount').textContent = mockData.length + ' 件';
-        loading.classList.add('hidden');
-        result.classList.remove('hidden');
-        btn.disabled = false;
+        try {
+          const res = await fetch(`https://api.freee.co.jp/api/1/deals?company_id=${companyId}&limit=100`, {
+            headers: { 'Authorization': `Bearer ${token}`, 'accept': 'application/json' }
+          });
+          if (!res.ok) throw new Error(`APIエラー: ${res.status}`);
+          const data = await res.json();
+          const deals = data.deals || [];
+
+          // 消耗品費等で10万円以上のものを抽出
+          const assetCandidates = [];
+          deals.forEach(d => {
+            d.details.forEach(det => {
+              const accName = det.account_item_name || '';
+              if ((accName.includes('消耗品') || accName.includes('工具器具備品')) && det.amount >= 100000) {
+                assetCandidates.push({
+                  date: d.issue_date,
+                  content: `${d.partner_name || '取引先不明'} (${accName})`,
+                  amount: det.amount,
+                  reason: `${accName}として処理されていますが 10万円以上です（固定資産・一括償却等の検討推奨）`
+                });
+              }
+            });
+          });
+
+          const tbody = document.getElementById('assetTableBody');
+          tbody.innerHTML = '';
+          if (assetCandidates.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--ink-soft);">高額な消耗品費等の資産候補は見つかりませんでした。</td></tr>';
+          } else {
+            assetCandidates.forEach(row => {
+              tbody.innerHTML += `<tr><td>${row.date}</td><td><b>${row.content}</b></td><td>¥ ${row.amount.toLocaleString()}</td><td style="color:var(--red);">${row.reason}</td></tr>`;
+            });
+          }
+
+          document.getElementById('statAssetCount').textContent = assetCandidates.length + ' 件';
+          loading.classList.add('hidden');
+          result.classList.remove('hidden');
+        } catch (err) {
+          alert('データ取得に失敗しました: ' + err.message);
+          loading.classList.add('hidden');
+        } finally {
+          btn.disabled = false;
+        }
       });
     })();
   </script>
