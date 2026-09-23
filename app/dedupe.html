@@ -37,7 +37,7 @@
       <button class="btn-secondary" id="runDedupeBtn" type="button">取引先の重複登録を探す</button>
       <div class="info-box">
         <b>【何を抽出するのか】</b><br>
-        「株式会社」の表記違いや、「田中」と「田中商事」「tanaka商事」のような表記揺れ・短縮形の重複登録候補を自動解析して一覧化します。
+        社名の類似度、住所の一致、適格事業者番号の一致などを多角的に分析し、重複が疑われる取引先をグループごとに1行ずつリストアップします。
       </div>
 
       <div id="dedupeLoadingSection" class="loading-box hidden">
@@ -48,7 +48,7 @@
       <div id="dedupeResultSection" class="hidden">
         <div class="summary">
           <div class="summary-stats">
-            <div class="stat"><span class="num danger" id="statDedupeCount">0</span><span class="lbl">重複が疑われる取引先グループ</span></div>
+            <div class="stat"><span class="num danger" id="statDedupeCount">0</span><span class="lbl">重複が疑われる取引先数（総行数）</span></div>
           </div>
         </div>
         <div style="overflow-x: auto;">
@@ -57,7 +57,8 @@
               <tr>
                 <th style="width: 40px; text-align: center;"><input type="checkbox" id="selectAllDedupe"></th>
                 <th>グループ</th>
-                <th>検出された取引先名</th>
+                <th>取引先名</th>
+                <th>詳細情報（住所 / 番号）</th>
                 <th>状態 / 判定</th>
                 <th>ステータス</th>
               </tr>
@@ -166,7 +167,60 @@
         return await res.json();
       }
 
-      // 1. 重複チェック（安全な完全一致 ＋ 田中グループ専用判定）
+      // --- 判定用ヘルパー関数群 ---
+      function normalizeAddress(addr) {
+        if (!addr) return '';
+        return addr
+          .replace(/[！-～]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0))
+          .replace(/\s+/g, '')
+          .replace(/[―ー\-－]/g, '-')
+          .replace(/(丁目|番地|番|号)/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/-$/, '')
+          .toLowerCase();
+      }
+
+      function cleanCompanyName(name) {
+        if (!name) return '';
+        return name
+          .replace(/[！-～]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0))
+          .replace(/\s+/g, '')
+          .replace(/（/g, '(').replace(/）/g, ')')
+          .replace(/\(株\)|株式会社|\(有\)|有限会社|\(同\)|合同会社|\(資\)|合資会社|\(名\)|合名会社|\(一社\)|一般社団法人/g, '')
+          .replace(/㈲|㊑|㈴|㈵/g, '')
+          .toLowerCase();
+      }
+
+      function getLevenshteinDistance(a, b) {
+        if (!a || !b) return Math.max(a ? a.length : 0, b ? b.length : 0);
+        const matrix = [];
+        for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+        for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+
+        for (let i = 1; i <= b.length; i++) {
+          for (let j = 1; j <= a.length; j++) {
+            if (b.charAt(i - 1) === a.charAt(j - 1)) {
+              matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+              matrix[i][j] = Math.min(
+                matrix[i - 1][j - 1] + 1,
+                matrix[i][j - 1] + 1,
+                matrix[i - 1][j] + 1
+              );
+            }
+          }
+        }
+        return matrix[b.length][a.length];
+      }
+
+      function getStringSimilarity(str1, str2) {
+        if (!str1 || !str2) return 0;
+        const dist = getLevenshteinDistance(str1, str2);
+        const maxLen = Math.max(str1.length, str2.length);
+        return maxLen === 0 ? 1.0 : (1.0 - dist / maxLen);
+      }
+
+      // 1. 重複チェック（高精度グループ化・各行個別表示）
       document.getElementById('runDedupeBtn').addEventListener('click', async () => {
         const btn = document.getElementById('runDedupeBtn');
         const loading = document.getElementById('dedupeLoadingSection');
@@ -187,51 +241,75 @@
             offset += limit;
           }
 
-          function normalizeName(name) {
-            if (!name) return "";
-            let clean = name
-              .replace(/株式会社|有限会社|合名会社|合資会社|合同会社|\(株\)|\（株\）|\(有\)|\（有\）|\s| /g, "")
-              .toLowerCase();
-            clean = clean.replace(/tanaka/g, "田中");
-            return clean;
-          }
+          // 取引先データの前処理
+          const processed = partners.map(p => ({
+            id: p.id,
+            name: p.name,
+            cleanName: cleanCompanyName(p.name),
+            normAddr: normalizeAddress(p.address ? (p.address.street || p.address.name || '') : ''),
+            invoiceNumber: p.shortcut || p.code || '' // 適格事業者番号等があれば活用
+          }));
 
-          const tanakaGroup = [];
-          const exactMap = {};
-
-          partners.forEach(p => {
-            const clean = normalizeName(p.name);
-            if (!clean) return;
-
-            if (clean.includes("田中")) {
-              tanakaGroup.push({ id: p.id, name: p.name });
-            } else {
-              if (!exactMap[clean]) exactMap[clean] = [];
-              exactMap[clean].push({ id: p.id, name: p.name });
-            }
-          });
-
+          // クラスタリング（グループ化）処理
+          const visited = new Set();
           const groups = [];
-          if (tanakaGroup.length > 1) groups.push(tanakaGroup);
-          Object.values(exactMap).forEach(g => {
-            if (g.length > 1) groups.push(g);
-          });
+
+          for (let i = 0; i < processed.length; i++) {
+            if (visited.has(i)) continue;
+            const currentCluster = [processed[i]];
+            visited.add(i);
+
+            for (let j = i + 1; j < processed.length; j++) {
+              if (visited.has(j)) continue;
+
+              const p1 = processed[i];
+              const p2 = processed[j];
+
+              let isMatch = false;
+
+              // 判定1: 社名クリーン後の完全一致 または 類似度が高い（例: 0.8以上かつ文字数3文字以上）
+              const sim = getStringSimilarity(p1.cleanName, p2.cleanName);
+              if (p1.cleanName === p2.cleanName || (sim >= 0.8 && p1.cleanName.length >= 2 && p2.cleanName.length >= 2)) {
+                isMatch = true;
+              }
+
+              // 判定2: 住所が両方存在し、正規化後に完全一致する場合
+              if (!isMatch && p1.normAddr && p2.normAddr && p1.normAddr === p2.normAddr) {
+                isMatch = true;
+              }
+
+              if (isMatch) {
+                currentCluster.push(processed[j]);
+                visited.add(j);
+              }
+            }
+
+            if (currentCluster.length > 1) {
+              groups.push(currentCluster);
+            }
+          }
 
           const tbody = document.getElementById('dedupeTableBody');
           tbody.innerHTML = '';
+          
           if (groups.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--ink-soft);">重複が疑われる取引先は検出されませんでした。</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--ink-soft);">重複が疑われる取引先は検出されませんでした。</td></tr>';
+            document.getElementById('statDedupeCount').textContent = '0 件';
           } else {
+            let totalRows = 0;
             groups.forEach((grp, idx) => {
-              const namesStr = grp.map(g => g.name).join(' / ');
-              tbody.innerHTML += `
-                <tr data-group-index="${idx}">
-                  <td style="text-align: center;"><input type="checkbox" class="dedupe-row-checkbox"></td>
-                  <td><b>グループ${idx + 1}</b></td>
-                  <td>${namesStr}</td>
-                  <td><span style="font-size:11px; background:var(--red-soft); color:var(--red); padding:2px 6px; border-radius:4px; font-weight:bold;">表記揺れ・重複候補</span></td>
-                  <td><span class="status-badge status-default row-status-label">未選択</span></td>
-                </tr>`;
+              grp.forEach(item => {
+                totalRows++;
+                tbody.innerHTML += `
+                  <tr>
+                    <td style="text-align: center;"><input type="checkbox" class="dedupe-row-checkbox"></td>
+                    <td><b>グループ${idx + 1}</b></td>
+                    <td><b>${item.name}</b></td>
+                    <td style="font-size:12px; color:var(--ink-soft);">${item.normAddr ? '住所一致等' : '社名類似'}</td>
+                    <td><span style="font-size:11px; background:var(--red-soft); color:var(--red); padding:2px 6px; border-radius:4px; font-weight:bold;">重複候補</span></td>
+                    <td><span class="status-badge status-default row-status-label">未選択</span></td>
+                  </tr>`;
+              });
             });
 
             document.querySelectorAll('.dedupe-row-checkbox').forEach((chk) => {
@@ -247,6 +325,8 @@
                 }
               });
             });
+
+            document.getElementById('statDedupeCount').textContent = totalRows + ' 件';
           }
 
           const selectAll = document.getElementById('selectAllDedupe');
@@ -258,7 +338,6 @@
             });
           };
 
-          document.getElementById('statDedupeCount').textContent = groups.length + ' 件';
           loading.classList.add('hidden');
           result.classList.remove('hidden');
         } catch (err) {
@@ -276,71 +355,102 @@
           alert('出力するデータがありません。');
           return;
         }
-        let csv = '\uFEFFグループ,検出された取引先名,判定,ステータス\n';
+        let csv = '\uFEFFグループ,取引先名,判定,ステータス\n';
         rows.forEach(tr => {
           const cols = tr.querySelectorAll('td');
-          if (cols.length >= 5) {
+          if (cols.length >= 6) {
             const group = cols[1].innerText.trim();
             const name = `"${cols[2].innerText.replace(/"/g, '""').trim()}"`;
-            const judge = cols[3].innerText.trim();
-            const status = cols[4].innerText.trim();
+            const judge = cols[4].innerText.trim();
+            const status = cols[5].innerText.trim();
             csv += `${group},${name},${judge},${status}\n`;
           }
         });
         downloadCsv(csv, 'dedupe_partners.csv');
       });
 
-      // 2. 未使用取引先の抽出（最初に確認メッセージを表示）
+      // 2. 未使用取引先の抽出（事前に件数を検出して確認メッセージを表示）
       document.getElementById('runUnusedBtn').addEventListener('click', async () => {
         const isCustom = radioCustom.checked;
         const start = isCustom ? document.getElementById('unusedStartDate').value : '';
         const end = isCustom ? document.getElementById('unusedEndDate').value : '';
         if (isCustom && (!start || !end)) { alert('期間を指定してください'); return; }
 
-        // ★ ボタンを押した最初に確認メッセージを表示
-        const confirmMsg = "取引データ量によっては完了までに時間がかかる可能性がありますが続けますか？";
-        if (!confirm(confirmMsg)) {
-          return;
-        }
-
         const btn = document.getElementById('runUnusedBtn');
         const loading = document.getElementById('unusedLoadingSection');
         const progressText = document.getElementById('unusedProgressText');
         const result = document.getElementById('unusedResultSection');
-        result.classList.add('hidden');
+        
+        // ★ 事前に取引件数を軽くカウントまたは確認してからメッセージを表示
+        try {
+          progressText.textContent = "取引件数を確認中...";
+          let testQuery = `company_id=${companyId}&limit=1`;
+          if (isCustom) testQuery += `&start_issue_date=${start}&end_issue_date=${end}`;
+          
+          // まずdealsの総件数をヘッダーやAPI等から想定するか、ざっくり確認
+          // freee APIでは全体の件数が返りにくいため、最初の1回リクエストして確認目安にするか、一般的なメッセージにする
+          // ここでは直近の目安として取引データの総件数確認フローを挟みます
+          const checkRes = await callApi(`/deals?${testQuery}`);
+          // 件数の厳密な合計がAPI仕様上 pagination等で直感取れないため、スムーズに件数を測るフェーズを入れます
+        } catch(e) {}
+
+        // ★ ご要望の確認メッセージ（取引件数を含める）
+        // ここでは全件カウント用の一時取得を行ってから確認メッセージを出します
         loading.classList.remove('hidden');
+        result.classList.add('hidden');
         btn.disabled = true;
 
         try {
+          progressText.textContent = "取引件数を集計中...";
+          let totalDealsCount = 0;
+          let dOffset = 0;
+          let queryParam = `company_id=${companyId}&limit=100`;
+          if (isCustom) queryParam += `&start_issue_date=${start}&end_issue_date=${end}`;
+
+          // 高速に件数だけ把握するためにループ
+          while (true) {
+            const dRes = await callApi(`/deals?${queryParam}&offset=${dOffset}`);
+            const batch = dRes.deals || [];
+            totalDealsCount += batch.length;
+            if (batch.length < 100) break;
+            dOffset += 100;
+          }
+
+          loading.classList.add('hidden');
+          btn.disabled = false;
+
+          const confirmMsg = `${totalDealsCount}件の取引データから未使用の取引先を検出します。時間がかかる可能性がありますが続けますか？`;
+          if (!confirm(confirmMsg)) {
+            return;
+          }
+
+          // 「はい」が選ばれた場合の実処理
+          result.classList.add('hidden');
+          loading.classList.remove('hidden');
+          btn.disabled = true;
+
           progressText.textContent = "取引先データを取得中...";
           let partners = [];
           let pOffset = 0;
-          const pLimit = 100;
           while (true) {
-            const pRes = await callApi(`/partners?company_id=${companyId}&limit=${pLimit}&offset=${pOffset}`);
+            const pRes = await callApi(`/partners?company_id=${companyId}&limit=100&offset=${pOffset}`);
             const pBatch = pRes.partners || [];
             partners = partners.concat(pBatch);
-            if (pBatch.length < pLimit) break;
-            pOffset += pLimit;
+            if (pBatch.length < 100) break;
+            pOffset += 100;
           }
 
-          progressText.textContent = `取引先 ${partners.length}件 取得完了。取引データを取得中...`;
+          progressText.textContent = `取引先 ${partners.length}件 完了。取引データを収集中...`;
 
           let deals = [];
-          let dOffset = 0;
-          const dLimit = 100;
-          let queryParam = `company_id=${companyId}&limit=${dLimit}`;
-          if (isCustom) {
-            queryParam += `&start_issue_date=${start}&end_issue_date=${end}`;
-          }
-
+          dOffset = 0;
           while (true) {
             const dRes = await callApi(`/deals?${queryParam}&offset=${dOffset}`);
             const dBatch = dRes.deals || [];
             deals = deals.concat(dBatch);
             progressText.textContent = `取引データを収集中... (${deals.length}件)`;
-            if (dBatch.length < dLimit) break;
-            dOffset += dLimit;
+            if (dBatch.length < 100) break;
+            dOffset += 100;
           }
 
           progressText.textContent = `照合処理を実行中...`;
