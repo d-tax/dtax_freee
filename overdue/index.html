@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>期日超過売掛金チェッカー - freee拡張ポータル</title>
+  <link rel="stylesheet" href="../css/common.css">
+</head>
+<body>
+  <div class="bg-gradient"></div>
+
+  <div class="page">
+    <div class="app-header-bar">
+      <button class="btn-nav" onclick="location.href='../index.html'" type="button">← ポータルへ戻る</button>
+      <span class="app-tag">使用中：期日超過の未決済売掛金チェッカー</span>
+    </div>
+
+    <div class="step-box">
+      <div class="step-title">売掛金の滞納状況チェック</div>
+      <button class="btn-primary" id="runOverdueBtn" type="button">期日超過の未決済取引を自動抽出する</button>
+      <div class="info-box">
+        <b>【何を抽出するのか】</b><br>
+        freeeに登録されている未決済の売掛金（収入取引）の中から、決済期日（回収予定日）を過ぎているにもかかわらず入金処理が完了していない取引を抽出します。
+      </div>
+    </div>
+
+    <div id="overdueLoadingSection" class="loading-box hidden">
+      <div class="spinner"></div>
+      <div style="font-size: 13px; font-weight: 600; color: var(--navy);">売掛金データを照会中...</div>
+    </div>
+
+    <div id="overdueResultSection" class="hidden">
+      <div class="summary">
+        <div class="summary-stats">
+          <div class="stat"><span class="num danger" id="statOverdueCount">0</span><span class="lbl">期日超過件数</span></div>
+          <div class="stat"><span class="num danger" id="statOverdueAmount">¥0</span><span class="lbl">超過合計金額</span></div>
+        </div>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="all-table">
+          <thead>
+            <tr>
+              <th>取引先</th>
+              <th>期日</th>
+              <th>金額</th>
+              <th>超過日数</th>
+            </tr>
+          </thead>
+          <tbody id="overdueTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="error-box" id="errorBox"></div>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+      const companyId = localStorage.getItem('freee_company_id');
+      console.log("売掛金チェッカー起動 - 事業所ID:", companyId);
+      // ここに売掛金チェッカーの専用ロジックを記述
+    })();
+  </script>
+</body>
+</html>
