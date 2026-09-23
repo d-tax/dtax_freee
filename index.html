@@ -20,9 +20,10 @@
 
     <!-- Step 1: ログイン画面 -->
     <div id="stepLogin" class="step-box">
-      <div class="step-title">1. freee連携ログイン</div>
-      <div class="step-desc">freeeアカウントで認証を行い、安全にAPIデータと連携します。</div>
-      <button class="btn-primary" id="loginBtn" type="button">freeeアカウントでログイン</button>
+      <div class="step-title">1. freeeアクセストークン設定</div>
+      <div class="step-desc">freeeアプリのアクセストークンを入力してください（テスト用）。</div>
+      <input type="password" class="form-input" id="tokenInput" placeholder="freee アクセストークンを貼り付け">
+      <button class="btn-primary" id="saveTokenBtn" type="button">事業所一覧を取得する</button>
     </div>
 
     <!-- Step 2: 事業所選択画面 -->
@@ -115,6 +116,22 @@
       errorBox.style.display = "block";
       errorBox.textContent = msg;
     }
+
+    const saveTokenBtn = document.getElementById("saveTokenBtn");
+    const tokenInput = document.getElementById("tokenInput");
+
+    saveTokenBtn.addEventListener("click", async function () {
+      const token = tokenInput.value.trim();
+      if (!token) {
+        alert("アクセストークンを入力してください。");
+        return;
+      }
+      // トークンを保存して事業所取得へ
+      localStorage.setItem("freee_access_token", token);
+      stepLogin.classList.add("hidden");
+      stepCompany.classList.remove("hidden");
+      await fetchCompanies(token);
+    });
 
     // 1. ログインボタン押下時の処理（freeeの認証画面へ飛ばす）
     loginBtn.addEventListener("click", function () {
