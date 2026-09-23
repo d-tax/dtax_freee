@@ -29,19 +29,19 @@
         <div class="date-field">
           <label>対象期間</label>
           <select class="form-select" id="pochiMonthsSelect">
-            <option value="3">過去 3ヶ月</option>
+            <option value="3" selected>過去 3ヶ月</option>
             <option value="6">過去 6ヶ月</option>
-            <option value="12" selected>過去 12ヶ月</option>
+            <option value="12">過去 12ヶ月</option>
           </select>
         </div>
         <div class="date-field">
           <label>手入力回数の閾値（○回以上）</label>
-          <input type="number" class="form-input" id="pochiMinCount" value="2" min="1">
+          <input type="number" class="form-input" id="pochiMinCount" value="5" min="1">
         </div>
       </div>
       
       <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
-        <input type="checkbox" id="excludeNoPartner" style="width: 16px; height: 16px; cursor: pointer;">
+        <input type="checkbox" id="excludeNoPartner" checked style="width: 16px; height: 16px; cursor: pointer;">
         <label for="excludeNoPartner" style="font-size: 13px; color: var(--ink); cursor: pointer;">「取引先が指定なし」のデータを集計から除外する</label>
       </div>
 
@@ -87,8 +87,8 @@
       document.getElementById('currentCompanyLabel').textContent = sessionStorage.getItem('company_name');
 
       document.getElementById('runPochiCheckBtn').addEventListener('click', async () => {
-        const months = parseInt(document.getElementById('pochiMonthsSelect').value, 10) || 6;
-        const minCount = parseInt(document.getElementById('pochiMinCount').value, 10) || 2;
+        const months = parseInt(document.getElementById('pochiMonthsSelect').value, 10) || 3;
+        const minCount = parseInt(document.getElementById('pochiMinCount').value, 10) || 5;
         const excludeNoPartner = document.getElementById('excludeNoPartner').checked;
 
         const btn = document.getElementById('runPochiCheckBtn');
@@ -136,7 +136,7 @@
 
           const totalManualCount = manualDeals.length;
 
-          // 4. 具体的な件数つきで確認ダイアログを表示
+          // 4. 指定された形式で確認ダイアログを表示
           const confirmed = confirm(`${totalManualCount}件の取引データから未使用の取引先を検出します。時間がかかる可能性がありますが続けますか？`);
           if (!confirmed) {
             loading.classList.add('hidden');
