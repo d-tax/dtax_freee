@@ -18,10 +18,10 @@
       <img src="images/360097.png" alt="D-Tax" class="header-logo" onerror="this.style.display='none'">
     </header>
 
-    <!-- Step 1: ログイン画面 -->
+    <!-- Step 1: アクセストークン設定画面 -->
     <div id="stepLogin" class="step-box">
-      <div class="step-title">1. freeeアクセストークン設定</div>
-      <div class="step-desc">freeeアプリのアクセストークンを入力してください（テスト用）。</div>
+      <div class="step-title">1. freee アクセストークン設定</div>
+      <div class="step-desc">freee APIのアクセストークンを入力してください。</div>
       <input type="password" class="form-input" id="tokenInput" placeholder="freee アクセストークンを貼り付け">
       <button class="btn-primary" id="saveTokenBtn" type="button">事業所一覧を取得する</button>
     </div>
@@ -90,143 +90,115 @@
     </div>
 
     <!-- 共通エラー表示 -->
-    <div class="error-box" id="errorBox"></div>
+    <div class="error-box" id="errorBox" style="display:none; color:red; margin-top:10px;"></div>
   </div>
 
   <script>
-  (function () {
-    "use strict";
+    (function () {
+      "use strict";
 
-    // ▼ ご自身のfreeeアプリのクライアントIDを設定してください
-    const CLIENT_ID = "803164151598495"; 
-    
-    // リダイレクト先（現在開いているページのURLを自動取得）
-    const REDIRECT_URI = window.location.origin + window.location.pathname;
+      const tokenInput = document.getElementById("tokenInput");
+      const saveTokenBtn = document.getElementById("saveTokenBtn");
+      const stepLogin = document.getElementById("stepLogin");
+      const stepCompany = document.getElementById("stepCompany");
+      const stepApps = document.getElementById("stepApps");
+      const companySelect = document.getElementById("companySelect");
+      const selectCompanyBtn = document.getElementById("selectCompanyBtn");
+      const selectedCompanyName = document.getElementById("selectedCompanyName");
+      const errorBox = document.getElementById("errorBox");
 
-    const loginBtn = document.getElementById("loginBtn");
-    const stepLogin = document.getElementById("stepLogin");
-    const stepCompany = document.getElementById("stepCompany");
-    const stepApps = document.getElementById("stepApps");
-    const companySelect = document.getElementById("companySelect");
-    const selectCompanyBtn = document.getElementById("selectCompanyBtn");
-    const selectedCompanyName = document.getElementById("selectedCompanyName");
-    const errorBox = document.getElementById("errorBox");
-
-    function showError(msg) {
-      errorBox.style.display = "block";
-      errorBox.textContent = msg;
-    }
-
-    const saveTokenBtn = document.getElementById("saveTokenBtn");
-    const tokenInput = document.getElementById("tokenInput");
-
-    saveTokenBtn.addEventListener("click", async function () {
-      const token = tokenInput.value.trim();
-      if (!token) {
-        alert("アクセストークンを入力してください。");
-        return;
-      }
-      // トークンを保存して事業所取得へ
-      localStorage.setItem("freee_access_token", token);
-      stepLogin.classList.add("hidden");
-      stepCompany.classList.remove("hidden");
-      await fetchCompanies(token);
-    });
-
-    // 1. ログインボタン押下時の処理（freeeの認証画面へ飛ばす）
-    loginBtn.addEventListener("click", function () {
-      const authUrl = `https://accounts.secure.freee.co.jp/public_api/authorize?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
-      window.location.href = authUrl;
-    });
-
-    // 2. ページ読み込み時の処理（freeeから認可コード付きで戻ってきたかチェック）
-    window.addEventListener("DOMContentLoaded", async function () {
-      const urlParams = new URLSearchParams(window.location.search);
-      const code = urlParams.get("code");
-      const savedToken = localStorage.getItem("freee_access_token");
-
-      if (code && !savedToken) {
-        // 戻ってきた直後：本来はここでバックエンドやAPI経由でアクセストークンに交換します
-        // ※今回は簡易的にコードをトークンに見立てて保存する例、またはご自身のアクセストークン取得ロジックをここに挟みます
-        localStorage.setItem("freee_access_token", code);
-        // URLの ?code=... をキレイに消す
-        window.history.replaceState({}, document.title, window.location.pathname);
+      function showError(msg) {
+        errorBox.style.display = "block";
+        errorBox.textContent = msg;
       }
 
-      const accessToken = localStorage.getItem("freee_access_token");
+      // 1. ページ読み込み時、すでに保存されたトークンがあれば自動で事業所一覧を取得
+      window.addEventListener("DOMContentLoaded", async function () {
+        const savedToken = localStorage.getItem("freee_access_token");
+        if (savedToken) {
+          tokenInput.value = savedToken;
+          stepLogin.classList.add("hidden");
+          stepCompany.classList.remove("hidden");
+          await fetchCompanies(savedToken);
+        }
+      });
 
-      if (accessToken) {
-        // ログイン済みの場合、ステップ1を飛ばして事業所選択へ進む
+      // 2. トークン保存ボタン押下時の処理
+      saveTokenBtn.addEventListener("click", async function () {
+        const token = tokenInput.value.trim();
+        if (!token) {
+          alert("アクセストークンを入力してください。");
+          return;
+        }
+        localStorage.setItem("freee_access_token", token);
         stepLogin.classList.add("hidden");
         stepCompany.classList.remove("hidden");
-        await fetchCompanies(accessToken);
-      }
-    });
+        await fetchCompanies(token);
+      });
 
-    // 3. 事業所一覧の取得関数（本番API連携版）
-    async function fetchCompanies(token) {
-      try {
-        companySelect.innerHTML = '<option value="">事業所を読み込んでいます...</option>';
-        
-        // freee APIから実際の事業所一覧を取得
-        const response = await fetch("https://api.freee.co.jp/api/1/companies", {
-          method: "GET",
-          headers: {
-            "Authorization": "Bearer " + token,
-            "accept": "application/json"
+      // 3. 事業所一覧の取得関数（本番API連携版）
+      async function fetchCompanies(token) {
+        try {
+          companySelect.innerHTML = '<option value="">事業所を読み込んでいます...</option>';
+          errorBox.style.display = "none";
+          
+          const response = await fetch("https://api.freee.co.jp/api/1/companies", {
+            method: "GET",
+            headers: {
+              "Authorization": "Bearer " + token,
+              "accept": "application/json"
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error(`API通信に失敗しました (ステータス: ${response.status})`);
           }
-        });
 
-        if (!response.ok) {
-          throw new Error(`API通信に失敗しました (ステータス: ${response.status})`);
+          const data = await response.json();
+          const companies = data.companies;
+
+          if (!companies || companies.length === 0) {
+            throw new Error("利用可能な事業所が見つかりませんでした。");
+          }
+
+          companySelect.innerHTML = "";
+          companies.forEach(comp => {
+            const opt = document.createElement("option");
+            opt.value = comp.id;
+            opt.textContent = comp.display_name || comp.name;
+            companySelect.appendChild(opt);
+          });
+
+        } catch (err) {
+          showError("事業所一覧の取得に失敗しました: " + err.message);
+          console.error(err);
+          // エラーが発生した場合はトークンをクリアして再入力できるようにする
+          localStorage.removeItem("freee_access_token");
+          stepCompany.classList.add("hidden");
+          stepLogin.classList.remove("hidden");
         }
-
-        const data = await response.json();
-        const companies = data.companies;
-
-        if (!companies || companies.length === 0) {
-          throw new Error("利用可能な事業所が見つかりませんでした。");
-        }
-
-        // セレクトボックスを実際の事業所で埋める
-        companySelect.innerHTML = "";
-        companies.forEach(comp => {
-          const opt = document.createElement("option");
-          opt.value = comp.id;
-          // 表示名（display_name または name）を設定
-          opt.textContent = comp.display_name || comp.name;
-          companySelect.appendChild(opt);
-        });
-
-      } catch (err) {
-        showError("事業所一覧の取得に失敗しました: " + err.message);
-        // トークンが無効な場合などのためにストレージをクリアする選択肢も持たせられます
-        console.error(err);
-      }
-    }
-
-    // 4. 事業所を選択してアプリ一覧へ進むボタン
-    selectCompanyBtn.addEventListener("click", function () {
-      const selectedId = companySelect.value;
-      const selectedText = companySelect.options[companySelect.selectedIndex].text;
-
-      if (!selectedId) {
-        alert("事業所を選択してください。");
-        return;
       }
 
-      // 各アプリが参照できるように保存
-      localStorage.setItem("freee_company_id", selectedId);
-      localStorage.setItem("freee_company_name", selectedText);
+      // 4. 事業所を選択してアプリ一覧へ進むボタン
+      selectCompanyBtn.addEventListener("click", function () {
+        const selectedId = companySelect.value;
+        const selectedText = companySelect.options[companySelect.selectedIndex].text;
 
-      selectedCompanyName.textContent = selectedText;
+        if (!selectedId) {
+          alert("事業所を選択してください。");
+          return;
+        }
 
-      // 画面切り替え
-      stepCompany.classList.add("hidden");
-      stepApps.classList.remove("hidden");
-    });
+        localStorage.setItem("freee_company_id", selectedId);
+        localStorage.setItem("freee_company_name", selectedText);
 
-  })();
-</script>
+        selectedCompanyName.textContent = selectedText;
+
+        stepCompany.classList.add("hidden");
+        stepApps.classList.remove("hidden");
+      });
+
+    })();
+  </script>
 </body>
 </html>
