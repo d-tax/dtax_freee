@@ -18,12 +18,11 @@
       <img src="images/360097.png" alt="D-Tax" class="header-logo" onerror="this.style.display='none'">
     </header>
 
-    <!-- Step 1: アクセストークン設定画面 -->
+    <!-- Step 1: ログイン画面 -->
     <div id="stepLogin" class="step-box">
-      <div class="step-title">1. freee アクセストークン設定</div>
-      <div class="step-desc">freee APIのアクセストークンを入力してください。</div>
-      <input type="password" class="form-input" id="tokenInput" placeholder="freee アクセストークンを貼り付け">
-      <button class="btn-primary" id="saveTokenBtn" type="button">事業所一覧を取得する</button>
+      <div class="step-title">1. freee連携ログイン</div>
+      <div class="step-desc">freeeアカウントで認証を行い、安全にAPIデータと連携します。</div>
+      <button class="btn-primary" id="loginBtn" type="button">freeeアカウントでログイン</button>
     </div>
 
     <!-- Step 2: 事業所選択画面 -->
@@ -97,8 +96,13 @@
     (function () {
       "use strict";
 
-      const tokenInput = document.getElementById("tokenInput");
-      const saveTokenBtn = document.getElementById("saveTokenBtn");
+      // ▼ ご自身のfreeeアプリのクライアントIDを設定済みの状態
+      const CLIENT_ID = "803164151598495"; 
+      
+      // リダイレクト先（現在開いているページのURLを自動取得）
+      const REDIRECT_URI = window.location.origin + window.location.pathname;
+
+      const loginBtn = document.getElementById("loginBtn");
       const stepLogin = document.getElementById("stepLogin");
       const stepCompany = document.getElementById("stepCompany");
       const stepApps = document.getElementById("stepApps");
@@ -112,28 +116,35 @@
         errorBox.textContent = msg;
       }
 
-      // 1. ページ読み込み時、すでに保存されたトークンがあれば自動で事業所一覧を取得
+      // 1. ログインボタン押下時の処理（freeeの認証画面へ飛ばす）
+      if (loginBtn) {
+        loginBtn.addEventListener("click", function () {
+          const authUrl = `https://accounts.secure.freee.co.jp/public_api/authorize?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
+          window.location.href = authUrl;
+        });
+      }
+
+      // 2. ページ読み込み時の処理（freeeから認可コード付きで戻ってきたかチェック）
       window.addEventListener("DOMContentLoaded", async function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get("code");
         const savedToken = localStorage.getItem("freee_access_token");
-        if (savedToken) {
-          tokenInput.value = savedToken;
+
+        if (code && !savedToken) {
+          // 認証から戻ってきた際の一時処理
+          // ※もしバックエンドサーバー等でコードをアクセストークンに交換する仕組みがある場合はここに組み込みます。
+          // （静的HTML単体で動かす場合はアクセストークンを直接保持する形が一般的ですが、コード構造を維持しています）
+          localStorage.setItem("freee_access_token", code);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        const accessToken = localStorage.getItem("freee_access_token");
+
+        if (accessToken) {
           stepLogin.classList.add("hidden");
           stepCompany.classList.remove("hidden");
-          await fetchCompanies(savedToken);
+          await fetchCompanies(accessToken);
         }
-      });
-
-      // 2. トークン保存ボタン押下時の処理
-      saveTokenBtn.addEventListener("click", async function () {
-        const token = tokenInput.value.trim();
-        if (!token) {
-          alert("アクセストークンを入力してください。");
-          return;
-        }
-        localStorage.setItem("freee_access_token", token);
-        stepLogin.classList.add("hidden");
-        stepCompany.classList.remove("hidden");
-        await fetchCompanies(token);
       });
 
       // 3. 事業所一覧の取得関数（本番API連携版）
@@ -172,7 +183,6 @@
         } catch (err) {
           showError("事業所一覧の取得に失敗しました: " + err.message);
           console.error(err);
-          // エラーが発生した場合はトークンをクリアして再入力できるようにする
           localStorage.removeItem("freee_access_token");
           stepCompany.classList.add("hidden");
           stepLogin.classList.remove("hidden");
