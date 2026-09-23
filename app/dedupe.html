@@ -1,105 +1,4 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>取引先台帳クリーニング - freee拡張ポータル</title>
-  <link rel="stylesheet" href="../css/common.css">
-</head>
-<body>
-  <div class="bg-gradient"></div>
-
-  <div class="page">
-    <header>
-      <div>
-        <h1>取引先台帳クリーニング</h1>
-        <p>対象事業所: <b id="currentCompanyLabel" style="color:var(--ink);">読み込み中...</b></p>
-      </div>
-      <img src="../images/360097.png" alt="D-Tax" class="header-logo">
-    </header>
-
-    <div class="app-header-bar">
-      <a href="../index.html" class="btn-nav">← ポータルへ戻る</a>
-      <span class="app-tag">使用中：取引先台帳クリーニング</span>
-    </div>
-
-    <!-- 機能1: 重複チェック -->
-    <div class="step-box">
-      <div class="step-title">1. 取引先台帳の重複チェック</div>
-      <button class="btn-secondary" id="runDedupeBtn" type="button">取引先の重複登録を探す</button>
-      <div class="info-box">
-        <b>【何を抽出するのか】</b><br>
-        「株式会社」の表記違いや、名称が酷似している重複登録の取引先候補を自動解析して一覧化します。
-      </div>
-
-      <div id="dedupeLoadingSection" class="loading-box hidden">
-        <div class="spinner"></div>
-        <div style="font-size: 13px; font-weight: 600; color: var(--navy);">重複取引先データを分析中...</div>
-      </div>
-
-      <div id="dedupeResultSection" class="hidden">
-        <div class="summary">
-          <div class="summary-stats">
-            <div class="stat"><span class="num danger" id="statDedupeCount">0</span><span class="lbl">重複が疑われる取引先グループ</span></div>
-          </div>
-        </div>
-        <div style="overflow-x: auto;">
-          <table class="all-table">
-            <thead>
-              <tr><th>グループ</th><th>検出された取引先名</th><th>状態 / 判定</th></tr>
-            </thead>
-            <tbody id="dedupeTableBody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- 機能2: 未使用取引先抽出 -->
-    <div class="step-box">
-      <div class="step-title">2. 未使用取引先の抽出</div>
-      <div class="date-range-grid" style="margin-bottom: 12px;">
-        <div class="date-field">
-          <label>対象期間（開始）</label>
-          <input type="date" class="form-input" id="unusedStartDate" style="margin-bottom:0;">
-        </div>
-        <div class="date-field">
-          <label>対象期間（終了）</label>
-          <input type="date" class="form-input" id="unusedEndDate" style="margin-bottom:0;">
-        </div>
-      </div>
-      <button class="btn-secondary" id="runUnusedBtn" type="button">過去に取引のない取引先を探す</button>
-      <div class="info-box">
-        <b>【何を抽出するのか】</b><br>
-        指定した期間内に一度も取引が発生していない取引先を抽出し、整理候補として可視化します。
-      </div>
-
-      <div id="unusedLoadingSection" class="loading-box hidden">
-        <div class="spinner"></div>
-        <div style="font-size: 13px; font-weight: 600; color: var(--navy);">過去の取引データを解析中...</div>
-        <div id="unusedProgressText" style="font-size: 14px; font-weight: 700; color: var(--red);">過去の取引 0 件 / 0 件</div>
-      </div>
-
-      <div id="unusedResultSection" class="hidden">
-        <div class="summary">
-          <div class="summary-stats">
-            <div class="stat"><span class="num danger" id="statUnusedCount">0</span><span class="lbl">未使用の取引先数</span></div>
-          </div>
-        </div>
-        <div style="overflow-x: auto;">
-          <table class="all-table">
-            <thead>
-              <tr><th>取引先コード</th><th>取引先名</th><th>最終取引判定</th></tr>
-            </thead>
-            <tbody id="unusedTableBody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <div class="error-box" id="errorBox"></div>
-  </div>
-
-  <script>
+<script>
     (function () {
       "use strict";
       const token = sessionStorage.getItem('access_token');
@@ -120,7 +19,15 @@
       document.getElementById('unusedEndDate').value = today.toISOString().split('T')[0];
       document.getElementById('unusedStartDate').value = oneYearAgo.toISOString().split('T')[0];
 
-      // 重複チェックダミー処理
+      async function callApi(endpoint) {
+        const res = await fetch(`https://api.freee.co.jp/api/1${endpoint}`, {
+          headers: { 'Authorization': `Bearer ${token}`, 'accept': 'application/json' }
+        });
+        if (!res.ok) throw new Error(`APIエラー: ${res.status}`);
+        return await res.json();
+      }
+
+      // 1. 重複チェック（実際のAPIデータから名称の類似・揺れを検出）
       document.getElementById('runDedupeBtn').addEventListener('click', async () => {
         const btn = document.getElementById('runDedupeBtn');
         const loading = document.getElementById('dedupeLoadingSection');
@@ -129,24 +36,46 @@
         loading.classList.remove('hidden');
         btn.disabled = true;
 
-        await new Promise(r => setTimeout(r, 1200));
-        const mockData = [
-          { group: 'グループ1', names: '株式会社サンプル / (株)サンプル', status: '重複の可能性高' },
-          { group: 'グループ2', names: 'テスト商事 / テスト商事株式会社', status: '表記違い' }
-        ];
-        const tbody = document.getElementById('dedupeTableBody');
-        tbody.innerHTML = '';
-        mockData.forEach(row => {
-          tbody.innerHTML += `<tr><td><b>${row.group}</b></td><td>${row.names}</td><td><span style="font-size:11px; background:var(--red-soft); color:var(--red); padding:2px 6px; border-radius:4px; font-weight:bold;">${row.status}</span></td></tr>`;
-        });
-        document.getElementById('statDedupeCount').textContent = mockData.length + ' 件';
-        loading.classList.add('hidden');
-        result.classList.remove('hidden');
-        btn.disabled = false;
+        try {
+          const data = await callApi(`/partners?company_id=${companyId}&limit=100`);
+          const partners = data.partners || [];
+
+          // 簡易的な重複判定ロジック（株式会社やスペースなどを除いた名前で比較）
+          const normalizedMap = {};
+          partners.forEach(p => {
+            const cleanName = p.name.replace(/株式会社|有限会社|\(株\)|\（株\）|\s| /g, "").toLowerCase();
+            if (!normalizedMap[cleanName]) normalizedMap[cleanName] = [];
+            normalizedMap[cleanName].push(p.name);
+          });
+
+          const duplicates = Object.entries(normalizedMap).filter(([key, names]) => names.length > 1);
+          
+          const tbody = document.getElementById('dedupeTableBody');
+          tbody.innerHTML = '';
+          if (duplicates.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--ink-soft);">重複が疑われる取引先は検出されませんでした。</td></tr>';
+          } else {
+            duplicates.forEach(([, names], idx) => {
+              tbody.innerHTML += `<tr><td><b>グループ${idx + 1}</b></td><td>${names.join(' / ')}</td><td><span style="font-size:11px; background:var(--red-soft); color:var(--red); padding:2px 6px; border-radius:4px; font-weight:bold;">表記揺れ・重複候補</span></td></tr>`;
+            });
+          }
+          document.getElementById('statDedupeCount').textContent = duplicates.length + ' 件';
+          loading.classList.add('hidden');
+          result.classList.remove('hidden');
+        } catch (err) {
+          alert('データ取得に失敗しました: ' + err.message);
+          loading.classList.add('hidden');
+        } finally {
+          btn.disabled = false;
+        }
       });
 
-      // 未使用取引先抽出ダミー処理
+      // 2. 未使用取引先の抽出（指定期間内に取引がない取引先を特定）
       document.getElementById('runUnusedBtn').addEventListener('click', async () => {
+        const start = document.getElementById('unusedStartDate').value;
+        const end = document.getElementById('unusedEndDate').value;
+        if (!start || !end) { alert('期間を指定してください'); return; }
+
         const btn = document.getElementById('runUnusedBtn');
         const loading = document.getElementById('unusedLoadingSection');
         const result = document.getElementById('unusedResultSection');
@@ -154,22 +83,43 @@
         loading.classList.remove('hidden');
         btn.disabled = true;
 
-        await new Promise(r => setTimeout(r, 1500));
-        const mockData = [
-          { code: 'TRD-0012', name: '旧・グローバルインク', status: '指定期間内 取引0件' },
-          { code: 'TRD-0045', name: 'ダミーサプライヤ', status: '指定期間内 取引0件' }
-        ];
-        const tbody = document.getElementById('unusedTableBody');
-        tbody.innerHTML = '';
-        mockData.forEach(row => {
-          tbody.innerHTML += `<tr><td><b>${row.code}</b></td><td>${row.name}</td><td><span style="font-size:11px; background:var(--amber-soft); color:var(--amber); padding:2px 6px; border-radius:4px; font-weight:bold;">${row.status}</span></td></tr>`;
-        });
-        document.getElementById('statUnusedCount').textContent = mockData.length + ' 件';
-        loading.classList.add('hidden');
-        result.classList.remove('hidden');
-        btn.disabled = false;
+        try {
+          // 並行して取引先一覧と期間内の取引を取得
+          const [partnerRes, dealRes] = await Promise.all([
+            callApi(`/partners?company_id=${companyId}&limit=100`),
+            callApi(`/deals?company_id=${companyId}&start_issue_date=${start}&end_issue_date=${end}&limit=100`)
+          ]);
+
+          const partners = partnerRes.partners || [];
+          const deals = dealRes.deals || [];
+
+          // 期間内に使用されたpartner_idのセットを作る
+          const usedPartnerIds = new Set();
+          deals.forEach(d => {
+            if (d.partner_id) usedPartnerIds.add(d.partner_id);
+          });
+
+          // 取引実績のない取引先を抽出
+          const unusedPartners = partners.filter(p => !usedPartnerIds.has(p.id));
+
+          const tbody = document.getElementById('unusedTableBody');
+          tbody.innerHTML = '';
+          if (unusedPartners.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--ink-soft);">該当する未使用取引先はありません。</td></tr>';
+          } else {
+            unusedPartners.forEach(p => {
+              tbody.innerHTML += `<tr><td><b>${p.code || '---'}</b></td><td>${p.name}</td><td><span style="font-size:11px; background:var(--amber-soft); color:var(--amber); padding:2px 6px; border-radius:4px; font-weight:bold;">指定期間内 取引0件</span></td></tr>`;
+            });
+          }
+          document.getElementById('statUnusedCount').textContent = unusedPartners.length + ' 件';
+          loading.classList.add('hidden');
+          result.classList.remove('hidden');
+        } catch (err) {
+          alert('データ取得に失敗しました: ' + err.message);
+          loading.classList.add('hidden');
+        } finally {
+          btn.disabled = false;
+        }
       });
     })();
   </script>
-</body>
-</html>
