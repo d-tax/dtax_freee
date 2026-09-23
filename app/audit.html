@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>取引の異常値・異常入力チェッカー - freee拡張ポータル</title>
+  <link rel="stylesheet" href="../css/common.css">
+</head>
+<body>
+  <div class="bg-gradient"></div>
+
+  <div class="page">
+    <header>
+      <div>
+        <h1>異常値・異常入力チェッカー</h1>
+        <p>対象事業所: <b id="currentCompanyLabel" style="color:var(--ink);">読み込み中...</b></p>
+      </div>
+      <img src="../images/360097.png" alt="D-Tax" class="header-logo">
+    </header>
+
+    <div class="app-header-bar">
+      <a href="../index.html" class="btn-nav">← ポータルへ戻る</a>
+      <span class="app-tag">使用中：取引の異常値・異常入力チェッカー</span>
+    </div>
+
+    <div class="step-box">
+      <div class="step-title">監査用チェックの実行</div>
+      <div class="date-range-grid" style="margin-bottom: 12px;">
+        <div class="date-field">
+          <label>対象期間</label>
+          <select class="form-select" id="auditMonthsSelect">
+            <option value="1">当月分のみ</option>
+            <option value="3" selected>過去 3ヶ月</option>
+            <option value="6">過去 6ヶ月</option>
+          </select>
+        </div>
+        <div class="date-field">
+          <label>金額乖離トリガー</label>
+          <select class="form-select" id="auditThresholdSelect">
+            <option value="3">平均の 3倍以上</option>
+            <option value="5" selected>平均の 5倍以上 (桁指定ミス等)</option>
+            <option value="10">平均の 10倍以上</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-primary" id="runAuditCheckBtn" type="button">異常値・入力ミスを抽出する</button>
+
+      <div class="info-box">
+        <b>【何を抽出するのか】</b><br>
+        ・<b>金額の桁間違い</b>：平均値から大きく乖離した取引。<br>
+        ・<b>税区分の矛盾</b>：いつもと異なる税区分になっている矛盾取引。
+      </div>
+    </div>
+
+    <div id="auditLoadingSection" class="loading-box hidden">
+      <div class="spinner"></div>
+      <div style="font-size: 13px; font-weight: 600; color: var(--navy);">全仕訳・取引データを解析中...</div>
+    </div>
+
+    <div id="auditResultSection" class="hidden">
+      <div class="summary">
+        <div class="summary-stats">
+          <div class="stat"><span class="num danger" id="statAuditTotalCount">0</span><span class="lbl">要確認の異常取引数</span></div>
+        </div>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="all-table">
+          <thead>
+            <tr><th>発生日 / 取引先</th><th>科目 / 登録金額</th><th>検知された異常理由</th><th>リスク度</th></tr>
+          </thead>
+          <tbody id="auditTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="error-box" id="errorBox"></div>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+      const token = sessionStorage.getItem('access_token');
+      const companyId = sessionStorage.getItem('company_id');
+      if (!token || !companyId) {
+        window.location.href = '../index.html';
+        return;
+      }
+      document.getElementById('currentCompanyLabel').textContent = sessionStorage.getItem('company_name');
+
+      document.getElementById('runAuditCheckBtn').addEventListener('click', async () => {
+        const btn = document.getElementById('runAuditCheckBtn');
+        const loading = document.getElementById('auditLoadingSection');
+        const result = document.getElementById('auditResultSection');
+        result.classList.add('hidden');
+        loading.classList.remove('hidden');
+        btn.disabled = true;
+
+        await new Promise(r => setTimeout(r, 1400));
+        const mockData = [
+          { date: '2026-09-10', partner: 'オフィスサプライ社', account: '事務用品費', amount: '¥ 1,200,000', reason: '金額の桁間違い疑い（過去平均: ¥120,000）', risk: '高（要確認）' },
+          { date: '2026-09-05', partner: '東京ビル管理', account: '支払手数料', amount: '¥ 88,000', reason: '税区分不一致（課税仕入 → 非課税）', risk: '高（税務リスク）' }
+        ];
+        const tbody = document.getElementById('auditTableBody');
+        tbody.innerHTML = '';
+        mockData.forEach(row => {
+          tbody.innerHTML += `<tr><td>${row.date}<br><b>${row.partner}</b></td><td>${row.account}<br><b style="color:var(--ink);">${row.amount}</b></td><td style="color:var(--red); font-weight:600; font-size:11.5px;">${row.reason}</td><td><span style="font-size:11px; background:var(--red-soft); color:var(--red); padding:2px 6px; border-radius:4px; font-weight:bold;">${row.risk}</span></td></tr>`;
+        });
+        document.getElementById('statAuditTotalCount').textContent = mockData.length + ' 件';
+        loading.classList.add('hidden');
+        result.classList.remove('hidden');
+        btn.disabled = false;
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ポチポチ手入力取引チェッカー - freee拡張ポータル</title>
+  <link rel="stylesheet" href="../css/common.css">
+</head>
+<body>
+  <div class="bg-gradient"></div>
+
+  <div class="page">
+    <header>
+      <div>
+        <h1>ポチポチ取引チェッカー</h1>
+        <p>対象事業所: <b id="currentCompanyLabel" style="color:var(--ink);">読み込み中...</b></p>
+      </div>
+      <img src="../images/360097.png" alt="D-Tax" class="header-logo">
+    </header>
+
+    <div class="app-header-bar">
+      <a href="../index.html" class="btn-nav">← ポータルへ戻る</a>
+      <span class="app-tag">使用中：ポチポチ手入力取引チェッカー</span>
+    </div>
+
+    <div class="step-box">
+      <div class="step-title">抽出条件の設定</div>
+      <div class="date-range-grid" style="margin-bottom: 12px;">
+        <div class="date-field">
+          <label>対象期間</label>
+          <select class="form-select" id="pochiMonthsSelect">
+            <option value="3">過去 3ヶ月</option>
+            <option value="6" selected>過去 6ヶ月</option>
+            <option value="12">過去 12ヶ月</option>
+          </select>
+        </div>
+        <div class="date-field">
+          <label>手入力回数の閾値（○回以上）</label>
+          <input type="number" class="form-input" id="pochiMinCount" value="5" min="2">
+        </div>
+      </div>
+      <button class="btn-primary" id="runPochiCheckBtn" type="button">ポチポチ取引を抽出する</button>
+
+      <div class="info-box">
+        <b>【何を抽出するのか】</b><br>
+        自動登録ルールが未適用のため「画面上で手動クリック（ポチポチ操作）」して登録されている繰り返し取引を抽出します。
+      </div>
+    </div>
+
+    <div id="pochiLoadingSection" class="loading-box hidden">
+      <div class="spinner"></div>
+      <div style="font-size: 13px; font-weight: 600; color: var(--navy);">freeeから取引データを解析中...</div>
+    </div>
+
+    <div id="pochiResultSection" class="hidden">
+      <div class="summary">
+        <div class="summary-stats">
+          <div class="stat"><span class="num danger" id="statPochiTotalCount">0</span><span class="lbl">改善候補パターン数</span></div>
+          <div class="stat"><span class="num danger" id="statPochiManualRatio">0%</span><span class="lbl">全体の手入力比率</span></div>
+        </div>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="all-table">
+          <thead>
+            <tr><th>取引先</th><th>勘定科目</th><th>手入力回数</th><th>月平均推定量</th><th>改善インパクト</th></tr>
+          </thead>
+          <tbody id="pochiTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="error-box" id="errorBox"></div>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+      const token = sessionStorage.getItem('access_token');
+      const companyId = sessionStorage.getItem('company_id');
+      if (!token || !companyId) {
+        window.location.href = '../index.html';
+        return;
+      }
+      document.getElementById('currentCompanyLabel').textContent = sessionStorage.getItem('company_name');
+
+      document.getElementById('runPochiCheckBtn').addEventListener('click', async () => {
+        const btn = document.getElementById('runPochiCheckBtn');
+        const loading = document.getElementById('pochiLoadingSection');
+        const result = document.getElementById('pochiResultSection');
+        result.classList.add('hidden');
+        loading.classList.remove('hidden');
+        btn.disabled = true;
+
+        await new Promise(r => setTimeout(r, 1400));
+        const mockData = [
+          { partner: 'Amazon.co.jp', account: '消耗品費', count: 18, monthly: '約 3 件/月', impact: '高（自動登録ルール推奨）' },
+          { partner: 'セブン-イレブン', account: '旅費交通費', count: 12, monthly: '約 2 件/月', impact: '高（自動登録ルール推奨）' }
+        ];
+        const tbody = document.getElementById('pochiTableBody');
+        tbody.innerHTML = '';
+        mockData.forEach(row => {
+          tbody.innerHTML += `<tr><td><b>${row.partner}</b></td><td>${row.account}</td><td style="color:var(--red); font-weight:bold;">${row.count} 回</td><td>${row.monthly}</td><td><span style="font-size:11px; background:var(--amber-soft); color:var(--amber); padding:2px 6px; border-radius:4px; font-weight:bold;">${row.impact}</span></td></tr>`;
+        });
+        document.getElementById('statPochiTotalCount').textContent = mockData.length + ' 件';
+        document.getElementById('statPochiManualRatio').textContent = '38.2%';
+        loading.classList.add('hidden');
+        result.classList.remove('hidden');
+        btn.disabled = false;
+      });
+    })();
+  </script>
+</body>
+</html>

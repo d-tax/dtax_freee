@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>期日超過の未決済売掛金チェッカー - freee拡張ポータル</title>
+  <link rel="stylesheet" href="../css/common.css">
+</head>
+<body>
+  <div class="bg-gradient"></div>
+
+  <div class="page">
+    <header>
+      <div>
+        <h1>期日超過売掛金チェッカー</h1>
+        <p>対象事業所: <b id="currentCompanyLabel" style="color:var(--ink);">読み込み中...</b></p>
+      </div>
+      <img src="../images/360097.png" alt="D-Tax" class="header-logo">
+    </header>
+
+    <div class="app-header-bar">
+      <a href="../index.html" class="btn-nav">← ポータルへ戻る</a>
+      <span class="app-tag">使用中：期日超過の未決済売掛金チェッカー</span>
+    </div>
+
+    <div class="step-box">
+      <div class="step-title">売掛金の滞納状況チェック</div>
+      <button class="btn-primary" id="runOverdueBtn" type="button">期日超過の未決済取引を自動抽出する</button>
+      <div class="info-box">
+        <b>【何を抽出するのか】</b><br>
+        決済期日（回収予定日）を過ぎているにもかかわらず入金処理が完了していない取引を抽出します。
+      </div>
+    </div>
+
+    <div id="overdueLoadingSection" class="loading-box hidden">
+      <div class="spinner"></div>
+      <div style="font-size: 13px; font-weight: 600; color: var(--navy);">売掛金データを照会中...</div>
+    </div>
+
+    <div id="overdueResultSection" class="hidden">
+      <div class="summary">
+        <div class="summary-stats">
+          <div class="stat"><span class="num danger" id="statOverdueCount">0</span><span class="lbl">期日超過件数</span></div>
+          <div class="stat"><span class="num danger" id="statOverdueAmount">¥0</span><span class="lbl">超過合計金額</span></div>
+        </div>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="all-table">
+          <thead>
+            <tr><th>取引先</th><th>期日</th><th>金額</th><th>超過日数</th></tr>
+          </thead>
+          <tbody id="overdueTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="error-box" id="errorBox"></div>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+      const token = sessionStorage.getItem('access_token');
+      const companyId = sessionStorage.getItem('company_id');
+      if (!token || !companyId) {
+        window.location.href = '../index.html';
+        return;
+      }
+      document.getElementById('currentCompanyLabel').textContent = sessionStorage.getItem('company_name');
+
+      document.getElementById('runOverdueBtn').addEventListener('click', async () => {
+        const btn = document.getElementById('runOverdueBtn');
+        const loading = document.getElementById('overdueLoadingSection');
+        const result = document.getElementById('overdueResultSection');
+        result.classList.add('hidden');
+        loading.classList.remove('hidden');
+        btn.disabled = true;
+
+        await new Promise(r => setTimeout(r, 1200));
+        const mockData = [
+          { partner: 'アルファ商事', date: '2026-08-31', amount: '¥ 330,000', days: '15 日超過' },
+          { partner: 'ベータテクノロジー', date: '2026-07-31', amount: '¥ 154,000', days: '46 日超過' }
+        ];
+        const tbody = document.getElementById('overdueTableBody');
+        tbody.innerHTML = '';
+        mockData.forEach(row => {
+          tbody.innerHTML += `<tr><td><b>${row.partner}</b></td><td>${row.date}</td><td style="font-weight:bold;">${row.amount}</td><td><span style="font-size:11px; background:var(--red-soft); color:var(--red); padding:2px 6px; border-radius:4px; font-weight:bold;">${row.days}</span></td></tr>`;
+        });
+        document.getElementById('statOverdueCount').textContent = mockData.length + ' 件';
+        document.getElementById('statOverdueAmount').textContent = '¥ 484,000';
+        loading.classList.add('hidden');
+        result.classList.remove('hidden');
+        btn.disabled = false;
+      });
+    })();
+  </script>
+</body>
+</html>
