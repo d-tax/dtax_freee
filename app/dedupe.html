@@ -12,6 +12,8 @@
     .status-unused { background: var(--amber-soft); color: var(--amber); }
     .status-active { background: #e6f4ea; color: #137333; }
     .status-default { background: #f1f3f4; color: #5f6368; }
+    /* グループごとの区切り線を明確にするためのスタイル */
+    .group-last-row td { border-bottom: 2px solid #cbd5e1 !important; }
   </style>
 </head>
 <body>
@@ -37,7 +39,7 @@
       <button class="btn-secondary" id="runDedupeBtn" type="button">取引先の重複登録を探す</button>
       <div class="info-box">
         <b>【何を抽出するのか】</b><br>
-        社名の類似度、住所の一致、適格事業者番号の一致などを多角的に分析し、重複が疑われる取引先をグループごとに1行ずつリストアップします。
+        社名の類似度、住所の一致、適格事業者番号の一致などを多角的に分析し、重複が疑われる取引先をグループごとにリストアップします。
       </div>
 
       <div id="dedupeLoadingSection" class="loading-box hidden">
@@ -220,7 +222,7 @@
         return maxLen === 0 ? 1.0 : (1.0 - dist / maxLen);
       }
 
-      // 1. 重複チェック（高精度グループ化・各行個別表示）
+      // 1. 重複チェック（高精度グループ化・グループごとの区切り線付き表示）
       document.getElementById('runDedupeBtn').addEventListener('click', async () => {
         const btn = document.getElementById('runDedupeBtn');
         const loading = document.getElementById('dedupeLoadingSection');
@@ -247,7 +249,7 @@
             name: p.name,
             cleanName: cleanCompanyName(p.name),
             normAddr: normalizeAddress(p.address ? (p.address.street || p.address.name || '') : ''),
-            invoiceNumber: p.shortcut || p.code || '' // 適格事業者番号等があれば活用
+            invoiceNumber: p.shortcut || p.code || ''
           }));
 
           // クラスタリング（グループ化）処理
@@ -267,13 +269,11 @@
 
               let isMatch = false;
 
-              // 判定1: 社名クリーン後の完全一致 または 類似度が高い（例: 0.8以上かつ文字数3文字以上）
               const sim = getStringSimilarity(p1.cleanName, p2.cleanName);
               if (p1.cleanName === p2.cleanName || (sim >= 0.8 && p1.cleanName.length >= 2 && p2.cleanName.length >= 2)) {
                 isMatch = true;
               }
 
-              // 判定2: 住所が両方存在し、正規化後に完全一致する場合
               if (!isMatch && p1.normAddr && p2.normAddr && p1.normAddr === p2.normAddr) {
                 isMatch = true;
               }
@@ -298,10 +298,14 @@
           } else {
             let totalRows = 0;
             groups.forEach((grp, idx) => {
-              grp.forEach(item => {
+              grp.forEach((item, itemIdx) => {
                 totalRows++;
+                // グループの最後の行に class="group-last-row" を付与して区切り線を太くする
+                const isLastInGroup = (itemIdx === grp.length - 1);
+                const rowClass = isLastInGroup ? 'group-last-row' : '';
+
                 tbody.innerHTML += `
-                  <tr>
+                  <tr class="${rowClass}">
                     <td style="text-align: center;"><input type="checkbox" class="dedupe-row-checkbox"></td>
                     <td><b>グループ${idx + 1}</b></td>
                     <td><b>${item.name}</b></td>
@@ -369,7 +373,7 @@
         downloadCsv(csv, 'dedupe_partners.csv');
       });
 
-      // 2. 未使用取引先の抽出（事前に件数を検出して確認メッセージを表示）
+      // 2. 未使用取引先の抽出（件数表示付き確認メッセージ）
       document.getElementById('runUnusedBtn').addEventListener('click', async () => {
         const isCustom = radioCustom.checked;
         const start = isCustom ? document.getElementById('unusedStartDate').value : '';
@@ -381,21 +385,6 @@
         const progressText = document.getElementById('unusedProgressText');
         const result = document.getElementById('unusedResultSection');
         
-        // ★ 事前に取引件数を軽くカウントまたは確認してからメッセージを表示
-        try {
-          progressText.textContent = "取引件数を確認中...";
-          let testQuery = `company_id=${companyId}&limit=1`;
-          if (isCustom) testQuery += `&start_issue_date=${start}&end_issue_date=${end}`;
-          
-          // まずdealsの総件数をヘッダーやAPI等から想定するか、ざっくり確認
-          // freee APIでは全体の件数が返りにくいため、最初の1回リクエストして確認目安にするか、一般的なメッセージにする
-          // ここでは直近の目安として取引データの総件数確認フローを挟みます
-          const checkRes = await callApi(`/deals?${testQuery}`);
-          // 件数の厳密な合計がAPI仕様上 pagination等で直感取れないため、スムーズに件数を測るフェーズを入れます
-        } catch(e) {}
-
-        // ★ ご要望の確認メッセージ（取引件数を含める）
-        // ここでは全件カウント用の一時取得を行ってから確認メッセージを出します
         loading.classList.remove('hidden');
         result.classList.add('hidden');
         btn.disabled = true;
@@ -407,7 +396,6 @@
           let queryParam = `company_id=${companyId}&limit=100`;
           if (isCustom) queryParam += `&start_issue_date=${start}&end_issue_date=${end}`;
 
-          // 高速に件数だけ把握するためにループ
           while (true) {
             const dRes = await callApi(`/deals?${queryParam}&offset=${dOffset}`);
             const batch = dRes.deals || [];
@@ -424,7 +412,6 @@
             return;
           }
 
-          // 「はい」が選ばれた場合の実処理
           result.classList.add('hidden');
           loading.classList.remove('hidden');
           btn.disabled = true;
