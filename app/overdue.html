@@ -86,8 +86,9 @@
           let totalAmount = 0;
 
           deals.forEach(d => {
-            // freeeの各決済(payments)の期日(due_date)をチェック
-            d.payments.forEach(p => {
+            // paymentsがundefinedの場合にエラーにならないよう安全に配列化
+            const payments = d.payments || [];
+            payments.forEach(p => {
               if (p.status === 'unsettled' && p.due_date) {
                 const dueDate = new Date(p.due_date);
                 if (dueDate < today) {
