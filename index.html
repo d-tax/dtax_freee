@@ -17,19 +17,34 @@
       </div>
     </header>
 
-    <!-- Step 1: ログイン -->
+    <!-- Step 1: ログイン / トークン設定 -->
     <div id="stepLogin" class="step-box">
-      <div class="step-title">1. freee連携ログイン</div>
-      <div class="step-desc">freeeアカウントで認証を行い、APIデータと連携します。</div>
-      <button class="btn-primary" id="loginBtn" type="button">freeeアカウントでログイン</button>
+      <div class="step-title">1. freee API 認証設定</div>
+      <div class="step-desc">
+        静的サイト（GitHub Pages等）で運用するため、freeeアプリのアクセストークンを直接設定して接続します。
+      </div>
+      
+      <div style="margin-bottom: 12px;">
+        <label style="font-size: 11.5px; color: var(--ink-soft); display: block; margin-bottom: 4px;">アクセストークンを入力</label>
+        <input type="password" id="tokenInput" class="form-select" placeholder="eyJhbGciOiJSUzI1NiIs..." style="background:#fff; margin-bottom:8px;">
+      </div>
+
+      <button class="btn-primary" id="saveTokenBtn" type="button">アクセストークンを保存して事業所を取得</button>
+      
+      <div class="info-box" style="margin-top: 14px; font-size: 11.5px; color: var(--ink-soft);">
+        ※ freeeデベロッパーポータルやAPIテストツール等で発行したアクセストークンを貼り付けてください。
+      </div>
     </div>
 
-    <!-- Step 2: 事業所選択 & アプリ一覧 -->
+    <!-- Step 2: 事業所選択 -->
     <div id="stepCompany" class="step-box hidden">
       <div class="step-title">2. 対象事業所の選択</div>
       <div class="step-desc">利用する事業所を選択してください。選択は全ツールに反映されます。</div>
       <select class="form-select" id="companySelect"></select>
-      <button class="btn-primary" id="saveCompanyBtn" type="button">事業所を決定してアプリを選ぶ</button>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn-primary" id="saveCompanyBtn" type="button" style="flex: 1;">事業所を決定してアプリを選ぶ</button>
+        <button class="btn-nav" id="logoutBtn" type="button" style="padding: 12px; margin:0;">トークン再設定</button>
+      </div>
     </div>
 
     <!-- Step 3: アプリ一覧メニュー -->
@@ -79,32 +94,23 @@
 
   <script>
     const CONFIG = {
-      clientId: "803164151598495",
-      redirectUri: window.location.origin + window.location.pathname,
-      authEndpoint: "https://accounts.secure.freee.co.jp/public_api/authorize",
       apiBase: "https://api.freee.co.jp/api/1"
     };
 
     const stepLogin = document.getElementById('stepLogin');
     const stepCompany = document.getElementById('stepCompany');
     const stepApps = document.getElementById('stepApps');
-    const loginBtn = document.getElementById('loginBtn');
+    const tokenInput = document.getElementById('tokenInput');
+    const saveTokenBtn = document.getElementById('saveTokenBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
     const companySelect = document.getElementById('companySelect');
     const saveCompanyBtn = document.getElementById('saveCompanyBtn');
     const changeCompanyBtn = document.getElementById('changeCompanyBtn');
     const selectedCompanyName = document.getElementById('selectedCompanyName');
     const errorBox = document.getElementById('errorBox');
 
-    loginBtn.addEventListener("click", () => {
-      window.location.href = `${CONFIG.authEndpoint}?response_type=code&client_id=${CONFIG.clientId}&redirect_uri=${encodeURIComponent(CONFIG.redirectUri)}`;
-    });
-
+    // ページ読み込み時の初期化チェック
     window.addEventListener("DOMContentLoaded", async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get("code")) {
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-
       const token = localStorage.getItem("freee_access_token");
       const savedCompanyId = localStorage.getItem("freee_company_id");
 
@@ -116,12 +122,38 @@
       await fetchCompanies(token, savedCompanyId);
     });
 
+    // トークン保存ボタン
+    saveTokenBtn.addEventListener("click", async () => {
+      const token = tokenInput.value.trim();
+      if (!token) {
+        alert("アクセストークンを入力してください。");
+        return;
+      }
+      localStorage.setItem("freee_access_token", token);
+      await fetchCompanies(token, null);
+    });
+
+    // トークン再設定（ログアウト）
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("freee_access_token");
+      localStorage.removeItem("freee_company_id");
+      stepCompany.classList.add("hidden");
+      stepLogin.classList.remove("hidden");
+      tokenInput.value = "";
+    });
+
+    // 事業所一覧の取得
     async function fetchCompanies(token, savedCompanyId) {
       try {
+        errorBox.style.display = "none";
         const res = await fetch(`${CONFIG.apiBase}/companies`, {
           headers: { "Authorization": "Bearer " + token, "accept": "application/json" }
         });
-        if (!res.ok) throw new Error("API通信に失敗しました");
+        
+        if (!res.ok) {
+          throw new Error(`API通信に失敗しました (ステータス: ${res.status})。トークンが有効か確認してください。`);
+        }
+        
         const data = await res.json();
         
         companySelect.innerHTML = "";
@@ -133,13 +165,12 @@
           companySelect.appendChild(opt);
         });
 
+        stepLogin.classList.add("hidden");
         if (savedCompanyId) {
-          stepLogin.classList.add("hidden");
           stepCompany.classList.add("hidden");
           stepApps.classList.remove("hidden");
           selectedCompanyName.textContent = companySelect.options[companySelect.selectedIndex].text;
         } else {
-          stepLogin.classList.add("hidden");
           stepCompany.classList.remove("hidden");
         }
       } catch (err) {
@@ -147,9 +178,11 @@
         errorBox.textContent = err.message;
         localStorage.removeItem("freee_access_token");
         stepLogin.classList.remove("hidden");
+        stepCompany.classList.add("hidden");
       }
     }
 
+    // 事業所の保存
     saveCompanyBtn.addEventListener("click", () => {
       localStorage.setItem("freee_company_id", companySelect.value);
       localStorage.setItem("freee_company_name", companySelect.options[companySelect.selectedIndex].text);
@@ -158,6 +191,7 @@
       stepApps.classList.remove("hidden");
     });
 
+    // 事業所変更ボタン
     changeCompanyBtn.addEventListener("click", () => {
       stepApps.classList.add("hidden");
       stepCompany.classList.remove("hidden");
