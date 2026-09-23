@@ -93,11 +93,109 @@
   </div>
 
   <script>
-    (function () {
-      "use strict";
-      // ログイン認証と事業所取得のロジックをここに記述します
-      // 選択された事業所IDやアクセストークンは localStorage に保存して各アプリへ受け渡します
-    })();
-  </script>
+  (function () {
+    "use strict";
+
+    // ▼ ご自身のfreeeアプリのクライアントIDを設定してください
+    const CLIENT_ID = "YOUR_FREE_CLIENT_ID_HERE"; 
+    
+    // リダイレクト先（現在開いているページのURLを自動取得）
+    const REDIRECT_URI = window.location.origin + window.location.pathname;
+
+    const loginBtn = document.getElementById("loginBtn");
+    const stepLogin = document.getElementById("stepLogin");
+    const stepCompany = document.getElementById("stepCompany");
+    const stepApps = document.getElementById("stepApps");
+    const companySelect = document.getElementById("companySelect");
+    const selectCompanyBtn = document.getElementById("selectCompanyBtn");
+    const selectedCompanyName = document.getElementById("selectedCompanyName");
+    const errorBox = document.getElementById("errorBox");
+
+    function showError(msg) {
+      errorBox.style.display = "block";
+      errorBox.textContent = msg;
+    }
+
+    // 1. ログインボタン押下時の処理（freeeの認証画面へ飛ばす）
+    loginBtn.addEventListener("click", function () {
+      const authUrl = `https://accounts.secure.freee.co.jp/public_api/authorize?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
+      window.location.href = authUrl;
+    });
+
+    // 2. ページ読み込み時の処理（freeeから認可コード付きで戻ってきたかチェック）
+    window.addEventListener("DOMContentLoaded", async function () {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get("code");
+      const savedToken = localStorage.getItem("freee_access_token");
+
+      if (code && !savedToken) {
+        // 戻ってきた直後：本来はここでバックエンドやAPI経由でアクセストークンに交換します
+        // ※今回は簡易的にコードをトークンに見立てて保存する例、またはご自身のアクセストークン取得ロジックをここに挟みます
+        localStorage.setItem("freee_access_token", code);
+        // URLの ?code=... をキレイに消す
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+
+      const accessToken = localStorage.getItem("freee_access_token");
+
+      if (accessToken) {
+        // ログイン済みの場合、ステップ1を飛ばして事業所選択へ進む
+        stepLogin.classList.add("hidden");
+        stepCompany.classList.remove("hidden");
+        await fetchCompanies(accessToken);
+      }
+    });
+
+    // 3. 事業所一覧の取得関数
+    async function fetchCompanies(token) {
+      try {
+        companySelect.innerHTML = '<option value="">事業所を読み込んでいます...</option>';
+        
+        // 【注意】実際にはfreee API（ /api/1/companies ）を叩いて取得します
+        // 例: const res = await fetch('https://api.freee.co.jp/api/1/companies', { headers: { 'Authorization': 'Bearer ' + token, 'accept': 'application/json' } });
+        // const data = await res.json();
+
+        // ── ダミーデータ（動作確認用） ──
+        const dummyCompanies = [
+          { id: 12345, display_name: "株式会社D-tax（テスト事業所）" },
+          { id: 67890, display_name: "個人事業主アカウント" }
+        ];
+
+        companySelect.innerHTML = "";
+        dummyCompanies.forEach(comp => {
+          const opt = document.createElement("option");
+          opt.value = comp.id;
+          opt.textContent = comp.display_name;
+          companySelect.appendChild(opt);
+        });
+
+      } catch (err) {
+        showError("事業所一覧の取得に失敗しました: " + err.message);
+      }
+    }
+
+    // 4. 事業所を選択してアプリ一覧へ進むボタン
+    selectCompanyBtn.addEventListener("click", function () {
+      const selectedId = companySelect.value;
+      const selectedText = companySelect.options[companySelect.selectedIndex].text;
+
+      if (!selectedId) {
+        alert("事業所を選択してください。");
+        return;
+      }
+
+      // 各アプリが参照できるように保存
+      localStorage.setItem("freee_company_id", selectedId);
+      localStorage.setItem("freee_company_name", selectedText);
+
+      selectedCompanyName.textContent = selectedText;
+
+      // 画面切り替え
+      stepCompany.classList.add("hidden");
+      stepApps.classList.remove("hidden");
+    });
+
+  })();
+</script>
 </body>
 </html>
