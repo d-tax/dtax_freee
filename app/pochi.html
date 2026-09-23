@@ -36,27 +36,26 @@
         </div>
         <div class="date-field">
           <label>手入力回数の閾値（○回以上）</label>
-          <input type="number" class="form-input" id="pochiMinCount" value="5" min="2">
+          <input type="number" class="form-input" id="pochiMinCount" value="2" min="1">
         </div>
       </div>
       
-      <!-- 追加：除外フィルター用チェックボックス -->
       <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
-        <input type="checkbox" id="excludeNoPartner" checked style="width: 16px; height: 16px; cursor: pointer;">
-        <label for="excludeNoPartner" style="font-size: 13px; color: var(--ink); cursor: pointer;">「取引先が指定なし」のデータを集計から除外する（推奨）</label>
+        <input type="checkbox" id="excludeNoPartner" style="width: 16px; height: 16px; cursor: pointer;">
+        <label for="excludeNoPartner" style="font-size: 13px; color: var(--ink); cursor: pointer;">「取引先が指定なし」のデータを集計から除外する</label>
       </div>
 
       <button class="btn-primary" id="runPochiCheckBtn" type="button">ポチポチ取引を抽出する</button>
 
       <div class="info-box">
         <b>【何を抽出するのか】</b><br>
-        自動登録ルールが未適用のため「画面上で手動クリック（ポチポチ操作）」して登録されている繰り返し取引を抽出します。取引先未設定のものは摘要（メモ）を解析してグループ化します。
+        自動登録ルールが未適用のため「画面上で手動クリック（ポチポチ操作）」して登録されている繰り返し取引を抽出します。指定した期間のデータをすべて走査して集計します。
       </div>
     </div>
 
     <div id="pochiLoadingSection" class="loading-box hidden">
       <div class="spinner"></div>
-      <div style="font-size: 13px; font-weight: 600; color: var(--navy);">freeeから取引データを解析中...</div>
+      <div style="font-size: 13px; font-weight: 600; color: var(--navy);" id="pochiLoadingText">freeeから取引データを取得中...</div>
     </div>
 
     <div id="pochiResultSection" class="hidden">
@@ -88,38 +87,59 @@
       document.getElementById('currentCompanyLabel').textContent = sessionStorage.getItem('company_name');
 
       document.getElementById('runPochiCheckBtn').addEventListener('click', async () => {
-        const months = document.getElementById('pochiMonthsSelect').value;
-        const minCount = parseInt(document.getElementById('pochiMinCount').value, 10) || 5;
+        const months = parseInt(document.getElementById('pochiMonthsSelect').value, 10) || 6;
+        const minCount = parseInt(document.getElementById('pochiMinCount').value, 10) || 2;
         const excludeNoPartner = document.getElementById('excludeNoPartner').checked;
 
         const btn = document.getElementById('runPochiCheckBtn');
         const loading = document.getElementById('pochiLoadingSection');
+        const loadingText = document.getElementById('pochiLoadingText');
         const result = document.getElementById('pochiResultSection');
         result.classList.add('hidden');
         loading.classList.remove('hidden');
         btn.disabled = true;
 
         try {
-          const res = await fetch(`https://api.freee.co.jp/api/1/deals?company_id=${companyId}&limit=100`, {
-            headers: { 'Authorization': `Bearer ${token}`, 'accept': 'application/json' }
-          });
-          if (!res.ok) throw new Error(`APIエラー: ${res.status}`);
-          const data = await res.json();
-          const deals = data.deals || [];
+          // 指定された月数前の日付を計算 (YYYY-MM-DD)
+          const targetDate = new Date();
+          targetDate.setMonth(targetDate.getMonth() - months);
+          const startDateStr = targetDate.toISOString().split('T')[0];
+
+          // ページングを使用して全件取得
+          let deals = [];
+          let offset = 0;
+          const limit = 100;
+
+          while (true) {
+            loadingText.textContent = `取引データを取得中... (${deals.length}件取得済み)`;
+            const url = `https://api.freee.co.jp/api/1/deals?company_id=${companyId}&start_issue_date=${startDateStr}&limit=${limit}&offset=${offset}`;
+            const res = await fetch(url, {
+              headers: { 'Authorization': `Bearer ${token}`, 'accept': 'application/json' }
+            });
+            if (!res.ok) throw new Error(`APIエラー: ${res.status}`);
+            const data = await res.json();
+            const batch = data.deals || [];
+            deals = deals.concat(batch);
+
+            if (batch.length < limit) break;
+            offset += limit;
+          }
+
+          loadingText.textContent = "データを解析中...";
 
           // 取引先×勘定科目ごとにカウント
           const freqMap = {};
           deals.forEach(d => {
             const rawPartner = d.partner_name ? d.partner_name.trim() : '';
             
-            d.details.forEach(det => {
+            const details = d.details || [];
+            details.forEach(det => {
               const account = det.account_item_name || '不明';
               const desc = det.description ? det.description.trim() : '';
 
               let partnerKey = rawPartner;
               let displayName = rawPartner;
 
-              // 取引先が空の場合の救済措置：摘要（メモ）があればそれをキーにする
               if (!rawPartner) {
                 if (excludeNoPartner) {
                   return; // 除外設定がONならスキップ
@@ -148,10 +168,10 @@
           const tbody = document.getElementById('pochiTableBody');
           tbody.innerHTML = '';
           if (candidates.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--ink-soft);">条件に合致する手入力頻発パターンはありませんでした。</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--ink-soft);">条件に合致する手入力頻発パターンはありませんでした。（期間や閾値を変更してみてください）</td></tr>';
           } else {
             candidates.forEach(item => {
-              tbody.innerHTML += `<tr><td><b>${item.partnerDisplay}</b></td><td>${item.account}</td><td style="color:var(--red); font-weight:bold;">${item.count} 回</td><td>約 ${Math.round(item.count / months)} 件/月</td><td><span style="font-size:11px; background:var(--amber-soft); color:var(--amber); padding:2px 6px; border-radius:4px; font-weight:bold;">自動登録ルール推奨</span></td></tr>`;
+              tbody.innerHTML += `<tr><td><b>${item.partnerDisplay}</b></td><td>${item.account}</td><td style="color:var(--red); font-weight:bold;">${item.count} 回</td><td>約 ${(item.count / months).toFixed(1)} 件/月</td><td><span style="font-size:11px; background:var(--amber-soft); color:var(--amber); padding:2px 6px; border-radius:4px; font-weight:bold;">自動登録ルール推奨</span></td></tr>`;
             });
           }
 
