@@ -30,8 +30,8 @@
           <label>対象期間</label>
           <select class="form-select" id="pochiMonthsSelect">
             <option value="3">過去 3ヶ月</option>
-            <option value="6" selected>過去 6ヶ月</option>
-            <option value="12">過去 12ヶ月</option>
+            <option value="6">過去 6ヶ月</option>
+            <option value="12" selected>過去 12ヶ月</option>
           </select>
         </div>
         <div class="date-field">
@@ -49,13 +49,13 @@
 
       <div class="info-box">
         <b>【何を抽出するのか】</b><br>
-        自動登録ルールが未適用のため「画面上で手動クリック（ポチポチ操作）」して登録されている繰り返し取引を抽出します。指定した期間のデータをすべて走査して集計します。
+        自動登録ルールが未適用のため「画面上で手動クリック（ポチポチ操作）」して登録されている繰り返し取引を抽出します。実行前に対象件数を確認できます。
       </div>
     </div>
 
     <div id="pochiLoadingSection" class="loading-box hidden">
       <div class="spinner"></div>
-      <div style="font-size: 13px; font-weight: 600; color: var(--navy);" id="pochiLoadingText">freeeから取引データを取得中...</div>
+      <div style="font-size: 13px; font-weight: 600; color: var(--navy);" id="pochiLoadingText">取引件数を確認中...</div>
     </div>
 
     <div id="pochiResultSection" class="hidden">
@@ -100,19 +100,35 @@
         btn.disabled = true;
 
         try {
-          // 指定された月数前の日付を計算 (YYYY-MM-DD)
-          const targetDate = new Date();
-          targetDate.setMonth(targetDate.getMonth() - months);
-          const startDateStr = targetDate.toISOString().split('T')[0];
+          // 1. 事前に総件数を取得するための一時リクエスト (パラメータなしで全件のメタ情報を取得)
+          loadingText.textContent = "取引件数を確認中...";
+          const countUrl = `https://api.freee.co.jp/api/1/deals?company_id=${companyId}&limit=1`;
+          const countRes = await fetch(countUrl, {
+            headers: { 'Authorization': `Bearer ${token}`, 'accept': 'application/json' }
+          });
+          if (!countRes.ok) throw new Error(`APIエラー: ${countRes.status}`);
+          const countData = await countRes.json();
+          
+          const totalCount = (countData.meta && typeof countData.meta.total_count === 'number') 
+            ? countData.meta.total_count 
+            : (countData.deals ? countData.deals.length : 0);
 
-          // ページングを使用して全件取得
+          // 2. 具体的な件数つきで確認ダイアログを表示
+          const confirmed = confirm(`${totalCount}件の取引データから未使用の取引先を検出します。時間がかかる可能性がありますが続けますか？`);
+          if (!confirmed) {
+            loading.classList.add('hidden');
+            btn.disabled = false;
+            return;
+          }
+
+          // 3. ユーザーが「OK」した場合、ページングを使用して全件取得を開始
           let deals = [];
           let offset = 0;
           const limit = 100;
 
           while (true) {
-            loadingText.textContent = `取引データを取得中... (${deals.length}件取得済み)`;
-            const url = `https://api.freee.co.jp/api/1/deals?company_id=${companyId}&start_issue_date=${startDateStr}&limit=${limit}&offset=${offset}`;
+            loadingText.textContent = `取引データを取得中... (${deals.length} / ${totalCount}件)`;
+            const url = `https://api.freee.co.jp/api/1/deals?company_id=${companyId}&limit=${limit}&offset=${offset}`;
             const res = await fetch(url, {
               headers: { 'Authorization': `Bearer ${token}`, 'accept': 'application/json' }
             });
@@ -121,15 +137,25 @@
             const batch = data.deals || [];
             deals = deals.concat(batch);
 
-            if (batch.length < limit) break;
+            if (batch.length < limit || deals.length >= totalCount) break;
             offset += limit;
           }
 
           loadingText.textContent = "データを解析中...";
 
-          // 取引先×勘定科目ごとにカウント
+          // 4. 指定された月数前の日付を計算し、JavaScript側で期間内に絞り込み
+          const targetDate = new Date();
+          targetDate.setMonth(targetDate.getMonth() - months);
+
+          const filteredDeals = deals.filter(d => {
+            if (!d.issue_date) return false;
+            const issueDate = new Date(d.issue_date);
+            return issueDate >= targetDate;
+          });
+
+          // 5. 取引先×勘定科目ごとにカウント
           const freqMap = {};
-          deals.forEach(d => {
+          filteredDeals.forEach(d => {
             const rawPartner = d.partner_name ? d.partner_name.trim() : '';
             
             const details = d.details || [];
@@ -176,7 +202,7 @@
           }
 
           document.getElementById('statPochiTotalCount').textContent = candidates.length + ' 件';
-          document.getElementById('statPochiManualRatio').textContent = deals.length > 0 ? Math.round((candidates.reduce((acc, cur) => acc + cur.count, 0) / deals.length) * 100) + '%' : '0%';
+          document.getElementById('statPochiManualRatio').textContent = filteredDeals.length > 0 ? Math.round((candidates.reduce((acc, cur) => acc + cur.count, 0) / filteredDeals.length) * 100) + '%' : '0%';
           loading.classList.add('hidden');
           result.classList.remove('hidden');
         } catch (err) {
