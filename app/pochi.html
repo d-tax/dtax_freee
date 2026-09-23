@@ -77,13 +77,13 @@
       "use strict";
       const token = sessionStorage.getItem('access_token');
       const companyId = sessionStorage.getItem('company_id');
-      if (!token || !companyId) {
-        window.location.href = '../index.html';
-        return;
-      }
+      if (!token || !companyId) { window.location.href = '../index.html'; return; }
       document.getElementById('currentCompanyLabel').textContent = sessionStorage.getItem('company_name');
 
       document.getElementById('runPochiCheckBtn').addEventListener('click', async () => {
+        const months = document.getElementById('pochiMonthsSelect').value;
+        const minCount = parseInt(document.getElementById('pochiMinCount').value, 10) || 5;
+
         const btn = document.getElementById('runPochiCheckBtn');
         const loading = document.getElementById('pochiLoadingSection');
         const result = document.getElementById('pochiResultSection');
@@ -91,21 +91,51 @@
         loading.classList.remove('hidden');
         btn.disabled = true;
 
-        await new Promise(r => setTimeout(r, 1400));
-        const mockData = [
-          { partner: 'Amazon.co.jp', account: '消耗品費', count: 18, monthly: '約 3 件/月', impact: '高（自動登録ルール推奨）' },
-          { partner: 'セブン-イレブン', account: '旅費交通費', count: 12, monthly: '約 2 件/月', impact: '高（自動登録ルール推奨）' }
-        ];
-        const tbody = document.getElementById('pochiTableBody');
-        tbody.innerHTML = '';
-        mockData.forEach(row => {
-          tbody.innerHTML += `<tr><td><b>${row.partner}</b></td><td>${row.account}</td><td style="color:var(--red); font-weight:bold;">${row.count} 回</td><td>${row.monthly}</td><td><span style="font-size:11px; background:var(--amber-soft); color:var(--amber); padding:2px 6px; border-radius:4px; font-weight:bold;">${row.impact}</span></td></tr>`;
-        });
-        document.getElementById('statPochiTotalCount').textContent = mockData.length + ' 件';
-        document.getElementById('statPochiManualRatio').textContent = '38.2%';
-        loading.classList.add('hidden');
-        result.classList.remove('hidden');
-        btn.disabled = false;
+        try {
+          const res = await fetch(`https://api.freee.co.jp/api/1/deals?company_id=${companyId}&limit=100`, {
+            headers: { 'Authorization': `Bearer ${token}`, 'accept': 'application/json' }
+          });
+          if (!res.ok) throw new Error(`APIエラー: ${res.status}`);
+          const data = await res.json();
+          const deals = data.deals || [];
+
+          // 取引先×勘定科目ごとにカウント
+          const freqMap = {};
+          deals.forEach(d => {
+            const partner = d.partner_name || '指定なし';
+            // 取引の内訳（details）から勘定科目を拾う
+            d.details.forEach(det => {
+              const account = det.account_item_name || '不明';
+              const key = `${partner}__${account}`;
+              if (!freqMap[key]) freqMap[key] = { partner, account, count: 0 };
+              freqMap[key].count += 1;
+            });
+          });
+
+          // 指定回数以上のものを抽出
+          const candidates = Object.values(freqMap).filter(item => item.count >= minCount);
+          candidates.sort((a, b) => b.count - a.count);
+
+          const tbody = document.getElementById('pochiTableBody');
+          tbody.innerHTML = '';
+          if (candidates.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--ink-soft);">条件に合致する手入力頻発パターンはありませんでした。</td></tr>';
+          } else {
+            candidates.forEach(item => {
+              tbody.innerHTML += `<tr><td><b>${item.partner}</b></td><td>${item.account}</td><td style="color:var(--red); font-weight:bold;">${item.count} 回</td><td>約 ${Math.round(item.count / months)} 件/月</td><td><span style="font-size:11px; background:var(--amber-soft); color:var(--amber); padding:2px 6px; border-radius:4px; font-weight:bold;">自動登録ルール推奨</span></td></tr>`;
+            });
+          }
+
+          document.getElementById('statPochiTotalCount').textContent = candidates.length + ' 件';
+          document.getElementById('statPochiManualRatio').textContent = deals.length > 0 ? Math.round((candidates.reduce((acc, cur) => acc + cur.count, 0) / deals.length) * 100) + '%' : '0%';
+          loading.classList.add('hidden');
+          result.classList.remove('hidden');
+        } catch (err) {
+          alert('データ取得に失敗しました: ' + err.message);
+          loading.classList.add('hidden');
+        } finally {
+          btn.disabled = false;
+        }
       });
     })();
   </script>
