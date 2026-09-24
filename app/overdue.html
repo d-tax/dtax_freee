@@ -5,17 +5,117 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>期日超過の未決済売掛金チェッカー - freee拡張ポータル</title>
   <link rel="stylesheet" href="../css/common.css">
+  <style>
+    .app-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .app-tag {
+      font-size: 12px;
+      color: var(--text-muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 6px;
+    }
+    .info-box {
+      background: var(--primary-light);
+      border: 1px solid rgba(37, 99, 235, 0.2);
+      color: var(--text-main);
+      padding: 14px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-top: 16px;
+      line-height: 1.6;
+    }
+    .loading-box {
+      text-align: center;
+      padding: 40px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .summary {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .summary-stats {
+      display: flex;
+      gap: 20px;
+    }
+    .stat .num {
+      font-size: 24px;
+      font-weight: 700;
+      display: block;
+    }
+    .stat .num.danger { color: var(--danger-text); }
+    .stat .lbl {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .all-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+    .all-table th, .all-table td {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border);
+    }
+    .all-table th {
+      background: var(--bg);
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    .all-table tr:last-child td { border-bottom: none; }
+  </style>
 </head>
 <body>
-  <div class="bg-gradient"></div>
+  <div class="cursor-glow" id="cursorGlow"></div>
+  <div class="cursor-dot" id="cursorDot"></div>
 
   <div class="page">
     <header>
-      <div>
-        <h1>期日超過売掛金チェッカー</h1>
-        <p>対象事業所: <b id="currentCompanyLabel" style="color:var(--ink);">読み込み中...</b></p>
+      <div class="header-left">
+        <img src="../images/360097.png" alt="D-Tax Logo" class="header-logo">
+        <div class="header-title-area">
+          <h1>期日超過売掛金チェッカー</h1>
+          <p>対象事業所: <b id="currentCompanyLabel" style="color:var(--text-main);">読み込み中...</b></p>
+        </div>
       </div>
-      <img src="../images/360097.png" alt="D-Tax" class="header-logo">
+      
+      <div class="menu-container">
+        <button class="hamburger-btn" id="hamburgerBtn" aria-label="メニューを開く" type="button">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="dropdown-menu" id="dropdownMenu">
+          <button class="dropdown-item" id="logoutBtn" type="button"><span>🚪</span> ログアウト</button>
+        </div>
+      </div>
     </header>
 
     <div class="app-header-bar">
@@ -25,7 +125,9 @@
 
     <div class="step-box">
       <div class="step-title">売掛金の滞納状況チェック</div>
+      <div class="step-desc">決済期日を過ぎているにもかかわらず未入金の売掛取引を自動抽出し、回収リスクを可視化します。</div>
       <button class="btn-primary" id="runOverdueBtn" type="button">期日超過の未決済取引を自動抽出する</button>
+      
       <div class="info-box">
         <b>【何を抽出するのか】</b><br>
         決済期日（回収予定日）を過ぎているにもかかわらず入金処理が完了していない取引を抽出します。
@@ -34,7 +136,7 @@
 
     <div id="overdueLoadingSection" class="loading-box hidden">
       <div class="spinner"></div>
-      <div style="font-size: 13px; font-weight: 600; color: var(--navy);">売掛金データを照会中...</div>
+      <div style="font-size: 13px; font-weight: 600; color: var(--text-main);">売掛金データを照会中...</div>
     </div>
 
     <div id="overdueResultSection" class="hidden">
@@ -60,6 +162,41 @@
   <script>
     (function () {
       "use strict";
+      // カーソル・演出処理
+      const cursorDot = document.getElementById('cursorDot');
+      const cursorGlow = document.getElementById('cursorGlow');
+      let mouseX = 0, mouseY = 0, glowX = 0, glowY = 0;
+      window.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX; mouseY = e.clientY;
+        cursorDot.style.opacity = '1'; cursorGlow.style.opacity = '1';
+        cursorDot.style.left = `${mouseX}px`; cursorDot.style.top = `${mouseY}px`;
+      });
+      function animateGlow() {
+        glowX += (mouseX - glowX) * 0.15; glowY += (mouseY - glowY) * 0.15;
+        cursorGlow.style.left = `${glowX}px`; cursorGlow.style.top = `${glowY}px`;
+        requestAnimationFrame(animateGlow);
+      }
+      animateGlow();
+      window.addEventListener('click', (e) => {
+        const ripple = document.createElement('div');
+        ripple.className = 'ripple-wave';
+        ripple.style.left = `${e.clientX}px`; ripple.style.top = `${e.clientY}px`;
+        document.body.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 800);
+      });
+
+      // ハンバーガーメニュー
+      const hamburgerBtn = document.getElementById('hamburgerBtn');
+      const dropdownMenu = document.getElementById('dropdownMenu');
+      const logoutBtn = document.getElementById('logoutBtn');
+      hamburgerBtn.addEventListener('click', (e) => { e.stopPropagation(); dropdownMenu.classList.toggle('show'); });
+      window.addEventListener('click', () => dropdownMenu.classList.remove('show'));
+      dropdownMenu.addEventListener('click', (e) => e.stopPropagation());
+      logoutBtn.addEventListener('click', () => {
+        if (confirm('ログアウトしますか？')) { sessionStorage.clear(); window.location.href = '../index.html'; }
+      });
+
+      // アプリ固有ロジック
       const token = sessionStorage.getItem('access_token');
       const companyId = sessionStorage.getItem('company_id');
       if (!token || !companyId) { window.location.href = '../index.html'; return; }
@@ -86,7 +223,6 @@
           let totalAmount = 0;
 
           deals.forEach(d => {
-            // paymentsがundefinedの場合にエラーにならないよう安全に配列化
             const payments = d.payments || [];
             payments.forEach(p => {
               if (p.status === 'unsettled' && p.due_date) {
@@ -108,10 +244,10 @@
           const tbody = document.getElementById('overdueTableBody');
           tbody.innerHTML = '';
           if (overdueList.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--ink-soft);">期日を過ぎた未決済の売掛金はありません。素晴らしいです！</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">期日を過ぎた未決済の売掛金はありません。素晴らしいです！</td></tr>';
           } else {
             overdueList.forEach(row => {
-              tbody.innerHTML += `<tr><td><b>${row.partner}</b></td><td>${row.date}</td><td style="font-weight:bold;">¥ ${row.amount.toLocaleString()}</td><td><span style="font-size:11px; background:var(--red-soft); color:var(--red); padding:2px 6px; border-radius:4px; font-weight:bold;">${row.days} 日超過</span></td></tr>`;
+              tbody.innerHTML += `<tr><td><b>${row.partner}</b></td><td>${row.date}</td><td style="font-weight:bold;">¥ ${row.amount.toLocaleString()}</td><td><span style="font-size:11px; background:var(--danger-bg); color:var(--danger-text); padding:2px 6px; border-radius:4px; font-weight:bold; border: 1px solid var(--danger-border);">${row.days} 日超過</span></td></tr>`;
             });
           }
 
