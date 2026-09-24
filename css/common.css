@@ -29,9 +29,97 @@ html, body {
   color: var(--text-main);
   line-height: 1.6;
   min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* 後ろから2番目の背面に配置する虹色ブラー */
+.cursor-glow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 105, 180, 0.5) 0%,
+    rgba(161, 140, 209, 0.45) 40%,
+    rgba(135, 206, 250, 0.45) 70%,
+    transparent 85%
+  );
+  border-radius: 50%;
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: 1; /* 背景（body）のすぐ上、コンテンツ（z-index: 2以上）の下 */
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* クリック時に広がるリッチな波紋エフェクト */
+.ripple-wave {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 182, 193, 0.65) 0%,
+    rgba(251, 194, 235, 0.6) 25%,
+    rgba(161, 140, 209, 0.55) 50%,
+    rgba(143, 211, 244, 0.55) 70%,
+    transparent 85%
+  );
+  border-radius: 50%;
+  filter: blur(25px);
+  pointer-events: none;
+  z-index: 3;
+  transform: translate(-50%, -50%);
+  animation: waveAnimation 0.8s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+@keyframes waveAnimation {
+  0% {
+    width: 50px;
+    height: 50px;
+    opacity: 0.95;
+  }
+  100% {
+    width: 350px;
+    height: 350px;
+    opacity: 0;
+  }
+}
+
+/* カスタムカーソル（◎の形） */
+.cursor-dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 24px;
+  height: 24px;
+  border: 2px solid #333;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.cursor-dot::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  background-color: #333;
+  border-radius: 50%;
 }
 
 .page {
+  position: relative;
+  z-index: 2; /* 虹色ブラー（z-index: 1）の上、UIコンテンツを明確に前面に配置 */
   max-width: 900px;
   margin: 40px auto;
   padding: 0 20px 60px;
@@ -82,23 +170,27 @@ header {
   font-size: 12px;
 }
 
-/* ログアウト / ナビゲーションボタン */
-.btn-logout-header {
-  background: transparent;
-  color: var(--text-muted);
+/* ナビゲーションボタン */
+.btn-nav {
+  background: var(--surface);
   border: 1px solid var(--border);
-  padding: 6px 14px;
-  border-radius: 8px;
+  color: var(--text-muted);
   font-size: 12px;
-  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+  transition: all 0.2s;
 }
 
-.btn-logout-header:hover {
-  background: var(--danger-bg);
-  color: var(--danger-text);
-  border-color: var(--danger-border);
+.btn-nav:hover {
+  background: var(--bg);
+  color: var(--text-main);
+  border-color: var(--border-hover);
 }
 
 /* ステップ・ボックス（メインカード） */
@@ -165,28 +257,6 @@ header {
 .btn-primary:hover {
   background: var(--primary-hover);
   box-shadow: var(--shadow-md);
-}
-
-.btn-nav {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  font-size: 12px;
-  padding: 6px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.btn-nav:hover {
-  background: var(--bg);
-  color: var(--text-main);
-  border-color: var(--border-hover);
 }
 
 /* アプリ一覧グリッド */
