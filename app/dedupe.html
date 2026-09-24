@@ -6,17 +6,40 @@
   <title>取引先台帳クリーニング - freee拡張ポータル</title>
   <link rel="stylesheet" href="../css/common.css">
   <style>
-    .status-badge { font-size: 11px; padding: 4px 10px; border-radius: 4px; font-weight: bold; display: inline-block; white-space: nowrap; }
-    .status-active { background: #e6f4ea; color: #137333; }
-    .status-default { background: #f1f3f4; color: #5f6368; }
+    .status-badge { font-size: 11px; padding: 4px 10px; border-radius: 6px; font-weight: 600; display: inline-block; white-space: nowrap; }
+    .status-active { background: #e6f4ea; color: #137333; border: 1px solid #ceead6; }
+    .status-archive { background: #f1f3f4; color: #5f6368; border: 1px solid #dadce0; }
     
-    /* テーブル全体の高さを整え、上下中央に配置 */
+    .status-select {
+      padding: 6px 10px;
+      font-size: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .status-select:focus {
+      border-color: var(--navy);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(34, 56, 76, 0.1);
+    }
+
     .all-table th, .all-table td {
       vertical-align: middle !important;
+      padding: 12px 10px !important;
     }
-    /* グループごとの区切り線を明確にする */
     .group-last-row td {
-      border-bottom: 2px solid #cbd5e1 !important;
+      border-bottom: 2px solid var(--line) !important;
+    }
+    .group-cell {
+      background: rgba(242, 237, 224, 0.4);
+      font-weight: 700;
+      color: var(--navy);
+      text-align: center;
+      border-right: 1px solid var(--line-soft);
     }
   </style>
 </head>
@@ -32,16 +55,16 @@
       <img src="../images/360097.png" alt="D-Tax" class="header-logo">
     </header>
 
-    <div class="app-header-bar">
+    <div class="app-header-bar" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
       <a href="../index.html" class="btn-nav">← ポータルへ戻る</a>
       <span class="app-tag">使用中：取引先台帳クリーニング</span>
     </div>
 
     <!-- 機能1: 重複チェック -->
     <div class="step-box">
-      <div class="step-title">1. 取引先台帳の重複チェック</div>
+      <div class="step-title" style="font-size: 16px; margin-bottom: 12px;">1. 取引先台帳の重複チェック</div>
       <button class="btn-secondary" id="runDedupeBtn" type="button">取引先の重複登録を探す</button>
-      <div class="info-box">
+      <div class="info-box" style="margin-top: 14px;">
         <b>【何を抽出するのか】</b><br>
         社名の類似度、住所の一致などを多角的に分析し、重複が疑われる取引先をグループごとにリストアップします。重複候補の取引件数を個別に高速集計します。
       </div>
@@ -57,13 +80,12 @@
             <div class="stat"><span class="num danger" id="statDedupeCount">0</span><span class="lbl">重複が疑われる取引先数（総行数）</span></div>
           </div>
         </div>
-        <div style="overflow-x: auto;">
+        <div style="overflow-x: auto; background: #fff; border-radius: 12px; border: 1px solid var(--line); margin-top: 14px;">
           <table class="all-table">
             <thead>
-              <tr>
+              <tr style="background: var(--paper-deep);">
                 <th style="width: 80px; text-align: center;">グループ</th>
-                <th style="width: 40px; text-align: center;"><input type="checkbox" id="selectAllDedupe"></th>
-                <th style="width: 90px; text-align: center;">ステータス</th>
+                <th style="width: 130px; text-align: center;">ステータス</th>
                 <th>取引先名</th>
                 <th style="width: 120px; text-align: center;">過去の取引件数</th>
                 <th style="width: 100px; text-align: center;">状態 / 判定</th>
@@ -72,9 +94,9 @@
             <tbody id="dedupeTableBody"></tbody>
           </table>
         </div>
-        <!-- CSV書き出しボタン（結果の下部） -->
+        <!-- CSV書き出しボタン -->
         <div style="margin-top: 16px; text-align: right;">
-          <button class="btn-secondary" id="exportDedupeCsvBtn" type="button" style="padding: 8px 16px; font-size: 13px;">CSV書き出し</button>
+          <button class="btn-secondary" id="exportDedupeCsvBtn" type="button" style="padding: 10px 20px; font-size: 13px; width: auto;">CSV書き出し</button>
         </div>
       </div>
     </div>
@@ -105,7 +127,6 @@
         return await res.json();
       }
 
-      // --- 判定用ヘルパー関数群 ---
       function normalizeAddress(addr) {
         if (!addr) return '';
         return addr
@@ -158,7 +179,6 @@
         return maxLen === 0 ? 1.0 : (1.0 - dist / maxLen);
       }
 
-      // 1. 重複チェック（重複候補に絞って取引件数を取得）
       document.getElementById('runDedupeBtn').addEventListener('click', async () => {
         const btn = document.getElementById('runDedupeBtn');
         const loading = document.getElementById('dedupeLoadingSection');
@@ -169,7 +189,6 @@
         btn.disabled = true;
 
         try {
-          // 1. 取引先データの全件取得
           loadingText.textContent = "取引先データを取得中...";
           let partners = [];
           let offset = 0;
@@ -227,7 +246,6 @@
             }
           }
 
-          // 2. 重複候補に挙がった取引先だけに絞って、個別に取引件数を取得
           if (groups.length > 0) {
             loadingText.textContent = "重複候補の取引件数を集計中...";
             for (let idx = 0; idx < groups.length; idx++) {
@@ -249,7 +267,7 @@
           tbody.innerHTML = '';
           
           if (groups.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--ink-soft);">重複が疑われる取引先は検出されませんでした。</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--ink-soft); padding: 30px;">重複が疑われる取引先は検出されませんでした。</td></tr>';
             document.getElementById('statDedupeCount').textContent = '0 件';
           } else {
             let totalRows = 0;
@@ -262,41 +280,22 @@
 
                 tbody.innerHTML += `
                   <tr class="${rowClass}">
-                    ${isFirstInGroup ? `<td rowspan="${grp.length}" style="text-align: center; font-weight: bold;">グループ${idx + 1}</td>` : ''}
-                    <td style="text-align: center;"><input type="checkbox" class="dedupe-row-checkbox"></td>
-                    <td style="text-align: center;"><span class="status-badge status-default row-status-label">未選択</span></td>
-                    <td><b>${item.name}</b></td>
-                    <td style="text-align: center;">${item.dealCount} 件</td>
-                    <td><span style="font-size:11px; background:var(--red-soft); color:var(--red); padding:4px 8px; border-radius:4px; font-weight:bold; white-space: nowrap;">重複候補</span></td>
+                    ${isFirstInGroup ? `<td rowspan="${grp.length}" class="group-cell">グループ${idx + 1}</td>` : ''}
+                    <td style="text-align: center;">
+                      <select class="status-select">
+                        <option value="利用中" selected>利用中</option>
+                        <option value="アーカイブ">アーカイブ</option>
+                      </select>
+                    </td>
+                    <td><b style="color:var(--navy);">${item.name}</b></td>
+                    <td style="text-align: center; font-variant-numeric: tabular-nums;">${item.dealCount} 件</td>
+                    <td style="text-align: center;"><span style="font-size:11px; background:var(--red-soft); color:var(--red); padding:4px 8px; border-radius:6px; font-weight:bold; white-space: nowrap; border: 1px solid #f8d7da;">重複候補</span></td>
                   </tr>`;
-              });
-            });
-
-            document.querySelectorAll('.dedupe-row-checkbox').forEach((chk) => {
-              chk.addEventListener('change', (e) => {
-                const tr = e.target.closest('tr');
-                const label = tr.querySelector('.row-status-label');
-                if (e.target.checked) {
-                  label.textContent = "使用する";
-                  label.className = "status-badge status-active row-status-label";
-                } else {
-                  label.textContent = "未選択";
-                  label.className = "status-badge status-default row-status-label";
-                }
               });
             });
 
             document.getElementById('statDedupeCount').textContent = totalRows + ' 件';
           }
-
-          const selectAll = document.getElementById('selectAllDedupe');
-          selectAll.checked = false;
-          selectAll.onchange = (e) => {
-            document.querySelectorAll('.dedupe-row-checkbox').forEach(chk => {
-              chk.checked = e.target.checked;
-              chk.dispatchEvent(new Event('change'));
-            });
-          };
 
           loading.classList.add('hidden');
           result.classList.remove('hidden');
@@ -319,18 +318,21 @@
         let lastGroup = "";
         rows.forEach(tr => {
           const cols = tr.querySelectorAll('td');
-          if (cols.length >= 6) {
-            lastGroup = cols[0].innerText.trim();
-            const status = cols[2].innerText.trim();
-            const name = `"${cols[3].innerText.replace(/"/g, '""').trim()}"`;
-            const dealCount = `"${cols[4].innerText.trim()}"`;
-            const judge = cols[5].innerText.trim();
-            csv += `${lastGroup},${status},${name},${dealCount},${judge}\n`;
-          } else if (cols.length === 5) {
-            const status = cols[1].innerText.trim();
+          if (cols.length >= 5) {
+            lastGroup = cols[0].innerText.trim() !== "" ? cols[0].innerText.trim() : lastGroup;
+            // グループ列がある行はcols[0]がグループ、cols[1]がselect
+            const groupVal = cols[0].innerText.trim() || lastGroup;
+            const status = tr.querySelector('.status-select') ? tr.querySelector('.status-select').value : '';
             const name = `"${cols[2].innerText.replace(/"/g, '""').trim()}"`;
             const dealCount = `"${cols[3].innerText.trim()}"`;
             const judge = cols[4].innerText.trim();
+            csv += `${groupVal},${status},${name},${dealCount},${judge}\n`;
+          } else if (cols.length === 4) {
+            // rowspanでグループセルがない行
+            const status = tr.querySelector('.status-select') ? tr.querySelector('.status-select').value : '';
+            const name = `"${cols[1].innerText.replace(/"/g, '""').trim()}"`;
+            const dealCount = `"${cols[2].innerText.trim()}"`;
+            const judge = cols[3].innerText.trim();
             csv += `${lastGroup},${status},${name},${dealCount},${judge}\n`;
           }
         });
