@@ -7,6 +7,11 @@
   <link rel="stylesheet" href="css/common.css">
 </head>
 <body>
+  <!-- 後ろから2番目の背面に配置される遅れて追従する虹色ブラー -->
+  <div class="cursor-glow" id="cursorGlow"></div>
+  <!-- カスタムカーソル -->
+  <div class="cursor-dot" id="cursorDot"></div>
+
   <div class="page">
     <header>
       <div class="header-left">
@@ -16,8 +21,19 @@
           <p>freee APIを活用した業務効率化・監査ソリューション</p>
         </div>
       </div>
-      <div class="header-right">
-        <a href="https://d-tax.github.io/portal/" class="btn-nav">← D-Tax ポータルへ戻る</a>
+      
+      <!-- ハンバーガーメニュー -->
+      <div class="menu-container">
+        <button class="hamburger-btn" id="hamburgerBtn" aria-label="メニューを開く" type="button">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <div class="dropdown-menu" id="dropdownMenu">
+          <button class="dropdown-item" id="logoutBtn" type="button">
+            <span>🚪</span> ログアウト
+          </button>
+        </div>
       </div>
     </header>
 
@@ -98,6 +114,73 @@
     (function () {
       "use strict";
 
+      // --- カーソル・演出関連のスクリプト ---
+      const cursorDot = document.getElementById('cursorDot');
+      const cursorGlow = document.getElementById('cursorGlow');
+
+      let mouseX = 0, mouseY = 0;
+      let glowX = 0, glowY = 0;
+      const speed = 0.15;
+
+      window.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+
+        cursorDot.style.opacity = '1';
+        cursorGlow.style.opacity = '1';
+
+        cursorDot.style.left = `${mouseX}px`;
+        cursorDot.style.top = `${mouseY}px`;
+      });
+
+      function animateGlow() {
+        glowX += (mouseX - glowX) * speed;
+        glowY += (mouseY - glowY) * speed;
+        cursorGlow.style.left = `${glowX}px`;
+        cursorGlow.style.top = `${glowY}px`;
+        requestAnimationFrame(animateGlow);
+      }
+      animateGlow();
+
+      window.addEventListener('click', (e) => {
+        const ripple = document.createElement('div');
+        ripple.className = 'ripple-wave';
+        ripple.style.left = `${e.clientX}px`;
+        ripple.style.top = `${e.clientY}px`;
+        document.body.appendChild(ripple);
+        setTimeout(() => {
+          ripple.remove();
+        }, 800);
+      });
+
+      // --- ハンバーガーメニュー開閉 & ログアウト処理 ---
+      const hamburgerBtn = document.getElementById('hamburgerBtn');
+      const dropdownMenu = document.getElementById('dropdownMenu');
+      const logoutBtn = document.getElementById('logoutBtn');
+
+      hamburgerBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdownMenu.classList.toggle('show');
+      });
+
+      // メニュー外をクリックしたら閉じる
+      window.addEventListener('click', () => {
+        dropdownMenu.classList.remove('show');
+      });
+
+      dropdownMenu.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+
+      // ログアウト処理
+      logoutBtn.addEventListener('click', () => {
+        if (confirm('ログアウトしますか？')) {
+          sessionStorage.clear();
+          window.location.reload();
+        }
+      });
+
+      // --- freee API 連携処理 ---
       const CONFIG = {
         clientId: "803164151598495",
         redirectUri: window.location.origin + window.location.pathname,
@@ -154,7 +237,6 @@
             companySelect.appendChild(opt);
           });
 
-          // 保存された事業所があれば復元
           const savedId = sessionStorage.getItem('company_id');
           if (savedId) {
             companySelect.value = savedId;
@@ -195,7 +277,6 @@
         stepCompany.classList.remove('hidden');
       });
 
-      // OAuthコールバック（ハッシュトークン取得）
       if (window.location.hash) {
         const params = new URLSearchParams(window.location.hash.substring(1));
         const token = params.get('access_token');
