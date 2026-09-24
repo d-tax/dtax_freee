@@ -56,7 +56,7 @@
       box-shadow: var(--shadow-md);
       padding: 6px;
       z-index: 100;
-      min-width: 140px;
+      min-width: 190px;
     }
     .dropdown-menu.show {
       display: block;
@@ -239,8 +239,14 @@
       <button class="btn-secondary" id="runDedupeBtn" type="button">取引先の重複登録を探す</button>
       
       <div class="info-box">
-        <b>【何を抽出するのか】</b><br>
-        インボイス登録番号の一致や社名・住所の類似している重複候補を抽出し、それぞれの過去の取引件数を個別に集計します。
+        <b>【検出・判定の条件】</b><br>
+        インボイス登録番号や社名・住所などを多角的に分析し、以下の条件のいずれかに合致するものを重複候補としてグルーピングします。それぞれの過去の取引件数も個別に集計されます。
+        <ul style="margin: 6px 0 0 20px; padding: 0;">
+          <li><b>インボイス登録番号の一致:</b> 双方の登録番号（Tから始まる番号）が完全に一致する場合（最優先判定）</li>
+          <li><b>社名の完全一致:</b> 法人格（株式会社など）やスペース、全半角を正規化して社名が完全に一致する場合</li>
+          <li><b>社名の類似:</b> 社名の類似度が80%以上であり、かつ文字数が2文字以上の場合</li>
+          <li><b>住所の一致:</b> 丁目・番地・号の表記ゆれなどを統一（正規化）した上で住所が一致する場合</li>
+        </ul>
       </div>
 
       <div id="dedupeLoadingSection" class="loading-box hidden">
@@ -268,12 +274,18 @@
             <tbody id="dedupeTableBody"></tbody>
           </table>
         </div>
-        <!-- CSV書き出しボタン -->
+        <!-- CSV書き出しボタン（メニュー付き） -->
         <div style="margin-top: 16px; text-align: right;">
-          <button class="btn-secondary" id="exportDedupeCsvBtn" type="button" style="padding: 10px 20px; font-size: 13px; width: auto; display: inline-flex; align-items: center; gap: 8px;">
-            <img src="../images/dounload.png" alt="" style="width: 16px; height: 16px; object-fit: contain;">
-            選択したステータスのCSVデータを出力する
-          </button>
+          <div class="menu-container" style="display: inline-block;">
+            <button class="btn-secondary" id="exportMenuBtn" type="button" style="padding: 10px 20px; font-size: 13px; width: auto; display: inline-flex; align-items: center; gap: 8px;">
+              <img src="../images/dounload.png" alt="" style="width: 16px; height: 16px; object-fit: contain;">
+              CSVデータを出力する
+            </button>
+            <div class="dropdown-menu" id="exportDropdownMenu" style="right: 0; left: auto; min-width: 200px;">
+              <button class="dropdown-item" id="exportAllCsvBtn" type="button">すべての項目をエクスポート</button>
+              <button class="dropdown-item" id="exportArchiveCsvBtn" type="button">アーカイブのみをエクスポート</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -312,8 +324,19 @@
       const dropdownMenu = document.getElementById('dropdownMenu');
       const logoutBtn = document.getElementById('logoutBtn');
       hamburgerBtn.addEventListener('click', (e) => { e.stopPropagation(); dropdownMenu.classList.toggle('show'); });
-      window.addEventListener('click', () => dropdownMenu.classList.remove('show'));
+
+      // CSV出力メニュー
+      const exportMenuBtn = document.getElementById('exportMenuBtn');
+      const exportDropdownMenu = document.getElementById('exportDropdownMenu');
+      exportMenuBtn.addEventListener('click', (e) => { e.stopPropagation(); exportDropdownMenu.classList.toggle('show'); });
+
+      window.addEventListener('click', () => {
+        dropdownMenu.classList.remove('show');
+        exportDropdownMenu.classList.remove('show');
+      });
       dropdownMenu.addEventListener('click', (e) => e.stopPropagation());
+      exportDropdownMenu.addEventListener('click', (e) => e.stopPropagation());
+
       logoutBtn.addEventListener('click', () => {
         if (confirm('ログアウトしますか？')) { sessionStorage.clear(); window.location.href = '../index.html'; }
       });
@@ -553,7 +576,8 @@
         applyStatusColor(selectEl);
       };
 
-      document.getElementById('exportDedupeCsvBtn').addEventListener('click', () => {
+      // CSV出力処理（すべての項目 / アーカイブのみ）
+      function exportCsv(filterType) {
         const rows = document.querySelectorAll('#dedupeTableBody tr');
         if (rows.length === 0 || rows[0].innerText.includes('検出されませんでした')) {
           alert('出力するデータがありません。');
@@ -561,31 +585,58 @@
         }
         let csv = '\uFEFFグループ,ステータス,取引先名,過去の取引件数,判定理由\n';
         let lastGroup = "";
+        let exportCount = 0;
+
         rows.forEach(tr => {
           const cols = tr.querySelectorAll('td');
           if (cols.length >= 5) {
             lastGroup = cols[0].innerText.trim() !== "" ? cols[0].innerText.trim() : lastGroup;
             const groupVal = cols[0].innerText.trim() || lastGroup;
-            const status = tr.querySelector('.status-select') ? tr.querySelector('.status-select').value : '';
+            const statusSelect = tr.querySelector('.status-select');
+            const status = statusSelect ? statusSelect.value : '';
+            
+            if (filterType === 'archive' && status !== 'アーカイブ') {
+              return;
+            }
+
             const name = `"${cols[2].innerText.replace(/"/g, '""').trim()}"`;
             const dealCount = `"${cols[3].innerText.trim()}"`;
             const reason = `"${cols[4].innerText.replace(/"/g, '""').trim()}"`;
             csv += `${groupVal},${status},${name},${dealCount},${reason}\n`;
+            exportCount++;
           } else if (cols.length === 4) {
-            const status = tr.querySelector('.status-select') ? tr.querySelector('.status-select').value : '';
+            const statusSelect = tr.querySelector('.status-select');
+            const status = statusSelect ? statusSelect.value : '';
+
+            if (filterType === 'archive' && status !== 'アーカイブ') {
+              return;
+            }
+
             const name = `"${cols[1].innerText.replace(/"/g, '""').trim()}"`;
             const dealCount = `"${cols[2].innerText.trim()}"`;
             const reason = `"${cols[3].innerText.replace(/"/g, '""').trim()}"`;
             csv += `${lastGroup},${status},${name},${dealCount},${reason}\n`;
+            exportCount++;
           }
         });
+
+        if (exportCount === 0) {
+          alert(filterType === 'archive' ? 'アーカイブに指定されているデータがありません。' : '出力対象のデータがありません。');
+          return;
+        }
+
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url; a.download = 'dedupe_partners.csv';
+        a.href = url;
+        a.download = filterType === 'archive' ? 'dedupe_partners_archive.csv' : 'dedupe_partners_all.csv';
         document.body.appendChild(a); a.click();
         document.body.removeChild(a); URL.revokeObjectURL(url);
-      });
+        exportDropdownMenu.classList.remove('show');
+      }
+
+      document.getElementById('exportAllCsvBtn').addEventListener('click', () => exportCsv('all'));
+      document.getElementById('exportArchiveCsvBtn').addEventListener('click', () => exportCsv('archive'));
     })();
   </script>
 </body>
