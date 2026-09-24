@@ -20,7 +20,7 @@
       padding: 6px 12px;
       border-radius: 6px;
     }
-    /* メニュー・ログアウトボタンのスタイル修正 */
+    /* メニュー・ログアウトボタンのスタイル */
     .menu-container {
       position: relative;
     }
@@ -76,6 +76,11 @@
       gap: 8px;
       font-weight: 500;
       transition: background 0.2s;
+    }
+    .dropdown-item img {
+      width: 16px;
+      height: 16px;
+      object-fit: contain;
     }
     .dropdown-item:hover {
       background: var(--bg);
@@ -217,7 +222,7 @@
           <span></span><span></span><span></span>
         </button>
         <div class="dropdown-menu" id="dropdownMenu">
-          <button class="dropdown-item" id="logoutBtn" type="button"><span>🚪</span> ログアウト</button>
+          <button class="dropdown-item" id="logoutBtn" type="button"><img src="../images/logout.png" alt=""> ログアウト</button>
         </div>
       </div>
     </header>
@@ -265,7 +270,10 @@
         </div>
         <!-- CSV書き出しボタン -->
         <div style="margin-top: 16px; text-align: right;">
-          <button class="btn-secondary" id="exportDedupeCsvBtn" type="button" style="padding: 10px 20px; font-size: 13px; width: auto;">選択したステータスのCSVデータを出力する</button>
+          <button class="btn-secondary" id="exportDedupeCsvBtn" type="button" style="padding: 10px 20px; font-size: 13px; width: auto; display: inline-flex; align-items: center; gap: 8px;">
+            <img src="../images/dounload.png" alt="" style="width: 16px; height: 16px; object-fit: contain;">
+            選択したステータスのCSVデータを出力する
+          </button>
         </div>
       </div>
     </div>
@@ -383,16 +391,16 @@
         return maxLen === 0 ? 1.0 : (1.0 - dist / maxLen);
       }
 
-      // ステータスセレクトの色を動的に変更する関数
+      // ステータスセレクトの色を動的に変更する関数（利用中:緑系 / アーカイブ:赤系）
       function applyStatusColor(selectEl) {
         if (selectEl.value === '利用中') {
           selectEl.style.backgroundColor = '#ecfdf5';
           selectEl.style.color = '#065f46';
           selectEl.style.borderColor = '#10b981';
         } else {
-          selectEl.style.backgroundColor = '#f3f4f6';
-          selectEl.style.color = '#4b5563';
-          selectEl.style.borderColor = '#9ca3af';
+          selectEl.style.backgroundColor = '#fef2f2';
+          selectEl.style.color = '#991b1b';
+          selectEl.style.borderColor = '#ef4444';
         }
       }
 
@@ -510,7 +518,7 @@
 
                 tbody.innerHTML += `
                   <tr class="${rowClass}">
-                    ${isFirstInGroup ? `<td rowspan="${grp.length}" class="group-cell">${idx + 1}</td>` : ''}
+                    ${isFirstInGroup ? `<td rowspan="${grp.length}" class="group-cell" style="text-align: center;">${idx + 1}</td>` : ''}
                     <td style="text-align: center;">
                       <select class="status-select" onchange="window.updateSelectColor(this)">
                         <option value="利用中" selected>利用中</option>
