@@ -9,6 +9,10 @@
 <body>
   <div class="bg-gradient"></div>
 
+  <!-- カスタムカーソル & 虹色ブラーの要素 -->
+  <div class="cursor-dot" id="cursorDot"></div>
+  <div class="cursor-glow" id="cursorGlow"></div>
+
   <div class="page">
     <header>
       <div>
@@ -120,6 +124,47 @@
       const logoutBtn = document.getElementById('logoutBtn');
       const errorBox = document.getElementById('errorBox');
 
+      // カスタムカーソルと波紋エフェクトの制御
+      const cursorDot = document.getElementById('cursorDot');
+      const cursorGlow = document.getElementById('cursorGlow');
+      let mouseX = 0, mouseY = 0;
+      let glowX = 0, glowY = 0;
+      let isMoved = false;
+
+      window.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        if (!isMoved) {
+          isMoved = true;
+          cursorDot.style.opacity = '1';
+          cursorGlow.style.opacity = '1';
+        }
+        cursorDot.style.left = mouseX + 'px';
+        cursorDot.style.top = mouseY + 'px';
+      });
+
+      // 虹色ブラーの滑らかな遅延追従
+      function animateGlow() {
+        glowX += (mouseX - glowX) * 0.15;
+        glowY += (mouseY - glowY) * 0.15;
+        cursorGlow.style.left = glowX + 'px';
+        cursorGlow.style.top = glowY + 'px';
+        requestAnimationFrame(animateGlow);
+      }
+      requestAnimationFrame(animateGlow);
+
+      // クリック時の波紋エフェクト
+      window.addEventListener('click', (e) => {
+        const ripple = document.createElement('div');
+        ripple.className = 'ripple-wave';
+        ripple.style.left = e.clientX + 'px';
+        ripple.style.top = e.clientY + 'px';
+        document.body.appendChild(ripple);
+        setTimeout(() => {
+          ripple.remove();
+        }, 800);
+      });
+
       function showError(msg) {
         errorBox.textContent = msg;
         errorBox.style.display = 'block';
@@ -138,7 +183,6 @@
         return sessionStorage.getItem('access_token');
       }
 
-      // ログアウト処理（クリーンに初期画面に戻るよう修正）
       logoutBtn.addEventListener('click', () => {
         if (confirm('ログアウトしますか？')) {
           sessionStorage.clear();
@@ -167,7 +211,6 @@
             companySelect.appendChild(opt);
           });
 
-          // すでに事業所が保存されていたら復元
           const savedId = sessionStorage.getItem('company_id');
           if (savedId) {
             companySelect.value = savedId;
@@ -211,7 +254,6 @@
         stepCompany.classList.remove('hidden');
       });
 
-      // OAuthコールバック処理
       if (window.location.hash) {
         const params = new URLSearchParams(window.location.hash.substring(1));
         const token = params.get('access_token');
