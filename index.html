@@ -15,18 +15,11 @@
         <h1>freee 拡張ポータル</h1>
         <p>freee APIを活用して業務効率化ツールを利用・管理します。</p>
       </div>
-      <img src="images/360097.png" alt="D-Tax" class="header-logo">
+      <div class="header-right">
+        <img src="images/360097.png" alt="D-Tax" class="header-logo">
+        <button class="btn-logout-header hidden" id="logoutBtn" type="button">ログアウト</button>
+      </div>
     </header>
-
-    <!-- 常に表示するメニューバー（ログイン・事業所選択時に連動） -->
-    <div id="globalMenuBar" class="global-menu-bar hidden">
-      <div class="global-menu-info">
-        <span>選択中事業所: <b id="menuCompanyName">未選択</b></span>
-      </div>
-      <div>
-        <button class="btn-logout" id="logoutBtn" type="button">ログアウト</button>
-      </div>
-    </div>
 
     <!-- Step 1: ログイン画面 -->
     <div id="stepLogin" class="step-box">
@@ -45,67 +38,57 @@
       <button class="btn-primary" id="selectCompanyBtn" type="button">この事業所で進む</button>
     </div>
 
-    <!-- Step 3: アプリ選択画面 (2列グリッド) -->
+    <!-- Step 3: アプリ選択画面 -->
     <div id="stepApps" class="step-box hidden">
-      <div class="step-title" style="margin-top: 4px; margin-bottom: 16px;">3. 利用するアプリを選択</div>
+      <button class="btn-nav" id="backToCompanyBtn" type="button">← 事業所選択へ戻る</button>
+      <div class="step-title" style="margin-top: 14px; margin-bottom: 16px;">3. 利用するアプリを選択</div>
+      <div class="step-desc">選択した事業所：<b id="selectedCompanyName" style="color:var(--ink);"></b></div>
       
       <div class="app-grid">
         <a href="app/dedupe.html" class="app-card">
-          <div>
-            <div class="app-card-top">
-              <div class="app-card-title">取引先台帳クリーニング</div>
-              <img src="images/icon-clean.png" alt="クリーニング" class="app-card-icon">
-            </div>
+          <img src="images/icon-clean.png" alt="クリーニング" class="app-card-icon">
+          <div class="app-card-content">
+            <div class="app-card-title">取引先台帳クリーニング</div>
             <div class="app-card-desc">重複登録の探知や、過去に取引のない未使用の取引先を整理抽出します。</div>
           </div>
         </a>
 
         <a href="app/overdue.html" class="app-card">
-          <div>
-            <div class="app-card-top">
-              <div class="app-card-title">期日超過の未決済売掛金チェッカー</div>
-              <img src="images/icon-alert.png" alt="売掛金チェッカー" class="app-card-icon">
-            </div>
+          <img src="images/icon-alert.png" alt="売掛金チェッカー" class="app-card-icon">
+          <div class="app-card-content">
+            <div class="app-card-title">期日超過の未決済売掛金チェッカー</div>
             <div class="app-card-desc">決済期日を過ぎた未回収の売掛取引（収入）をリストアップし、回収リスクを可視化します。</div>
           </div>
         </a>
 
         <a href="app/pochi.html" class="app-card">
-          <div>
-            <div class="app-card-top">
-              <div class="app-card-title">ポチポチ手入力取引チェッカー</div>
-              <img src="images/icon-pochipochi.png" alt="ポチポチ手入力取引チェッカー" class="app-card-icon">
-            </div>
+          <img src="images/icon-pochipochi.png" alt="ポチポチ手入力取引チェッカー" class="app-card-icon">
+          <div class="app-card-content">
+            <div class="app-card-title">ポチポチ手入力取引チェッカー</div>
             <div class="app-card-desc">何度も手入力している取引を炙り出し、自動登録ルールの作成候補を可視化します。</div>
           </div>
         </a>
 
         <a href="app/audit.html" class="app-card">
-          <div>
-            <div class="app-card-top">
-              <div class="app-card-title">取引の異常値チェッカー</div>
-              <img src="images/icon-ijouchi.png" alt="取引の異常値・異常入力チェッカー" class="app-card-icon">
-            </div>
+          <img src="images/icon-ijouchi.png" alt="取引の異常値チェッカー" class="app-card-icon">
+          <div class="app-card-content">
+            <div class="app-card-title">取引の異常値・異常入力チェッカー</div>
             <div class="app-card-desc">金額の桁間違いや税区分の矛盾など、過去パターンから逸脱した取引を検知する監査ツール。</div>
           </div>
         </a>
 
         <a href="app/asset-scan.html" class="app-card">
-          <div>
-            <div class="app-card-top">
-              <div class="app-card-title">固定資産スキャン</div>
-              <img src="images/icon-clean.png" alt="固定資産スキャン" class="app-card-icon">
-            </div>
+          <img src="images/icon-clean.png" alt="固定資産スキャン" class="app-card-icon">
+          <div class="app-card-content">
+            <div class="app-card-title">固定資産スキャン</div>
             <div class="app-card-desc">減価償却資産や少額減価償却資産のモレ・対象外経費をスキャンします。</div>
           </div>
         </a>
 
         <a href="app/onescan.html" class="app-card">
-          <div>
-            <div class="app-card-top">
-              <div class="app-card-title">onescan</div>
-              <img src="images/icon-onescan.png" alt="onescan" class="app-card-icon">
-            </div>
+          <img src="images/icon-onescan.png" alt="onescan" class="app-card-icon">
+          <div class="app-card-content">
+            <div class="app-card-title">onescan</div>
             <div class="app-card-desc">書類のワンストップスキャンとOCRデータ連携をスムーズに行います。</div>
           </div>
         </a>
@@ -132,8 +115,8 @@
       const loginBtn = document.getElementById('loginBtn');
       const companySelect = document.getElementById('companySelect');
       const selectCompanyBtn = document.getElementById('selectCompanyBtn');
-      const globalMenuBar = document.getElementById('globalMenuBar');
-      const menuCompanyName = document.getElementById('menuCompanyName');
+      const selectedCompanyName = document.getElementById('selectedCompanyName');
+      const backToCompanyBtn = document.getElementById('backToCompanyBtn');
       const logoutBtn = document.getElementById('logoutBtn');
       const errorBox = document.getElementById('errorBox');
 
@@ -155,11 +138,11 @@
         return sessionStorage.getItem('access_token');
       }
 
-      // ログアウト処理
+      // ログアウト処理（クリーンに初期画面に戻るよう修正）
       logoutBtn.addEventListener('click', () => {
-        if (confirm('ログアウトしますか？（セッション情報がクリアされます）')) {
+        if (confirm('ログアウトしますか？')) {
           sessionStorage.clear();
-          window.location.href = CONFIG.redirectUri;
+          window.location.href = window.location.pathname;
         }
       });
 
@@ -186,18 +169,22 @@
 
           // すでに事業所が保存されていたら復元
           const savedId = sessionStorage.getItem('company_id');
-          const savedName = sessionStorage.getItem('company_name');
-          if (savedId && savedName) {
+          if (savedId) {
             companySelect.value = savedId;
-            menuCompanyName.textContent = savedName;
-            globalMenuBar.classList.remove('hidden');
-            stepLogin.classList.add('hidden');
-            stepApps.classList.remove('hidden');
-            return;
+            const selectedOpt = companySelect.options[companySelect.selectedIndex];
+            if (selectedOpt) {
+              selectedCompanyName.textContent = selectedOpt.text;
+              stepLogin.classList.add('hidden');
+              stepCompany.classList.add('hidden');
+              stepApps.classList.remove('hidden');
+              logoutBtn.classList.remove('hidden');
+              return;
+            }
           }
 
           stepLogin.classList.add('hidden');
           stepCompany.classList.remove('hidden');
+          logoutBtn.classList.remove('hidden');
         } catch (err) {
           showError(err.message);
         }
@@ -214,10 +201,14 @@
         sessionStorage.setItem('company_id', companySelect.value);
         sessionStorage.setItem('company_name', selectedOpt.text);
 
-        menuCompanyName.textContent = selectedOpt.text;
-        globalMenuBar.classList.remove('hidden');
+        selectedCompanyName.textContent = selectedOpt.text;
         stepCompany.classList.add('hidden');
         stepApps.classList.remove('hidden');
+      });
+
+      backToCompanyBtn.addEventListener('click', () => {
+        stepApps.classList.add('hidden');
+        stepCompany.classList.remove('hidden');
       });
 
       // OAuthコールバック処理
@@ -231,9 +222,7 @@
       }
 
       if (getAccessToken()) {
-        globalMenuBar.classList.remove('hidden');
-        const savedName = sessionStorage.getItem('company_name');
-        if (savedName) menuCompanyName.textContent = savedName;
+        logoutBtn.classList.remove('hidden');
         loadCompanies();
       }
     })();
