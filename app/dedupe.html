@@ -20,19 +20,77 @@
       padding: 6px 12px;
       border-radius: 6px;
     }
+    /* メニュー・ログアウトボタンのスタイル修正 */
+    .menu-container {
+      position: relative;
+    }
+    .hamburger-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+    }
+    .hamburger-btn span {
+      display: block;
+      width: 18px;
+      height: 2px;
+      background: var(--text-main);
+      border-radius: 2px;
+    }
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 8px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: var(--shadow-md);
+      padding: 6px;
+      z-index: 100;
+      min-width: 140px;
+    }
+    .dropdown-menu.show {
+      display: block;
+    }
+    .dropdown-item {
+      width: 100%;
+      background: transparent;
+      border: none;
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 13px;
+      color: var(--text-main);
+      cursor: pointer;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    .dropdown-item:hover {
+      background: var(--bg);
+    }
+
     .status-select {
       padding: 6px 10px;
       font-size: 12px;
       border-radius: 8px;
       border: 1px solid var(--border);
-      background: var(--surface);
-      color: var(--text-main);
       cursor: pointer;
       font-weight: 600;
       transition: all 0.2s;
     }
     .status-select:focus {
-      border-color: var(--primary);
       outline: none;
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
     }
@@ -172,12 +230,12 @@
     <!-- 機能1: 重複チェック -->
     <div class="step-box">
       <div class="step-title" style="margin-bottom: 6px;">1. 取引先台帳の重複チェック</div>
-      <div class="step-desc">社名の類似度や住所の一致などを多角的に分析し、重複が疑われる取引先をグループごとにリストアップします。</div>
+      <div class="step-desc">インボイス登録番号の一致や社名の類似度などを多角的に分析し、重複が疑われる取引先をグループごとにリストアップします。</div>
       <button class="btn-secondary" id="runDedupeBtn" type="button">取引先の重複登録を探す</button>
       
       <div class="info-box">
         <b>【何を抽出するのか】</b><br>
-        社名や住所の類似している重複候補を抽出し、それぞれの過去の取引件数を個別に集計します。
+        インボイス登録番号の一致や社名・住所の類似している重複候補を抽出し、それぞれの過去の取引件数を個別に集計します。
       </div>
 
       <div id="dedupeLoadingSection" class="loading-box hidden">
@@ -325,6 +383,19 @@
         return maxLen === 0 ? 1.0 : (1.0 - dist / maxLen);
       }
 
+      // ステータスセレクトの色を動的に変更する関数
+      function applyStatusColor(selectEl) {
+        if (selectEl.value === '利用中') {
+          selectEl.style.backgroundColor = '#ecfdf5';
+          selectEl.style.color = '#065f46';
+          selectEl.style.borderColor = '#10b981';
+        } else {
+          selectEl.style.backgroundColor = '#f3f4f6';
+          selectEl.style.color = '#4b5563';
+          selectEl.style.borderColor = '#9ca3af';
+        }
+      }
+
       document.getElementById('runDedupeBtn').addEventListener('click', async () => {
         const btn = document.getElementById('runDedupeBtn');
         const loading = document.getElementById('dedupeLoadingSection');
@@ -353,7 +424,8 @@
             id: p.id,
             name: p.name,
             cleanName: cleanCompanyName(p.name),
-            normAddr: normalizeAddress(p.address ? (p.address.street || p.address.name || '') : '')
+            normAddr: normalizeAddress(p.address ? (p.address.street || p.address.name || '') : ''),
+            invoiceNum: p.invoice_registration_number ? p.invoice_registration_number.trim() : ''
           }));
 
           const visited = new Set();
@@ -362,7 +434,6 @@
           for (let i = 0; i < processed.length; i++) {
             if (visited.has(i)) continue;
             
-            // グループの基準となる要素
             const baseItem = processed[i];
             baseItem.reason = "基準（比較元）";
             const currentCluster = [baseItem];
@@ -375,18 +446,22 @@
               let isMatch = false;
               let matchReason = "";
 
-              const sim = getStringSimilarity(p1.cleanName, p2.cleanName);
-              if (p1.cleanName === p2.cleanName) {
+              // 優先判定: インボイス登録番号の一致
+              if (p1.invoiceNum && p2.invoiceNum && p1.invoiceNum === p2.invoiceNum) {
+                matchReason = `インボイス登録番号が一致 (${p1.invoiceNum})`;
+                isMatch = true;
+              } else if (p1.cleanName === p2.cleanName) {
                 matchReason = "社名が完全一致";
                 isMatch = true;
-              } else if (sim >= 0.8 && p1.cleanName.length >= 2 && p2.cleanName.length >= 2) {
-                matchReason = `社名が類似 (類似度: ${Math.round(sim * 100)}%)`;
-                isMatch = true;
-              }
-              
-              if (!isMatch && p1.normAddr && p2.normAddr && p1.normAddr === p2.normAddr) {
-                matchReason = "住所が一致";
-                isMatch = true;
+              } else {
+                const sim = getStringSimilarity(p1.cleanName, p2.cleanName);
+                if (sim >= 0.8 && p1.cleanName.length >= 2 && p2.cleanName.length >= 2) {
+                  matchReason = `社名が類似 (類似度: ${Math.round(sim * 100)}%)`;
+                  isMatch = true;
+                } else if (p1.normAddr && p2.normAddr && p1.normAddr === p2.normAddr) {
+                  matchReason = "住所が一致";
+                  isMatch = true;
+                }
               }
 
               if (isMatch) {
@@ -435,9 +510,9 @@
 
                 tbody.innerHTML += `
                   <tr class="${rowClass}">
-                    ${isFirstInGroup ? `<td rowspan="${grp.length}" class="group-cell">グループ${idx + 1}</td>` : ''}
+                    ${isFirstInGroup ? `<td rowspan="${grp.length}" class="group-cell">${idx + 1}</td>` : ''}
                     <td style="text-align: center;">
-                      <select class="status-select">
+                      <select class="status-select" onchange="window.updateSelectColor(this)">
                         <option value="利用中" selected>利用中</option>
                         <option value="アーカイブ">アーカイブ</option>
                       </select>
@@ -448,6 +523,9 @@
                   </tr>`;
               });
             });
+
+            // 初期生成されたセレクトボックスの色を適用
+            document.querySelectorAll('.status-select').forEach(sel => applyStatusColor(sel));
 
             document.getElementById('statDedupeCount').textContent = totalRows + ' 件';
           }
@@ -461,6 +539,11 @@
           btn.disabled = false;
         }
       });
+
+      // グローバルに関数を公開してonchangeから呼べるようにする
+      window.updateSelectColor = function(selectEl) {
+        applyStatusColor(selectEl);
+      };
 
       document.getElementById('exportDedupeCsvBtn').addEventListener('click', () => {
         const rows = document.querySelectorAll('#dedupeTableBody tr');
