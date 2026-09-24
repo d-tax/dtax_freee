@@ -50,7 +50,7 @@ html, body {
 .page {
   position: relative;
   z-index: 2;
-  max-width: 840px; /* 横幅を広げました */
+  max-width: 840px;
   margin: 44px auto;
   padding: 36px 32px 56px;
   background: rgba(255, 253, 247, 0.7);
@@ -79,12 +79,38 @@ header {
   margin-bottom: 24px;
 }
 
-.header-logo {
+.header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
   flex: none;
+}
+
+.header-logo {
   height: 38px;
   width: auto;
   object-fit: contain;
-  margin-top: 2px;
+}
+
+/* ログアウトボタン（アイコンの下に白色で配置） */
+.btn-logout-header {
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--navy);
+  border: 1px solid var(--line);
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(32, 48, 59, 0.05);
+  transition: all 0.2s;
+}
+
+.btn-logout-header:hover {
+  background: #ffffff;
+  color: var(--red);
+  border-color: var(--red);
 }
 
 header h1 {
@@ -96,46 +122,6 @@ header h1 {
 }
 
 header p { margin: 0; color: var(--ink-soft); font-size: 13px; }
-
-/* 常に表示するメニューバー */
-.global-menu-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--paper-deep);
-  border: 1px solid var(--line);
-  padding: 10px 16px;
-  border-radius: 12px;
-  margin-bottom: 24px;
-  font-size: 12.5px;
-}
-
-.global-menu-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--ink-soft);
-}
-
-.global-menu-info b {
-  color: var(--navy);
-}
-
-.btn-logout {
-  background: transparent;
-  color: var(--red);
-  border: 1px solid var(--red);
-  padding: 4px 12px;
-  border-radius: 8px;
-  font-size: 11.5px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-logout:hover {
-  background: var(--red-soft);
-}
 
 .step-box {
   background: #FFFDF7;
@@ -169,38 +155,28 @@ header p { margin: 0; color: var(--ink-soft); font-size: 13px; }
   margin-bottom: 12px;
 }
 
-/* アプリ選択カード：正方形ベースの2列グリッド */
-.app-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-}
-
-@media (max-width: 600px) {
-  .app-grid {
-    grid-template-columns: 1fr;
-  }
-}
+/* 横長のアプリカード（App Store風のリッチな余白と太めのフォント） */
+.app-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
 
 .app-card {
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
   border: 1.5px solid var(--line);
   background: #FFFDF7;
   border-radius: 16px;
-  padding: 20px;
+  padding: 20px 24px;
   cursor: pointer;
   text-decoration: none;
   transition: all 0.2s ease;
-  aspect-ratio: 1 / 0.85; /* やや正方形に近いバランス */
+  box-shadow: 0 2px 8px rgba(32, 48, 59, 0.03);
 }
 
-.app-card:hover { border-color: var(--navy); background: var(--paper-deep); transform: translateY(-2px); }
-.app-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-.app-card-icon { width: 44px; height: 44px; object-fit: contain; }
-.app-card-title { font-weight: 700; font-size: 14.5px; color: var(--navy); margin-bottom: 4px; }
-.app-card-desc { font-size: 12px; color: var(--ink-soft); line-height: 1.4; }
+.app-card:hover { border-color: var(--navy); background: var(--paper-deep); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(32, 48, 59, 0.08); }
+.app-card-icon { width: 56px; height: 56px; object-fit: contain; flex: none; }
+.app-card-content { flex: 1; }
+.app-card-title { font-weight: 700; font-size: 15.5px; color: var(--navy); margin-bottom: 6px; letter-spacing: 0.01em; }
+.app-card-desc { font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; }
 
 .app-header-bar {
   display: flex;
@@ -244,12 +220,18 @@ header p { margin: 0; color: var(--ink-soft); font-size: 13px; }
   background: var(--paper-deep);
   border: 1px solid var(--line);
   color: var(--ink-soft);
-  font-size: 11.5px;
-  padding: 4px 10px;
+  font-size: 12px;
+  padding: 6px 14px;
   border-radius: 8px;
   cursor: pointer;
   text-decoration: none;
   display: inline-block;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+.btn-nav:hover {
+  background: var(--line-soft);
+  color: var(--navy);
 }
 
 .app-tag {
