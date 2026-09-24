@@ -274,16 +274,16 @@
             <tbody id="dedupeTableBody"></tbody>
           </table>
         </div>
-        <!-- CSV書き出しボタン（メニュー付き） -->
+        <!-- CSV出力ボタン（メニュー付き） -->
         <div style="margin-top: 16px; text-align: right;">
           <div class="menu-container" style="display: inline-block;">
             <button class="btn-secondary" id="exportMenuBtn" type="button" style="padding: 10px 20px; font-size: 13px; width: auto; display: inline-flex; align-items: center; gap: 8px;">
               <img src="../images/dounload.png" alt="" style="width: 16px; height: 16px; object-fit: contain;">
               CSVデータを出力する
             </button>
-            <div class="dropdown-menu" id="exportDropdownMenu" style="right: 0; left: auto; min-width: 200px;">
-              <button class="dropdown-item" id="exportAllCsvBtn" type="button">すべての項目をエクスポート</button>
-              <button class="dropdown-item" id="exportArchiveCsvBtn" type="button">アーカイブのみをエクスポート</button>
+            <div class="dropdown-menu" id="exportDropdownMenu" style="right: 0; left: auto; min-width: 180px;">
+              <button class="dropdown-item" id="exportAllCsvBtn" type="button">すべての項目を出力</button>
+              <button class="dropdown-item" id="exportArchiveCsvBtn" type="button">アーカイブのみを出力</button>
             </div>
           </div>
         </div>
@@ -538,6 +538,7 @@
                 const isFirstInGroup = (itemIdx === 0);
                 const isLastInGroup = (itemIdx === grp.length - 1);
                 const rowClass = isLastInGroup ? 'group-last-row' : '';
+                const dealCountDisplay = item.dealCount >= 100 ? '100件以上' : `${item.dealCount} 件`;
 
                 tbody.innerHTML += `
                   <tr class="${rowClass}">
@@ -549,7 +550,7 @@
                       </select>
                     </td>
                     <td><b style="color:var(--text-main);">${item.name}</b></td>
-                    <td style="text-align: center; font-variant-numeric: tabular-nums;">${item.dealCount} 件</td>
+                    <td style="text-align: center; font-variant-numeric: tabular-nums;">${dealCountDisplay}</td>
                     <td style="font-size: 12px; color: var(--text-muted);">${item.reason}</td>
                   </tr>`;
               });
