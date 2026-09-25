@@ -86,25 +86,30 @@
       background: var(--bg);
     }
 
-    /* ステータス切替ボタングループのスタイル */
+    /* ステータス切替ボタングループのスタイル（縦2段に変更） */
     .status-toggle-group {
       display: inline-flex;
+      flex-direction: column;
       gap: 4px;
       background: var(--bg);
-      padding: 3px;
+      padding: 4px;
       border-radius: 8px;
       border: 1px solid var(--border);
+      width: 110px;
     }
     .status-btn {
       background: transparent;
       border: 1px solid transparent;
-      padding: 5px 10px;
+      padding: 5px 8px;
       font-size: 12px;
       font-weight: 600;
       border-radius: 6px;
       cursor: pointer;
       transition: all 0.2s;
       color: var(--text-muted);
+      text-align: center;
+      white-space: nowrap;
+      width: 100%;
     }
     .status-btn:hover {
       color: var(--text-main);
@@ -290,7 +295,7 @@
             <thead>
               <tr>
                 <th style="width: 80px; text-align: center;">グループ</th>
-                <th style="width: 150px; text-align: center;">ステータス</th>
+                <th style="width: 130px; text-align: center;">ステータス</th>
                 <th>取引先名</th>
                 <th style="width: 120px; text-align: center;">過去の取引件数</th>
                 <th>判定理由</th>
@@ -645,7 +650,7 @@
         exportDropdownMenu.classList.remove('show');
       }
 
-      document.getElementById('exportAllCsvBtn').addEventListener('click', () => exportCsv('all'));
+      document.getElementById('exportAllCsvBtn').appendEventListener ? null : document.getElementById('exportAllCsvBtn').addEventListener('click', () => exportCsv('all'));
       document.getElementById('exportArchiveCsvBtn').addEventListener('click', () => exportCsv('archive'));
     })();
   </script>
