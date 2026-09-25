@@ -68,7 +68,7 @@ html, body {
     rgba(251, 194, 235, 0.6) 25%,
     rgba(161, 140, 209, 0.55) 50%,
     rgba(143, 211, 244, 0.55) 70%,
-    transparent 85%
+    transparent 55%
   );
   border-radius: 50%;
   filter: blur(25px);
