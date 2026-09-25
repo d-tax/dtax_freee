@@ -86,19 +86,44 @@
       background: var(--bg);
     }
 
-    .status-select {
-      padding: 6px 10px;
-      font-size: 12px;
+    /* ステータス切替ボタングループのスタイル */
+    .status-toggle-group {
+      display: inline-flex;
+      gap: 4px;
+      background: var(--bg);
+      padding: 3px;
       border-radius: 8px;
       border: 1px solid var(--border);
-      cursor: pointer;
+    }
+    .status-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      padding: 5px 10px;
+      font-size: 12px;
       font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
       transition: all 0.2s;
+      color: var(--text-muted);
     }
-    .status-select:focus {
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    .status-btn:hover {
+      color: var(--text-main);
     }
+    /* 「利用中」がアクティブなとき */
+    .status-btn.active[data-status="利用中"] {
+      background: #ecfdf5;
+      color: #065f46;
+      border-color: #10b981;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    /* 「アーカイブ」がアクティブなとき */
+    .status-btn.active[data-status="アーカイブ"] {
+      background: #fef2f2;
+      color: #991b1b;
+      border-color: #ef4444;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
     .all-table {
       width: 100%;
       border-collapse: collapse;
@@ -265,7 +290,7 @@
             <thead>
               <tr>
                 <th style="width: 80px; text-align: center;">グループ</th>
-                <th style="width: 130px; text-align: center;">ステータス</th>
+                <th style="width: 150px; text-align: center;">ステータス</th>
                 <th>取引先名</th>
                 <th style="width: 120px; text-align: center;">過去の取引件数</th>
                 <th>判定理由</th>
@@ -338,7 +363,7 @@
       exportDropdownMenu.addEventListener('click', (e) => e.stopPropagation());
 
       logoutBtn.addEventListener('click', () => {
-        if (confirm('ログアウトしますか？')) { sessionStorage.clear(); window.location.href = '/dtax_freee/'; }
+        if (confirm('ログアウトしますか？')) { sessionStorage.clear(); window.location.href = '../index.html'; }
       });
 
       // アプリ固有ロジック
@@ -414,18 +439,12 @@
         return maxLen === 0 ? 1.0 : (1.0 - dist / maxLen);
       }
 
-      // ステータスセレクトの色を動的に変更する関数（利用中:緑系 / アーカイブ:赤系）
-      function applyStatusColor(selectEl) {
-        if (selectEl.value === '利用中') {
-          selectEl.style.backgroundColor = '#ecfdf5';
-          selectEl.style.color = '#065f46';
-          selectEl.style.borderColor = '#10b981';
-        } else {
-          selectEl.style.backgroundColor = '#fef2f2';
-          selectEl.style.color = '#991b1b';
-          selectEl.style.borderColor = '#ef4444';
-        }
-      }
+      // ステータスボタン切替用のグローバル関数
+      window.changeStatus = function(btnEl) {
+        const group = btnEl.closest('.status-toggle-group');
+        group.querySelectorAll('.status-btn').forEach(btn => btn.classList.remove('active'));
+        btnEl.classList.add('active');
+      };
 
       document.getElementById('runDedupeBtn').addEventListener('click', async () => {
         const btn = document.getElementById('runDedupeBtn');
@@ -477,7 +496,6 @@
               let isMatch = false;
               let matchReason = "";
 
-              // 優先判定: インボイス登録番号の一致
               if (p1.invoiceNum && p2.invoiceNum && p1.invoiceNum === p2.invoiceNum) {
                 matchReason = `インボイス登録番号が一致 (${p1.invoiceNum})`;
                 isMatch = true;
@@ -544,10 +562,10 @@
                   <tr class="${rowClass}">
                     ${isFirstInGroup ? `<td rowspan="${grp.length}" class="group-cell" style="text-align: center;">${idx + 1}</td>` : ''}
                     <td style="text-align: center;">
-                      <select class="status-select" onchange="window.updateSelectColor(this)">
-                        <option value="利用中" selected>利用中</option>
-                        <option value="アーカイブ">アーカイブ</option>
-                      </select>
+                      <div class="status-toggle-group">
+                        <button type="button" class="status-btn active" data-status="利用中" onclick="window.changeStatus(this)">利用中</button>
+                        <button type="button" class="status-btn" data-status="アーカイブ" onclick="window.changeStatus(this)">アーカイブ</button>
+                      </div>
                     </td>
                     <td><b style="color:var(--text-main);">${item.name}</b></td>
                     <td style="text-align: center; font-variant-numeric: tabular-nums;">${dealCountDisplay}</td>
@@ -555,9 +573,6 @@
                   </tr>`;
               });
             });
-
-            // 初期生成されたセレクトボックスの色を適用
-            document.querySelectorAll('.status-select').forEach(sel => applyStatusColor(sel));
 
             document.getElementById('statDedupeCount').textContent = totalRows + ' 件';
           }
@@ -572,11 +587,6 @@
         }
       });
 
-      // グローバルに関数を公開してonchangeから呼べるようにする
-      window.updateSelectColor = function(selectEl) {
-        applyStatusColor(selectEl);
-      };
-
       // CSV出力処理（すべての項目 / アーカイブのみ）
       function exportCsv(filterType) {
         const rows = document.querySelectorAll('#dedupeTableBody tr');
@@ -590,11 +600,13 @@
 
         rows.forEach(tr => {
           const cols = tr.querySelectorAll('td');
+          // アクティブなステータスボタンから値を取得
+          const activeStatusBtn = tr.querySelector('.status-btn.active');
+          const status = activeStatusBtn ? activeStatusBtn.getAttribute('data-status') : '';
+
           if (cols.length >= 5) {
             lastGroup = cols[0].innerText.trim() !== "" ? cols[0].innerText.trim() : lastGroup;
             const groupVal = cols[0].innerText.trim() || lastGroup;
-            const statusSelect = tr.querySelector('.status-select');
-            const status = statusSelect ? statusSelect.value : '';
             
             if (filterType === 'archive' && status !== 'アーカイブ') {
               return;
@@ -606,9 +618,6 @@
             csv += `${groupVal},${status},${name},${dealCount},${reason}\n`;
             exportCount++;
           } else if (cols.length === 4) {
-            const statusSelect = tr.querySelector('.status-select');
-            const status = statusSelect ? statusSelect.value : '';
-
             if (filterType === 'archive' && status !== 'アーカイブ') {
               return;
             }
