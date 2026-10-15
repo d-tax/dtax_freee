@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -71,6 +73,113 @@
     .dropdown-item:hover {
       background: var(--bg);
     }
+
+    /* 利用規約チェックボックスエリア */
+    .terms-container {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-main);
+    }
+    .terms-container input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: #007bff;
+    }
+    .terms-link {
+      color: #3b82f6;
+      text-decoration: underline;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: inherit;
+    }
+    .terms-link:hover {
+      opacity: 0.8;
+    }
+
+    /* モーダル（ポップアップ）スタイル */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.show {
+      display: flex;
+    }
+    .modal-content {
+      background: var(--surface, #ffffff);
+      color: var(--text-main, #333333);
+      border: 1px solid var(--border, #cccccc);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 650px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      overflow: hidden;
+      animation: fadeIn 0.2s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border, #eee);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
+      font-size: 16px;
+    }
+    .modal-close-btn {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: var(--text-muted, #888);
+      padding: 0 4px;
+    }
+    .modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .modal-body h2 {
+      font-size: 15px;
+      margin-top: 16px;
+      margin-bottom: 6px;
+      border-left: 3px solid #007bff;
+      padding-left: 8px;
+    }
+    .modal-body p {
+      margin-bottom: 10px;
+    }
+    .modal-body ul {
+      padding-left: 20px;
+      margin-bottom: 10px;
+    }
+    .modal-footer {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border, #eee);
+      text-align: right;
+    }
   </style>
 </head>
 <body>
@@ -107,6 +216,14 @@
       <div class="step-title">freee連携ログイン</div>
       <div class="step-desc">freeeアカウントで認証を行い、安全にAPIデータと連携します。</div>
       <button class="btn-primary" id="loginBtn" type="button">freeeアカウントでログイン</button>
+      
+      <!-- 利用規約チェックボックス（ログインボタンの下に配置） -->
+      <div class="terms-container">
+        <input type="checkbox" id="termsCheck">
+        <label for="termsCheck">
+          <button type="button" class="terms-link" id="openTermsBtn">利用規約</button> に同意する
+        </label>
+      </div>
     </div>
 
     <!-- Step 2: 事務所（事業所）選択画面 -->
@@ -130,49 +247,86 @@
       <div class="step-desc">目的に応じた分析・監査・クリーニングツールを選択してください。</div>
       
       <div class="app-grid">
+
+
+        
+  <div class="step-desc" style="margin-top: 25px;margin-bottom: 4px;color:#9999cc;">＜取引＞</div>  
+
+        
+        <a href="app/payment-watch.html" class="app-card">
+          <img src="images/icon-alert.png" alt="支払登録漏れチェッカー" class="app-card-icon">
+          <div class="app-card-content">
+            <div class="app-card-title">支払登録漏れチェッカー</div>
+            <div class="app-card-desc">毎月来ていた請求書がたまに来なかったりしても気が付くことができない。いつも来てるのに今日来てないよっていうのをアラートしてくれるアプリ</div>
+          </div>
+        </a>
+
+        
+
+
+        
+  <div class="step-desc" style="margin-top: 25px;margin-bottom: 4px;color:#9999cc;">＜取引先＞</div>  
+
+        
         <a href="app/dedupe.html" class="app-card">
           <img src="images/icon-clean.png" alt="クリーニング" class="app-card-icon">
           <div class="app-card-content">
-            <div class="app-card-title">取引先台帳クリーニング</div>
+            <div class="app-card-title">取引先クリーニング</div>
             <div class="app-card-desc">重複登録の探知や、過去に取引のない未使用の取引先を整理抽出します。</div>
           </div>
         </a>
 
-        <a href="app/overdue.html" class="app-card">
-          <img src="images/icon-alert.png" alt="売掛金チェッカー" class="app-card-icon">
-          <div class="app-card-content">
-            <div class="app-card-title">期日超過の未決済売掛金チェッカー　ベータ版</div>
-            <div class="app-card-desc">決済期日を過ぎた未回収の売掛取引（収入）をリストアップし、回収リスクを可視化します。</div>
-          </div>
-        </a>
+        
 
-        <a href="app/pochi.html" class="app-card">
-          <img src="images/icon-pochipochi.png" alt="ポチポチ手入力取引チェッカー" class="app-card-icon">
-          <div class="app-card-content">
-            <div class="app-card-title">ポチポチ手入力取引チェッカー　ベータ版</div>
-            <div class="app-card-desc">何度も手入力している取引を炙り出し、自動登録ルールの作成候補を可視化します。</div>
-          </div>
-        </a>
-
-        <a href="app/audit.html" class="app-card">
-          <img src="images/icon-ijouchi.png" alt="異常値チェッカー" class="app-card-icon">
-          <div class="app-card-content">
-            <div class="app-card-title">取引の異常値・異常入力チェッカー　ベータ版</div>
-            <div class="app-card-desc">金額の桁間違いや税区分の矛盾など、過去パターンから逸脱した取引を検知する監査用ツール。</div>
-          </div>
-        </a>
-
-        <a href="app/asset-scan.html" class="app-card">
-          <img src="images/icon-clean.png" alt="固定資産スキャン" class="app-card-icon">
-          <div class="app-card-content">
-            <div class="app-card-title">固定資産スキャン　ベータ版</div>
-            <div class="app-card-desc">減価償却資産や少額減価償却資産のモレ・対象外経費をスキャンします。</div>
-          </div>
-        </a>
+        
       </div>
     </div>
-
+    
     <div class="error-box" id="errorBox"></div>
+  </div>
+
+  <!-- 利用規約モーダル -->
+  <div class="modal-overlay" id="termsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span>利用規約</span>
+        <button type="button" class="modal-close-btn" id="closeTermsBtn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>本利用規約（以下「本規約」といいます。）は、竹本大一税理士事務所（以下「当事務所」といいます。）が提供するWebサービス「D-tax freee会計拡張webポータル」（以下「本サービス」といいます。）の利用条件を定めるものです。</p>
+
+        <h2>第1条（適用）</h2>
+        <p>本規約は、利用者の皆様（以下「ユーザー」といいます。）と当事務所との間の本サービスの利用に関わる一切の関係に適用されます。</p>
+
+        <h2>第2条（サービスの内容および連携）</h2>
+        <p>1. 本サービスは、freee株式会社が提供する「freee会計」等のAPIを活用し、データ整理・分析・監査補助機能を提供するシステムです。</p>
+        <p>2. 本サービスの利用には、ユーザー自身の責任において有効なfreeeアカウントを所有し、API連携の認証を行う必要があります。</p>
+        <p>3. ベータ版と表記されている機能について、当事務所は機能の正確性・完結性を保証するものではなく、事前の通知なく仕様変更や提供停止を行うことがあります。</p>
+
+        <h2>第3条（アカウント管理および認証情報）</h2>
+        <p>ユーザーは、本サービスの利用に必要なアクセストークンや認証情報を自己の責任において適切に管理するものとします。</p>
+
+        <h2>第4条（禁止事項）</h2>
+        <p>ユーザーは、法令違反行為、犯罪関連行為、本サービスやfreeeのサーバー・ネットワーク機能を破壊・妨害する行為、不正アクセス等を行ってはなりません。</p>
+
+        <h2>第5条（免責事項および注意事項）</h2>
+        <p>1. <strong>税務・会計上の判断について：</strong> 本サービスは、freee会計等のデータを抽出・可視化・分析するための「業務補助ツール」であり、本サービス単体で確定的な税務申告・税務判断を保証するものではありません。抽出結果の最終的な妥当性の確認・判断は、ユーザー自身または担当税理士の責任において行ってください。</p>
+        <p>2. 当事務所は、本サービスに起因してユーザーに生じた損害について、当事務所の故意または重大な過失による場合を除き、一切の責任を負いません。</p>
+        <p>3. freee APIの仕様変更、停止、障害等により本サービスが利用不能となった場合において生じた損害について、当事務所は責任を負いません。</p>
+
+        <h2>第6条（サービスの停止・変更・終了）</h2>
+        <p>当事務所は、システムの保守・点検、天災、freee APIの仕様変更等により、ユーザーへの事前通知なくサービスの提供を停止・変更・終了することができます。</p>
+
+        <h2>第7条（個人情報・データの取扱い）</h2>
+        <p>当事務所は、本サービスの利用によって取得するデータについて、プライバシーポリシーおよび関係法令に従い適切に取り扱います。</p>
+
+        <h2>第8条（準拠法・裁判管轄）</h2>
+        <p>本規約の解釈にあたっては日本法を準拠法とし、紛争が生じた場合は当事務所の所在地を管轄する裁判所を専属的合意管轄裁判所とします。</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" id="agreeAndCloseBtn" type="button" style="padding: 6px 16px; font-size: 13px;">同意して閉じる</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -245,6 +399,35 @@
         }
       });
 
+      // --- 利用規約モーダル処理 ---
+      const termsModal = document.getElementById('termsModal');
+      const openTermsBtn = document.getElementById('openTermsBtn');
+      const closeTermsBtn = document.getElementById('closeTermsBtn');
+      const agreeAndCloseBtn = document.getElementById('agreeAndCloseBtn');
+      const termsCheck = document.getElementById('termsCheck');
+
+      openTermsBtn.addEventListener('click', () => {
+        termsModal.classList.add('show');
+      });
+
+      function closeTermsModal() {
+        termsModal.classList.remove('show');
+      }
+
+      closeTermsBtn.addEventListener('click', closeTermsModal);
+      
+      agreeAndCloseBtn.addEventListener('click', () => {
+        termsCheck.checked = true;
+        closeTermsModal();
+      });
+
+      // モーダルの外側（背景）をクリックした時に閉じる
+      termsModal.addEventListener('click', (e) => {
+        if (e.target === termsModal) {
+          closeTermsModal();
+        }
+      });
+
       // --- freee API 連携処理 ---
       const CONFIG = {
         clientId: "803164151598495",
@@ -269,6 +452,12 @@
       }
 
       function redirectToAuth() {
+        // 利用規約のチェック確認
+        if (!termsCheck.checked) {
+          alert('利用規約をご確認のうえ、同意にチェックを入れてください。');
+          return;
+        }
+
         const params = new URLSearchParams({
           client_id: CONFIG.clientId,
           redirect_uri: CONFIG.redirectUri,
